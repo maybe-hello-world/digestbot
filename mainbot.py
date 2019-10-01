@@ -32,7 +32,7 @@ def get_channels_list(
     return ch_info
 
 
-def get_channel_top_messages(
+def get_channel_messages(
         cl: slack.WebClient,
         channel_id: str,
         oldest: datetime = None,
@@ -59,11 +59,23 @@ def get_channel_top_messages(
     return messages
 
 
+def sort_messages(messages: List[dict], topk: int = 20) -> List[dict]:
+    """
+    Sort messages by unique and mysterious algorithm and return most important
+
+    :param messages: list of messages from a channel
+    :param topk: amount of messages to return from each channel
+    :return: sorted messages
+    """
+
+    return sorted(messages, key=lambda x: x.get('reply_count', 0), reverse=True)[:topk]
+
+
 if __name__ == '__main__':
     # get channels list
     ch_info = get_channels_list(client)
 
     for ch_id, ch_name in ch_info:
         print(f"Channel: {ch_name}")
-        print(get_channel_top_messages(client, ch_id))
+        print(sort_messages(get_channel_messages(client, ch_id)))
         print('\n\n')
