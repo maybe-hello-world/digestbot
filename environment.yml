@@ -2,13 +2,13 @@ name: digest
 channels:
   - defaults
 dependencies:
-  - certifi=2018.8.24=py35_1
-  - python=3.5.6=he025d50_0
-  - setuptools=40.2.0=py35_0
+  - certifi=2019.9.11=py36_0
+  - python=3.6.9=h5500b2f_0
+  - setuptools=27.2.0=py36_1
+  - sqlite=3.29.0=he774522_0
   - vc=14.1=h0510ff6_4
   - vs2015_runtime=14.16.27012=hf0eaf9b_0
-  - wheel=0.31.1=py35_0
-  - wincertstore=0.2=py35hfebbdb8_0
+  - wheel=0.33.6=py36_0
   - pip:
     - chardet==3.0.4
     - idna==2.8
