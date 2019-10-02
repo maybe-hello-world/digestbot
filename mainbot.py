@@ -1,5 +1,6 @@
 import slacker
 from typing import List
+from datetime import datetime, timedelta
 
 
 def sort_messages(messages: List[dict], topk: int = 20) -> List[dict]:
@@ -20,7 +21,10 @@ if __name__ == "__main__":
 
     for ch_id, ch_name in ch_info:
         print(f"Channel: {ch_name}")
-        messages = slacker.get_channel_messages(ch_id)
+
+        week_ago = datetime.now() - timedelta(days=7)
+        messages = slacker.get_channel_messages(ch_id, week_ago)
+
         messages = sort_messages(messages)
         messages = slacker.update_permalinks(channel_id=ch_id, messages=messages)
 
