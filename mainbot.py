@@ -1,4 +1,4 @@
-import slacker
+from slacker import Slacker
 from typing import List
 from datetime import datetime, timedelta
 
@@ -17,6 +17,7 @@ def sort_messages(messages: List[dict], topk: int = 20) -> List[dict]:
 
 if __name__ == "__main__":
     # get channels list
+    slacker = Slacker()
     ch_info = slacker.get_channels_list()
 
     for ch_id, ch_name in ch_info:
