@@ -4,13 +4,12 @@ from typing import List, Tuple, Optional
 from datetime import datetime, timedelta
 import time
 
-client = slack.WebClient(token=os.environ['SLACK_API_TOKEN'])
+client = slack.WebClient(token=os.environ["SLACK_API_TOKEN"])
 
 
 def get_channels_list(
-        cl: slack.WebClient,
-        exclude_archive: bool = True,
-        public_only: bool = True) -> Optional[List[Tuple[str, str]]]:
+    cl: slack.WebClient, exclude_archive: bool = True, public_only: bool = True
+) -> Optional[List[Tuple[str, str]]]:
     """
     Get channel names and IDs
 
@@ -21,22 +20,20 @@ def get_channels_list(
     """
 
     # get channels
-    exclude_archive = 'true' if exclude_archive else 'false'
-    types = 'public_channel' if public_only else 'public_channel, private_channel'
+    exclude_archive = "true" if exclude_archive else "false"
+    types = "public_channel" if public_only else "public_channel, private_channel"
     channels = cl.channels_list(exclude_archive=exclude_archive, types=types)
 
     # get ids
-    ch_info = [(x['id'], x['name']) for x in channels['channels']]
+    ch_info = [(x["id"], x["name"]) for x in channels["channels"]]
 
     # TODO: logging & error handling
     return ch_info
 
 
 def get_channel_messages(
-        cl: slack.WebClient,
-        channel_id: str,
-        oldest: datetime = None,
-        limit=100000) -> Optional[List[dict]]:
+    cl: slack.WebClient, channel_id: str, oldest: datetime = None, limit=100000
+) -> Optional[List[dict]]:
     """
     Get list of messages and their statistics from the given channel from _oldest_ until now
 
@@ -54,7 +51,7 @@ def get_channel_messages(
     answer = cl.conversations_history(channel=channel_id, oldest=oldest, limit=limit)
 
     # TODO: logging & error handling & "'has_more': True" handling
-    messages = answer['messages']
+    messages = answer["messages"]
 
     return messages
 
@@ -68,14 +65,14 @@ def sort_messages(messages: List[dict], topk: int = 20) -> List[dict]:
     :return: sorted messages
     """
 
-    return sorted(messages, key=lambda x: x.get('reply_count', 0), reverse=True)[:topk]
+    return sorted(messages, key=lambda x: x.get("reply_count", 0), reverse=True)[:topk]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # get channels list
     ch_info = get_channels_list(client)
 
     for ch_id, ch_name in ch_info:
         print(f"Channel: {ch_name}")
         print(sort_messages(get_channel_messages(client, ch_id)))
-        print('\n\n')
+        print("\n\n")
