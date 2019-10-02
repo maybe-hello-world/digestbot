@@ -1,6 +1,7 @@
 name: digest
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - sqlite=3.29.0
   - psycopg2=2.8.3
