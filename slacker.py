@@ -51,10 +51,11 @@ def get_channels_list(
 
 def _count_thread_lengths(channel_id: str, messages: List[dict]) -> List[dict]:
     """
+    Update messages with length in chars
 
-    :param channel_id:
-    :param messages:
-    :return:
+    :param channel_id: channel ID (where message is)
+    :param messages: message list
+    :return: messages with counted length in chars
     """
 
     def count_th_len(ch_id: str, mes: dict) -> int:
