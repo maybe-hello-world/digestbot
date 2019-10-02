@@ -155,6 +155,7 @@ class Slacker:
                 "reply_users_count": x.get("reply_users_count", 0),
                 "reactions": x.get("reactions", []),
                 "char_length": x.get("char_length", 0),
+                "channel": channel_id,
             }
             for x in messages
         ]
