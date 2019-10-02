@@ -22,8 +22,7 @@ if __name__ == "__main__":
         print(f"Channel: {ch_name}")
         messages = slacker.get_channel_messages(ch_id)
         messages = sort_messages(messages)
-        for x in messages:
-            x.update({"permalink": slacker.get_permalink(ch_id, x["ts"])})
+        messages = slacker.update_permalinks(channel_id=ch_id, messages=messages)
 
         print(messages)
         print("\n\n")

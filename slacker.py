@@ -124,6 +124,21 @@ def get_permalink(channel_id: str, message_ts: str) -> Optional[str]:
     return link
 
 
+def update_permalinks(channel_id: str, messages: List[dict]) -> List[dict]:
+    """
+    Take messages and return them with permalinks added
+
+    :param channel_id: Message's origin
+    :param messages: List of messages to be updated
+    :return: List of these messages with added permalinks
+    """
+
+    for mess in messages:
+        mess.update({"permalink": get_permalink(channel_id, mess["ts"])})
+
+    return messages
+
+
 def _init() -> None:
     """
     Initialize slack client instance
