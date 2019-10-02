@@ -65,6 +65,7 @@ def get_channel_messages(
     """
 
     global client
+    allowed_subtypes = {"thread_broadcast", "bot_message", "file_share", None}
 
     # to unixtime
     oldest = oldest or datetime.now() - timedelta(days=1)
@@ -82,9 +83,45 @@ def get_channel_messages(
         return None
 
     # TODO: "'has_more': True" handling
-    messages = answer["messages"]
+    messages = (
+        x for x in answer["messages"] if x.get("subtype", None) in allowed_subtypes
+    )
+
+    # return only needed statistics
+    messages = [
+        {
+            "user": x.get("user", x.get("username", "")),
+            "text": x["text"],
+            "ts": x["ts"],
+            "reply_count": x.get("reply_count", 0),
+            "reply_users_count": x.get("reply_users_count", 0),
+            "reactions": x.get("reactions", []),
+        }
+        for x in messages
+    ]
 
     return messages
+
+
+def get_permalink(channel_id: str, message_ts: str) -> Optional[str]:
+    """
+    Get permalink for given message in given channel
+
+    :param channel_id: channel ID where message is located
+    :param message_ts: timestamp (unixtime) of the message
+    :return: permalink or None if not found or any error
+    """
+
+    global client
+
+    try:
+        answer = client.chat_getPermalink(channel=channel_id, message_ts=message_ts)
+    except errors.SlackClientError as e:
+        logger.exception(e)
+        return None
+
+    link = answer["permalink"]
+    return link
 
 
 def _init() -> None:
