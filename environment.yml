@@ -4,7 +4,7 @@ channels:
 dependencies:
   - sqlite=3.29.0
   - psycopg2=2.8.3
-  - migration_env=1.2.1
+  - alembic=1.2.1
   - pip:
     - aiohttp==3.6.1
     - async-timeout==3.0.1
