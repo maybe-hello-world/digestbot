@@ -8,6 +8,7 @@ import time
 import logging
 from typing import List, Tuple, Optional
 from datetime import datetime, timedelta
+from functools import reduce
 
 import slack
 import slack.errors as errors
@@ -48,6 +49,44 @@ def get_channels_list(
     return ch_info
 
 
+def _count_thread_lengths(channel_id: str, messages: List[dict]) -> List[dict]:
+    """
+
+    :param channel_id:
+    :param messages:
+    :return:
+    """
+
+    def count_th_len(ch_id: str, mes: dict) -> int:
+        """
+        Count length of the entire thread (with all replies)
+
+        :param ch_id: channel ID
+        :param mes: message to be updated
+        :return: count of chars in thread's messages
+        """
+
+        global client
+        if "replies" not in mes:
+            return len(mes.get("text", []))
+
+        try:
+            answer = client.conversations_replies(channel=ch_id, ts=mes.get("ts", 0))
+        except errors.SlackClientError as e:
+            logger.exception(e)
+            return 0
+
+        sum_length = reduce(
+            lambda x, y: x + len(y.get("text", 0)), answer.get("messages", []), 0
+        )
+        return sum_length
+
+    for mess in messages:
+        mess.update({"char_length": count_th_len(ch_id=channel_id, mes=mess)})
+
+    return messages
+
+
 def get_channel_messages(
     channel_id: str,
     oldest: datetime = None,
@@ -83,9 +122,11 @@ def get_channel_messages(
         return None
 
     # TODO: "'has_more': True" handling
-    messages = (
+    messages = [
         x for x in answer["messages"] if x.get("subtype", None) in allowed_subtypes
-    )
+    ]
+
+    messages = _count_thread_lengths(channel_id, messages)
 
     # return only needed statistics
     messages = [
@@ -96,6 +137,7 @@ def get_channel_messages(
             "reply_count": x.get("reply_count", 0),
             "reply_users_count": x.get("reply_users_count", 0),
             "reactions": x.get("reactions", []),
+            "char_length": x.get("char_length", 0),
         }
         for x in messages
     ]
