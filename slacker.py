@@ -31,8 +31,12 @@ class Slacker:
         if "SLACK_BOT_TOKEN" not in os.environ:
             raise Exception("SLACK_BOT_TOKEN not provided in env variables")
 
-        self.web_client = slack.WebClient(token=os.environ["SLACK_USER_TOKEN"])
-        self.rtm_client = slack.RTMClient(token=os.environ["SLACK_BOT_TOKEN"])
+        self.web_client = slack.WebClient(
+            token=os.environ["SLACK_USER_TOKEN"], run_async=True
+        )
+        self.rtm_client = slack.RTMClient(
+            token=os.environ["SLACK_BOT_TOKEN"], run_async=True
+        )
 
         try:
             self.web_client.auth_test()
@@ -45,14 +49,14 @@ class Slacker:
 
         self.logger.info("Slack API connection successfully established.")
 
-    def start(self) -> NoReturn:
+    async def start(self) -> NoReturn:
         """
         Start to listen to messages. ATTENTION: this function never ends.
         """
         self.logger.info("RTM listener started")
-        self.rtm_client.start()
+        await self.rtm_client.start()
 
-    def is_direct_channel(self, channel_id: str) -> Optional[bool]:
+    async def is_direct_channel(self, channel_id: str) -> Optional[bool]:
         """
         Check whether given channel is direct messages channel or public
 
@@ -60,7 +64,7 @@ class Slacker:
         :return: True if direct messages, False if not, None if have no connections or other problems
         """
         try:
-            ch_info = self.web_client.conversations_info(channel=channel_id)
+            ch_info = await self.web_client.conversations_info(channel=channel_id)
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
@@ -68,7 +72,7 @@ class Slacker:
         is_im = ch_info.get("channel", dict()).get("is_im", False)
         return is_im
 
-    def get_channels_list(
+    async def get_channels_list(
         self, exclude_archive: bool = True, public_only: bool = True
     ) -> Optional[List[Tuple[str, str]]]:
         """
@@ -84,7 +88,7 @@ class Slacker:
         types = "public_channel" if public_only else "public_channel, private_channel"
 
         try:
-            channels = self.web_client.channels_list(
+            channels = await self.web_client.channels_list(
                 exclude_archive=exclude_archive, types=types
             )
         except errors.SlackClientError as e:
@@ -96,7 +100,7 @@ class Slacker:
 
         return ch_info
 
-    def __count_th_len(self, ch_id: str, mes: dict) -> int:
+    async def __count_th_len(self, ch_id: str, mes: dict) -> int:
         """
         Count length of the entire thread (with all replies)
 
@@ -109,7 +113,7 @@ class Slacker:
             return len(mes.get("text", []))
 
         try:
-            answer = self.web_client.conversations_replies(
+            answer = await self.web_client.conversations_replies(
                 channel=ch_id, ts=mes.get("ts", 0)
             )
         except errors.SlackClientError as e:
@@ -121,7 +125,7 @@ class Slacker:
         )
         return sum_length
 
-    def _count_thread_lengths(
+    async def _count_thread_lengths(
         self, channel_id: str, messages: List[dict]
     ) -> List[dict]:
         """
@@ -134,12 +138,12 @@ class Slacker:
 
         for mess in messages:
             mess.update(
-                {"char_length": self.__count_th_len(ch_id=channel_id, mes=mess)}
+                {"char_length": await self.__count_th_len(ch_id=channel_id, mes=mess)}
             )
 
         return messages
 
-    def get_channel_messages(
+    async def get_channel_messages(
         self,
         channel_id: str,
         oldest: datetime = None,
@@ -168,7 +172,7 @@ class Slacker:
             kws.update({"latest": latest})
 
         try:
-            answer = self.web_client.conversations_history(**kws)
+            answer = await self.web_client.conversations_history(**kws)
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
@@ -178,7 +182,7 @@ class Slacker:
             x for x in answer["messages"] if x.get("subtype", None) in allowed_subtypes
         ]
 
-        messages = self._count_thread_lengths(channel_id, messages)
+        messages = await self._count_thread_lengths(channel_id, messages)
 
         # return only needed statistics
         messages = [
@@ -197,7 +201,7 @@ class Slacker:
 
         return messages
 
-    def get_permalink(self, channel_id: str, message_ts: str) -> Optional[str]:
+    async def get_permalink(self, channel_id: str, message_ts: str) -> Optional[str]:
         """
         Get permalink for given message in given channel
 
@@ -207,7 +211,7 @@ class Slacker:
         """
 
         try:
-            answer = self.web_client.chat_getPermalink(
+            answer = await self.web_client.chat_getPermalink(
                 channel=channel_id, message_ts=message_ts
             )
         except errors.SlackClientError as e:
@@ -217,7 +221,9 @@ class Slacker:
         link = answer["permalink"]
         return link
 
-    def update_permalinks(self, channel_id: str, messages: List[dict]) -> List[dict]:
+    async def update_permalinks(
+        self, channel_id: str, messages: List[dict]
+    ) -> List[dict]:
         """
         Take messages and return them with permalinks added
 
@@ -227,11 +233,11 @@ class Slacker:
         """
 
         for mess in messages:
-            mess.update({"permalink": self.get_permalink(channel_id, mess["ts"])})
+            mess.update({"permalink": await self.get_permalink(channel_id, mess["ts"])})
 
         return messages
 
-    def post_to_channel(self, channel_id: str, text: str) -> None:
+    async def post_to_channel(self, channel_id: str, text: str) -> None:
         """
         Post given text to given chat
 
@@ -240,7 +246,7 @@ class Slacker:
         :return: Nothing
         """
         try:
-            self.web_client.chat_postMessage(
+            await self.web_client.chat_postMessage(
                 channel=channel_id, text=text, as_user="false", link_names="true"
             )
         except errors.SlackClientError as e:

@@ -1,10 +1,30 @@
 import slack
+import asyncio
 from slacker import Slacker
 from typing import List
 from datetime import datetime, timedelta
 
 
 slacker: Slacker
+CRAWL_INTERVAL: int = 60 * 15  # in seconds
+
+
+async def crawl_messages() -> None:
+    def write_to_db_mock(anything):
+        print(anything, end="\n\n")
+
+    while True:
+        # get data
+        ch_info = await slacker.get_channels_list()
+        for ch_id, ch_name in ch_info:
+            print(f"Channel: {ch_name}")
+
+            day_ago = datetime.now() - timedelta(days=1)
+            messages = await slacker.get_channel_messages(ch_id, day_ago)
+            write_to_db_mock(messages)
+
+        # wait for next time
+        await asyncio.sleep(CRAWL_INTERVAL)
 
 
 def sort_messages(messages: List[dict], topk: int = 20) -> List[dict]:
@@ -19,7 +39,7 @@ def sort_messages(messages: List[dict], topk: int = 20) -> List[dict]:
     return sorted(messages, key=lambda x: x.get("reply_count", 0), reverse=True)[:topk]
 
 
-def process_message(message: dict) -> None:
+async def process_message(message: dict) -> None:
     """Answer only on needed messages"""
 
     # do not answer on own messages
@@ -34,18 +54,18 @@ def process_message(message: dict) -> None:
         f"Hello, <@{message['user']}>! Right now I'm too lazy to calculate the top,"
         f" but I'll be able in the future. Stay tuned!"
     )
-    slacker.post_to_channel(channel_id=message["channel"], text=text_to_answer)
+    await slacker.post_to_channel(channel_id=message["channel"], text=text_to_answer)
 
 
 @slack.RTMClient.run_on(event="message")
-def handle_message(**payload) -> None:
+async def handle_message(**payload) -> None:
     """Preprocess messages"""
     if "data" not in payload:
         return None
 
     data = payload["data"]
     channel = data.get("channel", "")
-    is_im = slacker.is_direct_channel(channel) or False
+    is_im = await slacker.is_direct_channel(channel) or False
 
     message = {
         "text": data.get("text", ""),
@@ -55,23 +75,18 @@ def handle_message(**payload) -> None:
         "is_im": is_im,
     }
 
-    process_message(message)
+    await process_message(message)
 
 
 if __name__ == "__main__":
     # get channels list
     slacker = Slacker()
 
-    ch_info = slacker.get_channels_list()
-    for ch_id, ch_name in ch_info:
-        print(f"Channel: {ch_name}")
+    loop = asyncio.get_event_loop()
 
-        week_ago = datetime.now() - timedelta(days=7)
-        messages = slacker.get_channel_messages(ch_id, week_ago)
+    # # Instantiate crawler timer with corresponding function
+    crawler_task = loop.create_task(crawl_messages())
 
-        messages = sort_messages(messages)
-        messages = slacker.update_permalinks(channel_id=ch_id, messages=messages)
-
-        print(messages)
-        print("\n\n")
-    slacker.start()
+    # start Real-Time Listener and crawler
+    overall_tasks = asyncio.gather(slacker.start(), crawler_task)
+    loop.run_until_complete(overall_tasks)
