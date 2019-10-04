@@ -1,5 +1,6 @@
 import slack
 import asyncio
+import logging
 from slacker import Slacker
 from typing import List
 from datetime import datetime, timedelta
@@ -27,16 +28,33 @@ async def crawl_messages() -> None:
         await asyncio.sleep(CRAWL_INTERVAL)
 
 
-def sort_messages(messages: List[dict], topk: int = 20) -> List[dict]:
+def sort_messages(
+    messages: List[dict], topk: int = 20, criterion: str = "replies"
+) -> List[dict]:
     """
     Sort messages by unique and mysterious algorithm and return most important
 
     :param messages: list of messages from a channel
     :param topk: amount of messages to return from each channel
+    :param criterion: criterion for message sorting (replies / length / reactions)
     :return: sorted messages
     """
 
-    return sorted(messages, key=lambda x: x.get("reply_count", 0), reverse=True)[:topk]
+    if criterion not in {"replies", "length", "reactions"}:
+        logging.warning(f"Wrong criterion: {criterion}, using 'replies'")
+        criterion = "replies"
+
+    if criterion == "replies":
+        key = "reply_count"
+    elif criterion == "length":
+        key = "char_length"
+    else:
+        logging.info("Ha-ha, reactions are not supported yet, using replies")
+        key = "reply_count"
+
+    return sorted(messages, key=lambda x: x.get(key=key, default=0), reverse=True)[
+        :topk
+    ]
 
 
 async def process_message(message: dict) -> None:
