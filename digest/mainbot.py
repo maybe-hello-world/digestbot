@@ -2,7 +2,7 @@ import os
 import slack
 import asyncio
 import logging
-from slacker import Slacker
+from .slacker import Slacker
 from typing import List
 from datetime import datetime, timedelta
 from dataclasses import dataclass
