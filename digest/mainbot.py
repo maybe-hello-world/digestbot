@@ -2,7 +2,7 @@ import os
 import slack
 import asyncio
 import logging
-from .slacker import Slacker, ChannelMessage
+from digest.slacker import Slacker, ChannelMessage
 from typing import List
 from datetime import datetime, timedelta
 from dataclasses import dataclass
@@ -111,8 +111,7 @@ if __name__ == "__main__":
     user_token = os.environ["SLACK_USER_TOKEN"]
     bot_token = os.environ["SLACK_BOT_TOKEN"]
 
-    global bot_name
-    bo_name = os.environ.get("bot_name", "digest-bot")
+    bot_name = os.environ.get("bot_name", "digest-bot")
 
     slacker = Slacker(user_token=user_token, bot_token=bot_token)
 
