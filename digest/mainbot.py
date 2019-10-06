@@ -2,7 +2,7 @@ import os
 import slack
 import asyncio
 import logging
-from .slacker import Slacker
+from .slacker import Slacker, ChannelMessage
 from typing import List
 from datetime import datetime, timedelta
 from dataclasses import dataclass
@@ -41,8 +41,8 @@ async def crawl_messages() -> None:
 
 
 def sort_messages(
-    messages: List[dict], topk: int = 20, criterion: str = "replies"
-) -> List[dict]:
+    messages: List[ChannelMessage], topk: int = 20, criterion: str = "replies"
+) -> List[ChannelMessage]:
     """
     Sort messages by unique and mysterious algorithm and return most important
 
@@ -64,9 +64,7 @@ def sort_messages(
         logging.info("Ha-ha, reactions are not supported yet, using replies")
         key = "reply_count"
 
-    return sorted(messages, key=lambda x: x.get(key=key, default=0), reverse=True)[
-        :topk
-    ]
+    return sorted(messages, key=lambda x: x.__getattr__(key), reverse=True)[:topk]
 
 
 async def process_message(message: UserRequest) -> None:
@@ -124,5 +122,5 @@ if __name__ == "__main__":
     crawler_task = loop.create_task(crawl_messages())
 
     # start Real-Time Listener and crawler
-    overall_tasks = asyncio.gather(slacker.start(), crawler_task)
+    overall_tasks = asyncio.gather(slacker.start_listening(), crawler_task)
     loop.run_until_complete(overall_tasks)

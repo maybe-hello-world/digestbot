@@ -4,6 +4,8 @@ import logging
 from typing import List, Tuple, Optional, NoReturn
 from datetime import datetime, timedelta
 from functools import reduce
+from decimal import Decimal
+from dataclasses import dataclass
 
 import nest_asyncio
 
@@ -13,6 +15,18 @@ import slack.errors as errors
 # Bug in slackclient v2.2.0:
 # https://stackoverflow.com/questions/57154308/why-am-i-getting-runtimeerror-this-event-loop-is-already-running
 nest_asyncio.apply()
+
+
+@dataclass
+class ChannelMessage:
+    user: str  # username or user ID
+    text: str  # message text
+    ts: Decimal  # timestamp of the message
+    reply_count: int  # amount of replies to the message
+    reply_users_count: int  # amount of users, answering to thread
+    reactions: List[dict]  # list of reactions
+    char_length: int  # length of the thread in chars
+    channel: str  # ID of the channel
 
 
 class Slacker:
@@ -46,7 +60,7 @@ class Slacker:
 
         self.logger.info("Slack API connection successfully established.")
 
-    async def start(self) -> NoReturn:
+    async def start_listening(self) -> NoReturn:
         """
         Start to listen to messages. ATTENTION: this function never ends.
         """
@@ -146,7 +160,7 @@ class Slacker:
         oldest: datetime = None,
         latest: datetime = None,
         limit: int = 100000,
-    ) -> Optional[List[dict]]:
+    ) -> Optional[List[ChannelMessage]]:
         """
         Get list of messages and their statistics from the given channel from _oldest_ until now
 
@@ -183,22 +197,24 @@ class Slacker:
 
         # return only needed statistics
         messages = [
-            {
-                "user": x.get("user", x.get("username", "")),
-                "text": x["text"],
-                "ts": x["ts"],
-                "reply_count": x.get("reply_count", 0),
-                "reply_users_count": x.get("reply_users_count", 0),
-                "reactions": x.get("reactions", []),
-                "char_length": x.get("char_length", 0),
-                "channel": channel_id,
-            }
+            ChannelMessage(
+                user=x.get("user", "") or x.get("username", ""),
+                text=x["text"],
+                ts=Decimal(x["ts"]),
+                reply_count=x.get("reply_count", 0),
+                reply_users_count=x.get("reply_users_count", 0),
+                reactions=x.get("reactions", []),
+                char_length=x.get("char_length", 0),
+                channel=channel_id,
+            )
             for x in messages
         ]
 
         return messages
 
-    async def get_permalink(self, channel_id: str, message_ts: str) -> Optional[str]:
+    async def get_permalink(
+        self, channel_id: str, message_ts: Decimal
+    ) -> Optional[str]:
         """
         Get permalink for given message in given channel
 
@@ -209,7 +225,7 @@ class Slacker:
 
         try:
             answer = await self.web_client.chat_getPermalink(
-                channel=channel_id, message_ts=message_ts
+                channel=channel_id, message_ts=str(message_ts)
             )
         except errors.SlackClientError as e:
             self.logger.exception(e)
@@ -219,8 +235,8 @@ class Slacker:
         return link
 
     async def update_permalinks(
-        self, channel_id: str, messages: List[dict]
-    ) -> List[dict]:
+        self, channel_id: str, messages: List[ChannelMessage]
+    ) -> List[ChannelMessage]:
         """
         Take messages and return them with permalinks added
 
@@ -230,7 +246,7 @@ class Slacker:
         """
 
         for mess in messages:
-            mess.update({"permalink": await self.get_permalink(channel_id, mess["ts"])})
+            mess.permalink = await self.get_permalink(channel_id, mess.ts)
 
         return messages
 
