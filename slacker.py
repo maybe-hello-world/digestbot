@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 import logging
@@ -21,26 +20,24 @@ class Slacker:
     Slack API wrapper
     """
 
-    def __init__(self):
+    def __init__(self, user_token: str, bot_token: str):
         self.logger = logging.getLogger("SlackAPI")
         self.logger.setLevel(logging.INFO)
-        self.logger.addHandler(logging.StreamHandler(sys.stdout))
 
-        if "SLACK_USER_TOKEN" not in os.environ:
-            raise Exception("SLACK_USER_TOKEN not provided in env variables")
-        if "SLACK_BOT_TOKEN" not in os.environ:
-            raise Exception("SLACK_BOT_TOKEN not provided in env variables")
+        handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%m.%d.%Y-%I:%M:%S",
+        )
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
 
-        self.web_client = slack.WebClient(
-            token=os.environ["SLACK_USER_TOKEN"], run_async=True
-        )
-        self.rtm_client = slack.RTMClient(
-            token=os.environ["SLACK_BOT_TOKEN"], run_async=True
-        )
+        self.web_client = slack.WebClient(token=user_token, run_async=True)
+        self.rtm_client = slack.RTMClient(token=bot_token, run_async=True)
 
         try:
             self.web_client.auth_test()
-            ans = slack.WebClient(token=os.environ["SLACK_BOT_TOKEN"]).auth_test()
+            ans = slack.WebClient(token=bot_token).auth_test()
         except errors.SlackClientError as e:
             self.logger.exception(e)
             raise
