@@ -58,7 +58,7 @@ async def handle_message(**payload) -> None:
 
 def set_logger():
     global __logger
-    __logger = logging.getLogger("SlackAPI")
+    __logger = logging.getLogger("root")
     __logger.setLevel(logging.INFO)
 
     handler = logging.StreamHandler(sys.stdout)
