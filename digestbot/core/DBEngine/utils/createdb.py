@@ -96,7 +96,7 @@ async def create_tables(connection: asyncpg.Connection, logger: Logger) -> bool:
     tables = {"Category": create_category_table(), "Message": create_message_table()}
 
     big_query = "\n".join(tables.values())
-    logger.info(f"Will be crated new tables: {', '.join(tables.keys())}")
+    logger.info(f"Will be created new tables: {', '.join(tables.keys())}")
 
     try:
         await connection.execute(big_query)

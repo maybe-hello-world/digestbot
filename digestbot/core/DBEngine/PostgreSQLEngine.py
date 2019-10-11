@@ -25,7 +25,7 @@ class PostgreSQLEngine:
         self.logger.setLevel(logging.INFO)
 
         handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging.DEBUG)
+        handler.setLevel(logging.DEBUG)  # TODO: change after dockerization
         formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             datefmt="%m.%d.%Y-%I:%M:%S",
