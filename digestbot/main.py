@@ -4,6 +4,7 @@ import slack
 import asyncio
 import digestbot.core.UserProcessing.ReqParser as ReqParser
 from digestbot.core.SlackAPI.Slacker import Slacker
+from digestbot.core.DBEngine.PostgreSQLEngine import PostgreSQLEngine
 from datetime import datetime, timedelta
 import logging
 import signal
@@ -81,7 +82,22 @@ if __name__ == "__main__":
 
     loop = asyncio.get_event_loop()
 
-    # # Instantiate crawler timer with corresponding function
+    # connect to database
+    dbEngine = PostgreSQLEngine()
+    status = dbEngine.connect_to_database(
+        user=os.environ.get("DB_USER", "postgres"),
+        password=os.environ.get("DB_PASSWORD", "postgres"),
+        database_name=os.environ.get("DB_NAME", "postgres"),
+        host=os.environ.get("DB_HOST", "postgres"),
+        port=os.environ.get("DB_PORT", None)
+    )
+    loop.run_until_complete(status)
+    if status == 0:
+        # TODO: change?
+        __logger.error("Could not connect to database. Exiting...")
+        sys.exit(1)
+
+    # Instantiate crawler timer with corresponding function
     crawler_task = loop.create_task(crawl_messages())
 
     # start Real-Time Listener and crawler
@@ -91,4 +107,5 @@ if __name__ == "__main__":
         loop.run_until_complete(overall_tasks)
     except KeyboardInterrupt as e:
         __logger.info("Received exit signal, exiting...")
+        dbEngine.close()
         sys.exit(0)
