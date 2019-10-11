@@ -1,11 +1,15 @@
 import os
+import sys
 import slack
 import asyncio
 import digestbot.core.UserProcessing.ReqParser as ReqParser
 from digestbot.core.SlackAPI.Slacker import Slacker
 from datetime import datetime, timedelta
+import logging
+import signal
 
 
+__logger: logging.Logger
 slacker: Slacker
 CRAWL_INTERVAL: int = 60 * 15  # in seconds
 bot_name: str
@@ -13,13 +17,13 @@ bot_name: str
 
 async def crawl_messages() -> None:
     def write_to_db_mock(anything):
-        print(anything, end="\n\n")
+        __logger.info(str(anything) + "\n\n")
 
     while True:
         # get data
         ch_info = await slacker.get_channels_list()
         for ch_id, ch_name in ch_info:
-            print(f"Channel: {ch_name}")
+            __logger.info(f"Channel: {ch_name}")
 
             day_ago = datetime.now() - timedelta(days=1)
             messages = await slacker.get_channel_messages(ch_id, day_ago)
@@ -52,12 +56,27 @@ async def handle_message(**payload) -> None:
     await ReqParser.process_message(message=message, bot_name=bot_name, api=slacker)
 
 
+def set_logger():
+    global __logger
+    __logger = logging.getLogger("SlackAPI")
+    __logger.setLevel(logging.INFO)
+
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%m.%d.%Y-%I:%M:%S",
+    )
+    handler.setFormatter(formatter)
+    __logger.addHandler(handler)
+
+
 if __name__ == "__main__":
+    set_logger()
+
     user_token = os.environ["SLACK_USER_TOKEN"]
     bot_token = os.environ["SLACK_BOT_TOKEN"]
 
     bot_name = os.environ.get("bot_name", "digest-bot")
-
     slacker = Slacker(user_token=user_token, bot_token=bot_token)
 
     loop = asyncio.get_event_loop()
@@ -67,4 +86,9 @@ if __name__ == "__main__":
 
     # start Real-Time Listener and crawler
     overall_tasks = asyncio.gather(slacker.start_listening(), crawler_task)
-    loop.run_until_complete(overall_tasks)
+    try:
+        signal.signal(signal.SIGTERM, lambda *args: exec("raise KeyboardInterrupt"))  # correct exit handler
+        loop.run_until_complete(overall_tasks)
+    except KeyboardInterrupt as e:
+        __logger.info("Received exit signal, exiting...")
+        sys.exit(0)
