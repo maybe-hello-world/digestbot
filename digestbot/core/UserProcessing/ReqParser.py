@@ -3,7 +3,7 @@ import logging
 import sys
 from enum import Enum, auto, unique
 from dataclasses import dataclass, field
-from digest.slacker import Slacker
+from digestbot.core.SlackAPI.Slacker import Slacker
 from typing import Optional, List
 
 
