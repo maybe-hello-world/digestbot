@@ -1,10 +1,8 @@
 import os
 import slack
 import asyncio
-import logging
-import digest.req_parser as req_parser
-from digest.slacker import Slacker, ChannelMessage
-from typing import List
+import digestbot.core.UserProcessing.ReqParser as ReqParser
+from digestbot.core.SlackAPI.Slacker import Slacker
 from datetime import datetime, timedelta
 
 
@@ -31,33 +29,6 @@ async def crawl_messages() -> None:
         await asyncio.sleep(CRAWL_INTERVAL)
 
 
-def sort_messages(
-    messages: List[ChannelMessage], topk: int = 20, criterion: str = "replies"
-) -> List[ChannelMessage]:
-    """
-    Sort messages by unique and mysterious algorithm and return most important
-
-    :param messages: list of messages from a channel
-    :param topk: amount of messages to return from each channel
-    :param criterion: criterion for message sorting (replies / length / reactions)
-    :return: sorted messages
-    """
-
-    if criterion not in {"replies", "length", "reactions"}:
-        logging.warning(f"Wrong criterion: {criterion}, using 'replies'")
-        criterion = "replies"
-
-    if criterion == "replies":
-        key = "reply_count"
-    elif criterion == "length":
-        key = "char_length"
-    else:
-        logging.info("Ha-ha, reactions are not supported yet, using replies")
-        key = "reply_count"
-
-    return sorted(messages, key=lambda x: x.__getattr__(key), reverse=True)[:topk]
-
-
 @slack.RTMClient.run_on(event="message")
 async def handle_message(**payload) -> None:
     """Preprocess messages"""
@@ -70,7 +41,7 @@ async def handle_message(**payload) -> None:
     channel = data.get("channel", "")
     is_im = await slacker.is_direct_channel(channel) or False
 
-    message = req_parser.UserRequest(
+    message = ReqParser.UserRequest(
         text=data.get("text", ""),
         user=data.get("user", "") or data.get("username", ""),
         channel=channel,
@@ -78,7 +49,7 @@ async def handle_message(**payload) -> None:
         is_im=is_im,
     )
 
-    await req_parser.process_message(message=message, bot_name=bot_name, api=slacker)
+    await ReqParser.process_message(message=message, bot_name=bot_name, api=slacker)
 
 
 if __name__ == "__main__":
