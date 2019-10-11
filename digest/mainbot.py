@@ -2,24 +2,15 @@ import os
 import slack
 import asyncio
 import logging
+import digest.req_parser as req_parser
 from digest.slacker import Slacker, ChannelMessage
 from typing import List
 from datetime import datetime, timedelta
-from dataclasses import dataclass
 
 
 slacker: Slacker
 CRAWL_INTERVAL: int = 60 * 15  # in seconds
 bot_name: str
-
-
-@dataclass(frozen=True)
-class UserRequest:
-    text: str  # user text
-    user: str  # author's username
-    channel: str  # ID of channel from Slack
-    ts: str  # timestamp of the message
-    is_im: bool  # is it private message to bot (or in public channel)
 
 
 async def crawl_messages() -> None:
@@ -67,28 +58,11 @@ def sort_messages(
     return sorted(messages, key=lambda x: x.__getattr__(key), reverse=True)[:topk]
 
 
-async def process_message(message: UserRequest) -> None:
-    """Answer only on needed messages"""
-    global bot_name
-
-    # do not answer on own messages
-    if message.user == bot_name:
-        return
-
-    # answer only on direct messages and mentions in chats
-    if slacker.user_id not in message.text and not message.is_im:
-        return
-
-    text_to_answer = (
-        f"Hello, <@{message.user}>! Right now I'm too lazy to calculate the top,"
-        f" but I'll be able in the future. Stay tuned!"
-    )
-    await slacker.post_to_channel(channel_id=message.channel, text=text_to_answer)
-
-
 @slack.RTMClient.run_on(event="message")
 async def handle_message(**payload) -> None:
     """Preprocess messages"""
+    global bot_name, slacker
+
     if "data" not in payload:
         return None
 
@@ -96,7 +70,7 @@ async def handle_message(**payload) -> None:
     channel = data.get("channel", "")
     is_im = await slacker.is_direct_channel(channel) or False
 
-    message = UserRequest(
+    message = req_parser.UserRequest(
         text=data.get("text", ""),
         user=data.get("user", "") or data.get("username", ""),
         channel=channel,
@@ -104,7 +78,7 @@ async def handle_message(**payload) -> None:
         is_im=is_im,
     )
 
-    await process_message(message)
+    await req_parser.process_message(message=message, bot_name=bot_name, api=slacker)
 
 
 if __name__ == "__main__":
