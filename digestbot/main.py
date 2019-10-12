@@ -77,7 +77,7 @@ if __name__ == "__main__":
     user_token = os.environ["SLACK_USER_TOKEN"]
     bot_token = os.environ["SLACK_BOT_TOKEN"]
 
-    bot_name = os.environ.get("bot_name", "digest-bot")
+    bot_name = os.environ.get("BOT_NAME", "digest-bot")
     slacker = Slacker(user_token=user_token, bot_token=bot_token)
 
     loop = asyncio.get_event_loop()
