@@ -50,6 +50,7 @@ __available_log_levels = {
     "debug": logging.DEBUG,
     "info": logging.INFO,
     "warn": logging.WARNING,
+    "warning": logging.WARNING,
     "error": logging.ERROR,
 }
 LOG_LEVEL = os.getenv("LOG_LEVEL", "info").lower()
