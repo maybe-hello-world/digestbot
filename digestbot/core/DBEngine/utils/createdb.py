@@ -80,7 +80,7 @@ async def check_exist_tables(connection: asyncpg.Connection) -> bool:
             SELECT 1
             FROM   information_schema.tables
             WHERE  table_schema = 'public'
-            AND    table_name = 'Message'
+            AND    table_name = 'message'
         );
     """
     )
