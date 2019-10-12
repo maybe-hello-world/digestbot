@@ -3,26 +3,11 @@ Parse configuration variables from env vars and raise Exceptions if needed
 """
 
 import os
-import sys
 import logging
+from digestbot.core.common import LoggerFactory as _log_factory
 
 
-def __set_logger():
-    """Set logger for the module"""
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-
-    handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%m.%d.%Y-%I:%M:%S",
-    )
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    return logger
-
-
-_logger = __set_logger()
+_logger = _log_factory.create_logger(__name__, logging.WARNING)
 
 
 # User token for message access

@@ -1,11 +1,11 @@
-import sys
 import time
-import logging
 from typing import List, Tuple, Optional, NoReturn
 from datetime import datetime, timedelta
 from functools import reduce
 from decimal import Decimal
 from dataclasses import dataclass
+
+from digestbot.core.common import config, LoggerFactory
 
 import nest_asyncio
 
@@ -35,16 +35,7 @@ class Slacker:
     """
 
     def __init__(self, user_token: str, bot_token: str):
-        self.logger = logging.getLogger("SlackAPI")
-        self.logger.setLevel(logging.INFO)
-
-        handler = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            datefmt="%m.%d.%Y-%I:%M:%S",
-        )
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
+        self.logger = LoggerFactory.create_logger("SlackAPI", config.LOG_LEVEL)
 
         self.web_client = slack.WebClient(token=user_token, run_async=True)
         self.rtm_client = slack.RTMClient(token=bot_token, run_async=True)

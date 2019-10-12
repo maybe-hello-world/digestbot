@@ -1,6 +1,4 @@
 import re
-import logging
-import sys
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -9,6 +7,7 @@ from typing import Optional
 
 from digestbot.core.common.DataClasses import DBTopRequest
 from digestbot.core.common.Enums import SortingType
+from digestbot.core.common import config, LoggerFactory
 
 SYNTAX_RESPONSE = "Hello, <@{}>! I didn't understood your request, could you check your command? Thanks."
 
@@ -138,11 +137,4 @@ async def process_message(message: __UserRequest, bot_name: str, api: Slacker) -
     await api.post_to_channel(channel_id=message.channel, text=text_to_answer)
 
 
-_logger = logging.getLogger("UserRequestParser")
-_logger.setLevel(logging.INFO)
-__handler = logging.StreamHandler(sys.stdout)
-__formatter = logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%m.%d.%Y-%I:%M:%S"
-)
-__handler.setFormatter(__formatter)
-_logger.addHandler(__handler)
+_logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)

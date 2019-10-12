@@ -4,13 +4,12 @@ import asyncio
 import digestbot.core.UserProcessing.ReqParser as ReqParser
 from digestbot.core.SlackAPI.Slacker import Slacker
 from digestbot.core.DBEngine.PostgreSQLEngine import PostgreSQLEngine
-from digestbot.core.common import config
+from digestbot.core.common import config, LoggerFactory
 from datetime import datetime, timedelta
-import logging
 import signal
 
 
-_logger: logging.Logger
+_logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)
 slacker: Slacker
 
 
@@ -57,23 +56,7 @@ async def handle_message(**payload) -> None:
     )
 
 
-def __set_logger():
-    global _logger
-    _logger = logging.getLogger("root")
-    _logger.setLevel(logging.INFO)
-
-    handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%m.%d.%Y-%I:%M:%S",
-    )
-    handler.setFormatter(formatter)
-    _logger.addHandler(handler)
-
-
 if __name__ == "__main__":
-    __set_logger()
-
     slacker = Slacker(
         user_token=config.SLACK_USER_TOKEN, bot_token=config.SLACK_BOT_TOKEN
     )
