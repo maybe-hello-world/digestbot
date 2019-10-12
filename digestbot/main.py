@@ -12,7 +12,7 @@ import signal
 
 __logger: logging.Logger
 slacker: Slacker
-CRAWL_INTERVAL: int = 60 * 15  # in seconds
+CRAWL_INTERVAL: int # in seconds
 bot_name: str
 
 
@@ -57,7 +57,7 @@ async def handle_message(**payload) -> None:
     await ReqParser.process_message(message=message, bot_name=bot_name, api=slacker)
 
 
-def set_logger():
+def __set_logger():
     global __logger
     __logger = logging.getLogger("root")
     __logger.setLevel(logging.INFO)
@@ -72,10 +72,16 @@ def set_logger():
 
 
 if __name__ == "__main__":
-    set_logger()
+    __set_logger()
 
     user_token = os.environ["SLACK_USER_TOKEN"]
     bot_token = os.environ["SLACK_BOT_TOKEN"]
+
+    try:
+        CRAWL_INTERVAL = int(os.environ.get("CRAWL_INTERVAL", "900"))
+    except ValueError:
+        __logger.warning("Could not parse CRAWL_INTERVAL, will use default value of 15 minutes.")
+        CRAWL_INTERVAL = 60 * 15
 
     bot_name = os.environ.get("BOT_NAME", "digest-bot")
     slacker = Slacker(user_token=user_token, bot_token=bot_token)
