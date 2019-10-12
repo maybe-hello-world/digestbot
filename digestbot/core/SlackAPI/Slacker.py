@@ -18,7 +18,7 @@ nest_asyncio.apply()
 
 
 @dataclass
-class ChannelMessage:
+class ChannelMessage:  # TODO: merge with DBs dataclass
     user: str  # username or user ID
     text: str  # message text
     ts: Decimal  # timestamp of the message

@@ -10,21 +10,21 @@ import logging
 import signal
 
 
-__logger: logging.Logger
+_logger: logging.Logger
 slacker: Slacker
-CRAWL_INTERVAL: int # in seconds
+CRAWL_INTERVAL: int  # in seconds
 bot_name: str
 
 
 async def crawl_messages() -> None:
     def write_to_db_mock(anything):
-        __logger.info(str(anything) + "\n\n")
+        _logger.info(str(anything) + "\n\n")
 
     while True:
         # get data
         ch_info = await slacker.get_channels_list()
         for ch_id, ch_name in ch_info:
-            __logger.info(f"Channel: {ch_name}")
+            _logger.info(f"Channel: {ch_name}")
 
             day_ago = datetime.now() - timedelta(days=1)
             messages = await slacker.get_channel_messages(ch_id, day_ago)
@@ -46,7 +46,7 @@ async def handle_message(**payload) -> None:
     channel = data.get("channel", "")
     is_im = await slacker.is_direct_channel(channel) or False
 
-    message = ReqParser.UserRequest(
+    message = ReqParser.__UserRequest(
         text=data.get("text", ""),
         user=data.get("user", "") or data.get("username", ""),
         channel=channel,
@@ -58,9 +58,9 @@ async def handle_message(**payload) -> None:
 
 
 def __set_logger():
-    global __logger
-    __logger = logging.getLogger("root")
-    __logger.setLevel(logging.INFO)
+    global _logger
+    _logger = logging.getLogger("root")
+    _logger.setLevel(logging.INFO)
 
     handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(
@@ -68,7 +68,7 @@ def __set_logger():
         datefmt="%m.%d.%Y-%I:%M:%S",
     )
     handler.setFormatter(formatter)
-    __logger.addHandler(handler)
+    _logger.addHandler(handler)
 
 
 if __name__ == "__main__":
@@ -80,7 +80,9 @@ if __name__ == "__main__":
     try:
         CRAWL_INTERVAL = int(os.environ.get("CRAWL_INTERVAL", "900"))
     except ValueError:
-        __logger.warning("Could not parse CRAWL_INTERVAL, will use default value of 15 minutes.")
+        _logger.warning(
+            "Could not parse CRAWL_INTERVAL, will use default value of 15 minutes."
+        )
         CRAWL_INTERVAL = 60 * 15
 
     bot_name = os.environ.get("BOT_NAME", "digest-bot")
@@ -95,12 +97,12 @@ if __name__ == "__main__":
         password=os.environ.get("DB_PASSWORD", "postgres"),
         database_name=os.environ.get("DB_NAME", "postgres"),
         host=os.environ.get("DB_HOST", "postgres"),
-        port=os.environ.get("DB_PORT", None)
+        port=os.environ.get("DB_PORT", None),
     )
     loop.run_until_complete(status)
     if status == 0:
         # TODO: change?
-        __logger.error("Could not connect to database. Exiting...")
+        _logger.error("Could not connect to database. Exiting...")
         sys.exit(1)
 
     # Instantiate crawler timer with corresponding function
@@ -109,9 +111,11 @@ if __name__ == "__main__":
     # start Real-Time Listener and crawler
     overall_tasks = asyncio.gather(slacker.start_listening(), crawler_task)
     try:
-        signal.signal(signal.SIGTERM, lambda *args: exec("raise KeyboardInterrupt"))  # correct exit handler
+        signal.signal(
+            signal.SIGTERM, lambda *args: exec("raise KeyboardInterrupt")
+        )  # correct exit handler
         loop.run_until_complete(overall_tasks)
-    except KeyboardInterrupt as e:
-        __logger.info("Received exit signal, exiting...")
+    except KeyboardInterrupt:
+        _logger.info("Received exit signal, exiting...")
         dbEngine.close()
         sys.exit(0)

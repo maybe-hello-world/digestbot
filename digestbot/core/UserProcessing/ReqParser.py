@@ -1,32 +1,26 @@
 import re
 import logging
 import sys
-from enum import Enum, auto, unique
-from dataclasses import dataclass, field
-from digestbot.core.SlackAPI.Slacker import Slacker
-from typing import Optional, List
+from dataclasses import dataclass
+from enum import Enum, auto
 
+from digestbot.core.SlackAPI.Slacker import Slacker
+from typing import Optional
+
+from digestbot.core.common.DataClasses import DBTopRequest
+from digestbot.core.common.Enums import SortingType
 
 SYNTAX_RESPONSE = "Hello, <@{}>! I didn't understood your request, could you check your command? Thanks."
 
 
-class CommandType(Enum):
+class __CommandType(Enum):
     """Parsed command type from user message"""
 
     TOP_REQUEST = auto()
 
 
-@unique
-class SortingType(Enum):
-    """Sorting type for database"""
-
-    REPLIES = "replies"
-    LENGTH = "length"
-    REACTIONS = "reactions"
-
-
 @dataclass(frozen=True)
-class UserRequest:
+class __UserRequest:
     text: str  # user text
     user: str  # author's username
     channel: str  # ID of channel from Slack
@@ -34,14 +28,7 @@ class UserRequest:
     is_im: bool  # is it private message to bot (or in public channel)
 
 
-@dataclass(frozen=True)
-class DBTopRequest:
-    amount: int = 10
-    channels: List[str] = field(default_factory=lambda: list("*"))  # equals to ["*"]
-    sorting_type: SortingType = SortingType.REPLIES
-
-
-def __parse_message_type(message: UserRequest) -> Optional[CommandType]:
+def __parse_message_type(message: __UserRequest) -> Optional[__CommandType]:
     """
     Parse message and return type of the command from the message
 
@@ -51,12 +38,12 @@ def __parse_message_type(message: UserRequest) -> Optional[CommandType]:
 
     # 'top ...' or '<@CWEHB72K> top ...'
     if re.match(r"(<@[A-Z\d]+> )?top", message.text.strip()):
-        return CommandType.TOP_REQUEST
+        return __CommandType.TOP_REQUEST
     else:
         return None
 
 
-async def __process_top_request(message: UserRequest) -> str:
+async def __process_top_request(message: __UserRequest) -> str:
     """
     Parse TOP_REQUEST command from user message
 
@@ -64,7 +51,7 @@ async def __process_top_request(message: UserRequest) -> str:
     :return: formatted message if parsed, None otherwise
     """
 
-    def __parse_text(_mes: UserRequest) -> Optional[DBTopRequest]:
+    def __parse_text(_mes: __UserRequest) -> Optional[DBTopRequest]:
         """
         Parse request and create DBTopRequest
 
@@ -78,16 +65,17 @@ async def __process_top_request(message: UserRequest) -> str:
             command_text = command_text[command_text.index(">") + 1 :].strip()
 
         # damn regexps
-        channel_name = r"#[\d_a-zA-Z]+"
-        channel_pattern = fr"{channel_name}(?:, {channel_name})*"
-        sorting_types = " " + "| ".join([x.value for x in SortingType])
-        command_pattern = fr"top(?P<amount> [\d]+)?(?P<channels> {channel_pattern})?(?P<sorting>{sorting_types})?"
+        channel_pattern = r"#?[\d_a-zA-Z]+"  # channel or preset name
+        sorting_types = " " + "| ".join(
+            [x.value for x in SortingType]
+        )  # one of several sorting types
+        command_pattern = fr"top(?P<amount> [\d]+)?(?P<channel> {channel_pattern})?(?P<sorting>{sorting_types})?"
         parse_result = re.fullmatch(command_pattern, command_text)
 
         if parse_result is None:
             return None
         amount = parse_result.group("amount")
-        channels = parse_result.group("channels")
+        channel = parse_result.group("channel")
         sorting = parse_result.group("sorting")
 
         if amount is not None:
@@ -104,10 +92,10 @@ async def __process_top_request(message: UserRequest) -> str:
                 _logger.exception(e)
                 sorting = None
 
-        if channels is not None:
-            channels = channels.strip().split(", ")
+        if channel is not None:
+            channel = channel.strip()
 
-        kwargs = {"amount": amount, "channels": channels, "sorting_type": sorting}
+        kwargs = {"amount": amount, "channel": channel, "sorting_type": sorting}
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
 
         return DBTopRequest(**kwargs)
@@ -124,7 +112,7 @@ async def __process_top_request(message: UserRequest) -> str:
     return formatted_message
 
 
-async def process_message(message: UserRequest, bot_name: str, api: Slacker) -> None:
+async def process_message(message: __UserRequest, bot_name: str, api: Slacker) -> None:
     """
     Parse user request and answer
     :param message: user message to be processed
@@ -142,7 +130,7 @@ async def process_message(message: UserRequest, bot_name: str, api: Slacker) -> 
 
     # parse message and prepare message to answer
     mtype = __parse_message_type(message=message)
-    if mtype == CommandType.TOP_REQUEST:
+    if mtype == __CommandType.TOP_REQUEST:
         text_to_answer = await __process_top_request(message=message)
     else:
         text_to_answer = SYNTAX_RESPONSE.format(message.user)
