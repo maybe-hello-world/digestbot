@@ -52,7 +52,7 @@ __available_log_levels = {
     "warn": logging.WARNING,
     "error": logging.ERROR,
 }
-LOG_LEVEL = os.getenv("LOG_LEVEL", "info")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "info").lower()
 if LOG_LEVEL not in __available_log_levels:
     _logger.warning(
         f"Could not parse log level: f{LOG_LEVEL}, default value 'info' is used."
