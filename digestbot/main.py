@@ -1,10 +1,10 @@
-import os
 import sys
 import slack
 import asyncio
 import digestbot.core.UserProcessing.ReqParser as ReqParser
 from digestbot.core.SlackAPI.Slacker import Slacker
 from digestbot.core.DBEngine.PostgreSQLEngine import PostgreSQLEngine
+from digestbot.core.common import config
 from datetime import datetime, timedelta
 import logging
 import signal
@@ -12,8 +12,6 @@ import signal
 
 _logger: logging.Logger
 slacker: Slacker
-CRAWL_INTERVAL: int  # in seconds
-bot_name: str
 
 
 async def crawl_messages() -> None:
@@ -31,13 +29,13 @@ async def crawl_messages() -> None:
             write_to_db_mock(messages)
 
         # wait for next time
-        await asyncio.sleep(CRAWL_INTERVAL)
+        await asyncio.sleep(config.CRAWL_INTERVAL)
 
 
 @slack.RTMClient.run_on(event="message")
 async def handle_message(**payload) -> None:
     """Preprocess messages"""
-    global bot_name, slacker
+    global slacker
 
     if "data" not in payload:
         return None
@@ -54,7 +52,9 @@ async def handle_message(**payload) -> None:
         is_im=is_im,
     )
 
-    await ReqParser.process_message(message=message, bot_name=bot_name, api=slacker)
+    await ReqParser.process_message(
+        message=message, bot_name=config.BOT_NAME, api=slacker
+    )
 
 
 def __set_logger():
@@ -74,30 +74,20 @@ def __set_logger():
 if __name__ == "__main__":
     __set_logger()
 
-    user_token = os.environ["SLACK_USER_TOKEN"]
-    bot_token = os.environ["SLACK_BOT_TOKEN"]
-
-    try:
-        CRAWL_INTERVAL = int(os.environ.get("CRAWL_INTERVAL", "900"))
-    except ValueError:
-        _logger.warning(
-            "Could not parse CRAWL_INTERVAL, will use default value of 15 minutes."
-        )
-        CRAWL_INTERVAL = 60 * 15
-
-    bot_name = os.environ.get("BOT_NAME", "digest-bot")
-    slacker = Slacker(user_token=user_token, bot_token=bot_token)
+    slacker = Slacker(
+        user_token=config.SLACK_USER_TOKEN, bot_token=config.SLACK_BOT_TOKEN
+    )
 
     loop = asyncio.get_event_loop()
 
     # connect to database
     dbEngine = PostgreSQLEngine()
     status = dbEngine.connect_to_database(
-        user=os.environ.get("DB_USER", "postgres"),
-        password=os.environ.get("DB_PASSWORD", "postgres"),
-        database_name=os.environ.get("DB_NAME", "postgres"),
-        host=os.environ.get("DB_HOST", "postgres"),
-        port=os.environ.get("DB_PORT", None),
+        user=config.DB_USER,
+        password=config.DB_PASS,
+        database_name=config.DB_NAME,
+        host=config.DB_HOST,
+        port=config.DB_PORT,
     )
     loop.run_until_complete(status)
     if status == 0:
