@@ -6,6 +6,7 @@ from decimal import Decimal
 from dataclasses import dataclass
 
 from digestbot.core.common import config, LoggerFactory
+from digestbot.core.utils import reaction_ranking
 
 import nest_asyncio
 
@@ -24,7 +25,7 @@ class ChannelMessage:  # TODO: merge with DBs dataclass
     ts: Decimal  # timestamp of the message
     reply_count: int  # amount of replies to the message
     reply_users_count: int  # amount of users, answering to thread
-    reactions: List[dict]  # list of reactions
+    reaction_rate: float  # list of reactions
     char_length: int  # length of the thread in chars
     channel: str  # ID of the channel
 
@@ -145,6 +146,18 @@ class Slacker:
 
         return messages
 
+    def _count_reaction_rate(self, messages: List[dict]) -> List[dict]:
+        for mess in messages:
+            mess.update(
+                {
+                    "reaction_rate": reaction_ranking.get_react_score(
+                        mess.get("reactions", [])
+                    )
+                }
+            )
+
+        return messages
+
     async def get_channel_messages(
         self,
         channel_id: str,
@@ -185,6 +198,7 @@ class Slacker:
         ]
 
         messages = await self._count_thread_lengths(channel_id, messages)
+        messages = self._count_reaction_rate(messages)
 
         # return only needed statistics
         messages = [
@@ -194,7 +208,7 @@ class Slacker:
                 ts=Decimal(x["ts"]),
                 reply_count=x.get("reply_count", 0),
                 reply_users_count=x.get("reply_users_count", 0),
-                reactions=x.get("reactions", []),
+                reaction_rate=x.get("reaction_rate", 0),
                 char_length=x.get("char_length", 0),
                 channel=channel_id,
             )
