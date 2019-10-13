@@ -1,7 +1,7 @@
-from digestbot.core.utils import reaction_dict as rd
+# from digestbot.core.utils import reaction_dict as rd
 
-react_dict = react_dict
-print(react_dict)
+# react_dict = react_dict
+# print(react_dict)
 
 
 def get_react_score(reactions, react_dict):
@@ -23,10 +23,10 @@ def get_react_score(reactions, react_dict):
 	
 reactions=[{'name': 'joy', 'users': ['UNQN3Q7MX'], 'count': 1}, {'name': 'man-biking', 'users': ['UNQN3Q7MX'], 'count': 1},{'name': 'joy2', 'users': ['UNQN3Q7MX'], 'count': 1}]
 
-# react_dict = {
-# 'joy' : 5,
-# 'man-biking' : 3,
-# 'minus' : -5
-# }
+react_dict = {
+'joy' : 5,
+'man-biking' : 3,
+'minus' : -5
+}
 
-# print(get_react_score(reactions, react_dict))
+print(get_react_score(reactions, react_dict))
