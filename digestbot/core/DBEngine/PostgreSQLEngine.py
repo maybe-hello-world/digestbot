@@ -84,6 +84,23 @@ class PostgreSQLEngine:
 
         return status
 
+    async def make_execute(self, request_string: str):
+        """
+        Execute request
+        :param request_string: request string
+        """
+        async with self.engine.acquire() as connection:
+            return await connection.execute(request_string)
+
+    async def make_fetch_rows(self, request_string: str):
+        """
+        Fetch request
+        :param request_string: request string
+        """
+
+        async with self.engine.acquire() as connection:
+            return await connection.fetch(request_string)
+
     async def close(self):
         """
         Close all connection with database

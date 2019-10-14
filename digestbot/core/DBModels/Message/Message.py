@@ -1,15 +1,15 @@
 from dataclasses import dataclass
-from datetime import datetime
+from decimal import Decimal
 
 
-@dataclass
+@dataclass(frozen=True)
 class Message:
-    id: int
     username: str
     text: str
-    date: datetime
+    timestamp: Decimal
     reply_count: int
     reply_users_count: int
     thread_length: int
     channel_id: str
+    link: str
     reactions_rate: int = 0
