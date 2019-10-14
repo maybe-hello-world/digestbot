@@ -3,8 +3,7 @@ from decimal import Decimal
 import asyncpg
 import enum
 
-from .Message import Message
-from digestbot.core.DBEngine.PostgreSQLEngine import PostgreSQLEngine
+from digestbot.core import Message, PostgreSQLEngine
 
 
 class SortingType(enum.Enum):

@@ -1,5 +1,12 @@
 from dataclasses import dataclass
+from typing import List
 from decimal import Decimal
+
+
+@dataclass(frozen=True)
+class Category:
+    name: str
+    channel_ids: List[str]
 
 
 @dataclass(frozen=True)

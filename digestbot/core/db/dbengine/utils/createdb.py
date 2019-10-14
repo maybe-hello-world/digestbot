@@ -29,7 +29,12 @@ def create_message_table() -> str:
 
 
 async def create_database(
-    user: str, password: str, host: str, database_name: str, logger: Logger, port: int = None
+    user: str,
+    password: str,
+    host: str,
+    database_name: str,
+    logger: Logger,
+    port: int = None,
 ) -> bool:
     """
     Create database

@@ -2,7 +2,7 @@ import logging
 import asyncpg
 import sys
 
-from digestbot.core.DBEngine.utils.createdb import (
+from digestbot.core.db.dbengine.utils.createdb import (
     create_database,
     check_exist_tables,
     create_tables,
@@ -21,7 +21,7 @@ class PostgreSQLEngine:
         Setting handlers and level of logging for self.logger
         """
 
-        self.logger = logging.getLogger("DBEngine")
+        self.logger = logging.getLogger("dbengine")
         self.logger.setLevel(logging.INFO)
 
         handler = logging.StreamHandler(sys.stdout)
@@ -34,7 +34,12 @@ class PostgreSQLEngine:
         self.logger.addHandler(handler)
 
     async def connect_to_database(
-        self, user: str, password: str, database_name: str, host: str = "localhost", port: int = None
+        self,
+        user: str,
+        password: str,
+        database_name: str,
+        host: str = "localhost",
+        port: int = None,
     ) -> bool:
         """
         Create connection to database
@@ -49,7 +54,11 @@ class PostgreSQLEngine:
         self.logger.info(f"Try to connect to '{database_name}' database")
         try:
             self.engine = await asyncpg.create_pool(
-                user=user, password=password, database=database_name, host=host, port=port
+                user=user,
+                password=password,
+                database=database_name,
+                host=host,
+                port=port,
             )
             status = 2
         except asyncpg.InvalidCatalogNameError:
@@ -72,7 +81,9 @@ class PostgreSQLEngine:
             self.logger.error(f"User '{user}' does not exist")
 
         if status == 1:
-            status = await self.connect_to_database(user, password, database_name, host, port)
+            status = await self.connect_to_database(
+                user, password, database_name, host, port
+            )
 
         if status == 2:
             async with self.engine.acquire() as connection:

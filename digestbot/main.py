@@ -3,7 +3,7 @@ import slack
 import asyncio
 import digestbot.core.UserProcessing.ReqParser as ReqParser
 from digestbot.core.SlackAPI.Slacker import Slacker
-from digestbot.core.DBEngine.PostgreSQLEngine import PostgreSQLEngine
+from digestbot.core import PostgreSQLEngine
 from digestbot.core.common import config, LoggerFactory
 from datetime import datetime, timedelta
 import signal
