@@ -29,13 +29,14 @@ def create_message_table() -> str:
 
 
 async def create_database(
-    user: str, password: str, database_name: str, logger: Logger, port: int = None
+    user: str, password: str, host: str, database_name: str, logger: Logger, port: int = None
 ) -> bool:
     """
     Create database
 
     :param user: username
     :param password: password for user
+    :param host: database server
     :param database_name: database name
     :param logger: logger for logging
     :param port: port for database server
@@ -44,7 +45,7 @@ async def create_database(
     logger.info(f"Try to connect to database 'template1' with user '{user}'")
     try:
         sys_conn = await asyncpg.connect(
-            database="template1", user=user, port=port, password=password
+            database="template1", host=host, port=port, user=user, password=password
         )
 
         await sys_conn.execute(

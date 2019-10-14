@@ -1,11 +1,12 @@
-import sys
 import time
-import logging
 from typing import List, Tuple, Optional, NoReturn
 from datetime import datetime, timedelta
 from functools import reduce
 from decimal import Decimal
 from dataclasses import dataclass
+
+from digestbot.core.common import config, LoggerFactory
+from digestbot.core.utils import reaction_ranking
 
 import nest_asyncio
 
@@ -18,13 +19,13 @@ nest_asyncio.apply()
 
 
 @dataclass
-class ChannelMessage:
+class ChannelMessage:  # TODO: merge with DBs dataclass
     user: str  # username or user ID
     text: str  # message text
     ts: Decimal  # timestamp of the message
     reply_count: int  # amount of replies to the message
     reply_users_count: int  # amount of users, answering to thread
-    reactions: List[dict]  # list of reactions
+    reaction_rate: float  # list of reactions
     char_length: int  # length of the thread in chars
     channel: str  # ID of the channel
 
@@ -35,16 +36,7 @@ class Slacker:
     """
 
     def __init__(self, user_token: str, bot_token: str):
-        self.logger = logging.getLogger("SlackAPI")
-        self.logger.setLevel(logging.INFO)
-
-        handler = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            datefmt="%m.%d.%Y-%I:%M:%S",
-        )
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
+        self.logger = LoggerFactory.create_logger("SlackAPI", config.LOG_LEVEL)
 
         self.web_client = slack.WebClient(token=user_token, run_async=True)
         self.rtm_client = slack.RTMClient(token=bot_token, run_async=True)
@@ -154,6 +146,18 @@ class Slacker:
 
         return messages
 
+    def _count_reaction_rate(self, messages: List[dict]) -> List[dict]:
+        for mess in messages:
+            mess.update(
+                {
+                    "reaction_rate": reaction_ranking.get_react_score(
+                        mess.get("reactions", [])
+                    )
+                }
+            )
+
+        return messages
+
     async def get_channel_messages(
         self,
         channel_id: str,
@@ -194,6 +198,7 @@ class Slacker:
         ]
 
         messages = await self._count_thread_lengths(channel_id, messages)
+        messages = self._count_reaction_rate(messages)
 
         # return only needed statistics
         messages = [
@@ -203,7 +208,7 @@ class Slacker:
                 ts=Decimal(x["ts"]),
                 reply_count=x.get("reply_count", 0),
                 reply_users_count=x.get("reply_users_count", 0),
-                reactions=x.get("reactions", []),
+                reaction_rate=x.get("reaction_rate", 0),
                 char_length=x.get("char_length", 0),
                 channel=channel_id,
             )

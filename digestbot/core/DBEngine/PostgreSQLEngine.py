@@ -34,7 +34,7 @@ class PostgreSQLEngine:
         self.logger.addHandler(handler)
 
     async def connect_to_database(
-        self, user: str, password: str, database_name: str, port: int = None
+        self, user: str, password: str, database_name: str, host: str = "localhost", port: int = None
     ) -> bool:
         """
         Create connection to database
@@ -42,13 +42,14 @@ class PostgreSQLEngine:
         :param user: user name
         :param password: password for username
         :param database_name: database name
+        :param host: database server address
         :param port: port for database server
         :return: status execution: 0 - Fail, 1 - Success
         """
         self.logger.info(f"Try to connect to '{database_name}' database")
         try:
             self.engine = await asyncpg.create_pool(
-                user=user, password=password, database=database_name, port=port
+                user=user, password=password, database=database_name, host=host, port=port
             )
             status = 2
         except asyncpg.InvalidCatalogNameError:
@@ -58,6 +59,7 @@ class PostgreSQLEngine:
             status = await create_database(
                 user=user,
                 password=password,
+                host=host,
                 database_name=database_name,
                 logger=self.logger,
                 port=port,
@@ -70,7 +72,7 @@ class PostgreSQLEngine:
             self.logger.error(f"User '{user}' does not exist")
 
         if status == 1:
-            status = await self.connect_to_database(user, password, database_name, port)
+            status = await self.connect_to_database(user, password, database_name, host, port)
 
         if status == 2:
             async with self.engine.acquire() as connection:
