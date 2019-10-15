@@ -5,9 +5,8 @@ from logging import Logger
 def create_category_table() -> str:
     return """
         CREATE TABLE Category (
-            id INTEGER NOT NULL PRIMARY KEY,
-            name VARCHAR NOT NULL,
-            channels_id VARCHAR(30)[]
+            name VARCHAR NOT NULL PRIMARY KEY,
+            channel_ids VARCHAR(30)[]
         );
     """
 
@@ -15,21 +14,27 @@ def create_category_table() -> str:
 def create_message_table() -> str:
     return """
         CREATE TABLE Message (
-            id INTEGER NOT NULL PRIMARY KEY,
             username VARCHAR(30) NOT NULL,
             text VARCHAR NOT NULL,
-            date TIMESTAMP NOT NULL,
+            timestamp DECIMAL NOT NULL,
             reply_count INTEGER NOT NULL,
             reply_users_count INTEGER NOT NULL,
             reactions_rate FLOAT,
             thread_length INTEGER NOT NULL,
-            channel_id VARCHAR(30)
+            channel_id VARCHAR(30),
+            link VARCHAR NULL,
+            PRIMARY KEY(channel_id, timestamp)
         );
     """
 
 
 async def create_database(
-    user: str, password: str, host: str, database_name: str, logger: Logger, port: int = None
+    user: str,
+    password: str,
+    host: str,
+    database_name: str,
+    logger: Logger,
+    port: int = None,
 ) -> bool:
     """
     Create database
@@ -81,7 +86,7 @@ async def check_exist_tables(connection: asyncpg.Connection) -> bool:
             SELECT 1
             FROM   information_schema.tables
             WHERE  table_schema = 'public'
-            AND    table_name = 'Message'
+            AND    table_name = 'message'
         );
     """
     )

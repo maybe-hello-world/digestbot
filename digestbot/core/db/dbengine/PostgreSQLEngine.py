@@ -1,8 +1,7 @@
-import logging
 import asyncpg
-import sys
 
-from digestbot.core.DBEngine.utils.createdb import (
+from digestbot.core.common import config, LoggerFactory
+from digestbot.core.db.dbengine.utils.createdb import (
     create_database,
     check_exist_tables,
     create_tables,
@@ -11,30 +10,16 @@ from digestbot.core.DBEngine.utils.createdb import (
 
 class PostgreSQLEngine:
     def __init__(self):
-        self.logger: logging.Logger
+        self.logger = LoggerFactory.create_logger("PostgreSQLEngine", config.LOG_LEVEL)
         self.engine: asyncpg.Connection
 
-        self.__setting_logger()
-
-    def __setting_logger(self):
-        """
-        Setting handlers and level of logging for self.logger
-        """
-
-        self.logger = logging.getLogger("DBEngine")
-        self.logger.setLevel(logging.INFO)
-
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging.DEBUG)  # TODO: change after dockerization
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            datefmt="%m.%d.%Y-%I:%M:%S",
-        )
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
-
     async def connect_to_database(
-        self, user: str, password: str, database_name: str, host: str = "localhost", port: int = None
+        self,
+        user: str,
+        password: str,
+        database_name: str,
+        host: str = "localhost",
+        port: int = None,
     ) -> bool:
         """
         Create connection to database
@@ -49,7 +34,11 @@ class PostgreSQLEngine:
         self.logger.info(f"Try to connect to '{database_name}' database")
         try:
             self.engine = await asyncpg.create_pool(
-                user=user, password=password, database=database_name, host=host, port=port
+                user=user,
+                password=password,
+                database=database_name,
+                host=host,
+                port=port,
             )
             status = 2
         except asyncpg.InvalidCatalogNameError:
@@ -72,7 +61,9 @@ class PostgreSQLEngine:
             self.logger.error(f"User '{user}' does not exist")
 
         if status == 1:
-            status = await self.connect_to_database(user, password, database_name, host, port)
+            status = await self.connect_to_database(
+                user, password, database_name, host, port
+            )
 
         if status == 2:
             async with self.engine.acquire() as connection:
@@ -85,6 +76,23 @@ class PostgreSQLEngine:
                     )
 
         return status
+
+    async def make_execute(self, request_string: str):
+        """
+        Execute request
+        :param request_string: request string
+        """
+        async with self.engine.acquire() as connection:
+            return await connection.execute(request_string)
+
+    async def make_fetch_rows(self, request_string: str):
+        """
+        Fetch request
+        :param request_string: request string
+        """
+
+        async with self.engine.acquire() as connection:
+            return await connection.fetch(request_string)
 
     async def close(self):
         """
