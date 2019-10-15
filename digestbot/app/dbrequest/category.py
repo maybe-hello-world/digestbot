@@ -20,7 +20,7 @@ def make_insert_values_from_messages_array(categories: List[Category]) -> str:
 def request_categories_to_category_class(
     request_categories: List[Any]
 ) -> List[Category]:
-    return [Category(*category) for category in request_categories]
+    return [Category(**category) for category in request_categories]
 
 
 async def create_categories(

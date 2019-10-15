@@ -1,7 +1,6 @@
-import logging
 import asyncpg
-import sys
 
+from digestbot.core.common import config, LoggerFactory
 from digestbot.core.db.dbengine.utils.createdb import (
     create_database,
     check_exist_tables,
@@ -11,27 +10,8 @@ from digestbot.core.db.dbengine.utils.createdb import (
 
 class PostgreSQLEngine:
     def __init__(self):
-        self.logger: logging.Logger
+        self.logger = LoggerFactory.create_logger("PostgreSQLEngine", config.LOG_LEVEL)
         self.engine: asyncpg.Connection
-
-        self.__setting_logger()
-
-    def __setting_logger(self):
-        """
-        Setting handlers and level of logging for self.logger
-        """
-
-        self.logger = logging.getLogger("dbengine")
-        self.logger.setLevel(logging.INFO)
-
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging.DEBUG)  # TODO: change after dockerization
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            datefmt="%m.%d.%Y-%I:%M:%S",
-        )
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
 
     async def connect_to_database(
         self,

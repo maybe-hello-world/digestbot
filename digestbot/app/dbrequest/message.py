@@ -26,7 +26,7 @@ def make_insert_values_from_messages_array(messages: List[Message]) -> str:
 
 
 def request_messages_to_message_class(request_messages: List[Any]) -> List[Message]:
-    return [Message(*message) for message in request_messages]
+    return [Message(**message) for message in request_messages]
 
 
 async def create_messages(db_engine: PostgreSQLEngine, messages: List[Message]) -> bool:
@@ -83,7 +83,31 @@ async def get_messages_without_links(
         status = True
         messages = request_messages_to_message_class(messages_base)
     except asyncpg.QueryCanceledError or asyncpg.ConnectionFailureError:
-        db_engine.logger.warn(f"Select messages without links was crashed")
+        db_engine.logger.warn(f"Selecting messages without links was crashed")
+        status = False
+        messages = None
+
+    return status, messages
+
+
+async def get_top_messages(
+    db_engine: PostgreSQLEngine,
+    after_ts: Decimal,
+    sorting_type: SortingType = SortingType.THREAD_LENGTH,
+    top_count: int = 10,
+) -> Tuple[bool, List[Message]]:
+    request = f"""
+    SELECT * FROM message
+    WHERE timestamp >= {after_ts}
+    ORDER BY {sorting_type.value}
+    LIMIT {top_count};
+    """
+    try:
+        messages_base = await db_engine.make_fetch_rows(request)
+        status = True
+        messages = request_messages_to_message_class(messages_base)
+    except asyncpg.QueryCanceledError or asyncpg.ConnectionFailureError:
+        db_engine.logger.warn(f"Selecting top messages was crashed")
         status = False
         messages = None
 
@@ -112,7 +136,7 @@ async def get_top_messages_by_channel_id(
         messages = request_messages_to_message_class(messages_base)
     except asyncpg.QueryCanceledError or asyncpg.ConnectionFailureError:
         db_engine.logger.warn(
-            f"Select top messages for channel_id '{channel_id}' was crashed"
+            f"Selecting top messages for channel_id '{channel_id}' was crashed"
         )
         status = False
         messages = None
@@ -146,7 +170,7 @@ async def get_top_messages_by_category_name(
         messages = request_messages_to_message_class(messages_base)
     except asyncpg.QueryCanceledError or asyncpg.ConnectionFailureError:
         db_engine.logger.warn(
-            f"Select top messages for category '{category_name}' was crashed"
+            f"Selecting top messages for category '{category_name}' was crashed"
         )
         status = False
         messages = None
