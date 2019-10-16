@@ -77,22 +77,31 @@ class PostgreSQLEngine:
 
         return status
 
-    async def make_execute(self, request_string: str):
+    async def make_execute(self, request_string: str, *args):
         """
         Execute request
         :param request_string: request string
         """
         async with self.engine.acquire() as connection:
-            return await connection.execute(request_string)
+            return await connection.execute(request_string, *args)
 
-    async def make_fetch_rows(self, request_string: str):
+    async def make_execute_many(self, request_string: str, sequence: list):
+        """
+        Execute request for each element in sequence
+        :param request_string: request string
+        :param sequence: list with data
+        """
+        async with self.engine.acquire() as connection:
+            return await connection.executemany(request_string, sequence)
+
+    async def make_fetch_rows(self, request_string: str, *args):
         """
         Fetch request
         :param request_string: request string
         """
 
         async with self.engine.acquire() as connection:
-            return await connection.fetch(request_string)
+            return await connection.fetch(request_string, *args)
 
     async def close(self):
         """
