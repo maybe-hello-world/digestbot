@@ -91,6 +91,29 @@ async def get_messages_without_links(
     return status, messages
 
 
+def make_link_update_values_from_messages_array(messages: List[Message]) -> List[tuple]:
+    return [(x.link, x.timestamp, x.channel_id) for x in messages]
+
+
+async def update_message_links(
+    db_engine: PostgreSQLEngine, messages: List[Message]
+) -> bool:
+    request = f"""
+        UPDATE message
+        SET link=($1)
+        WHERE timestamp=($2) AND channel_id=($3)
+        """
+    try:
+        await db_engine.make_execute_many(
+            request, make_link_update_values_from_messages_array(messages=messages)
+        )
+        status = True
+    except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
+        db_engine.logger.exception(e)
+        status = False
+    return status
+
+
 async def get_top_messages(
     db_engine: PostgreSQLEngine,
     after_ts: Decimal,
