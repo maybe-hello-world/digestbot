@@ -109,6 +109,7 @@ async def update_message_links(
         )
         status = True
     except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
+        db_engine.logger.warn("Updating message permalinks crashed. Stacktrace:")
         db_engine.logger.exception(e)
         status = False
     return status
