@@ -6,5 +6,6 @@ services:
     - docker
 
 script:
+    - touch .env
     - docker-compose up -d
     - sleep 10
