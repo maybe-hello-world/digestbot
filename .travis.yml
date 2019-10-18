@@ -4,8 +4,11 @@ python:
 
 services:
     - docker
-
-script:
+    
+before_script:
     - touch .env
-    - docker-compose up -d
-    - sleep 10
+
+# start containers -> sleep 10 secs -> get running containers -> count lines in output ->
+# check that 2 containers are running (+1 string of output == 3 strings at all) or travis_terminate
+script:
+    - docker-compose up -d && sleep 10 && docker container ls | wc -l | xargs test 2 -eq || travis_terminate 1
