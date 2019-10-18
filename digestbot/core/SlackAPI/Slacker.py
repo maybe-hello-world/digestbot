@@ -3,8 +3,8 @@ from typing import List, Tuple, Optional, NoReturn
 from datetime import datetime, timedelta
 from functools import reduce
 from decimal import Decimal
-from dataclasses import dataclass
 
+from digestbot.core.db.models import Message
 from digestbot.core.common import config, LoggerFactory
 from digestbot.core.utils import reaction_ranking
 
@@ -16,18 +16,6 @@ import slack.errors as errors
 # Bug in slackclient v2.2.0:
 # https://stackoverflow.com/questions/57154308/why-am-i-getting-runtimeerror-this-event-loop-is-already-running
 nest_asyncio.apply()
-
-
-@dataclass
-class ChannelMessage:  # TODO: merge with DBs dataclass
-    user: str  # username or user ID
-    text: str  # message text
-    ts: Decimal  # timestamp of the message
-    reply_count: int  # amount of replies to the message
-    reply_users_count: int  # amount of users, answering to thread
-    reaction_rate: float  # list of reactions
-    char_length: int  # length of the thread in chars
-    channel: str  # ID of the channel
 
 
 class Slacker:
@@ -164,7 +152,7 @@ class Slacker:
         oldest: datetime = None,
         latest: datetime = None,
         limit: int = 100000,
-    ) -> Optional[List[ChannelMessage]]:
+    ) -> Optional[List[Message]]:
         """
         Get list of messages and their statistics from the given channel from _oldest_ until now
 
@@ -202,15 +190,16 @@ class Slacker:
 
         # return only needed statistics
         messages = [
-            ChannelMessage(
-                user=x.get("user", "") or x.get("username", ""),
+            Message(
+                username=x.get("user", "") or x.get("username", ""),
                 text=x["text"],
-                ts=Decimal(x["ts"]),
+                timestamp=Decimal(x["ts"]),
                 reply_count=x.get("reply_count", 0),
                 reply_users_count=x.get("reply_users_count", 0),
-                reaction_rate=x.get("reaction_rate", 0),
-                char_length=x.get("char_length", 0),
-                channel=channel_id,
+                reactions_rate=x.get("reaction_rate", 0),
+                thread_length=x.get("char_length", 0),
+                channel_id=channel_id,
+                link=None,
             )
             for x in messages
         ]
@@ -239,19 +228,17 @@ class Slacker:
         link = answer["permalink"]
         return link
 
-    async def update_permalinks(
-        self, channel_id: str, messages: List[ChannelMessage]
-    ) -> List[ChannelMessage]:
+    async def update_permalinks(self, messages: List[Message]) -> List[Message]:
         """
         Take messages and return them with permalinks added
 
-        :param channel_id: Message's origin
         :param messages: List of messages to be updated
         :return: List of these messages with added permalinks
         """
 
         for mess in messages:
-            mess.permalink = await self.get_permalink(channel_id, mess.ts)
+            mess.link = await self.get_permalink(mess.channel_id, mess.timestamp)
+            # TODO: make async?
 
         return messages
 
@@ -264,8 +251,9 @@ class Slacker:
         :return: Nothing
         """
         try:
-            await self.web_client.chat_postMessage(
-                channel=channel_id, text=text, as_user="false", link_names="true"
-            )
+            if text:
+                await self.web_client.chat_postMessage(
+                    channel=channel_id, text=text, as_user="false", link_names="true"
+                )
         except errors.SlackClientError as e:
             self.logger.exception(e)

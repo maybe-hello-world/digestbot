@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 from decimal import Decimal
 
 
@@ -9,7 +9,8 @@ class Category:
     channel_ids: List[str]
 
 
-@dataclass(frozen=True)
+# TODO: change after permalinks_update fix (do not work with Messages, but with own type)
+@dataclass(frozen=False)
 class Message:
     username: str
     text: str
@@ -18,5 +19,5 @@ class Message:
     reply_users_count: int
     thread_length: int
     channel_id: str
-    link: str
+    link: Optional[str]
     reactions_rate: int = 0

@@ -3,6 +3,8 @@ services:
   bot:
     build: .
     restart: always
+    depends_on:
+      - postgres
     env_file:
       - .env
 
