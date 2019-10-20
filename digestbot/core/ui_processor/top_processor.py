@@ -8,19 +8,33 @@ from datetime import timedelta, datetime
 from typing import Optional, Any, Dict, List
 
 from digestbot.core import Message
-from digestbot.core.command_parser.argument import StringArgument, ChoiceArgument, TimeDeltaArgument, IntArgument
+from digestbot.core.command_parser.argument import (
+    StringArgument,
+    ChoiceArgument,
+    TimeDeltaArgument,
+    IntArgument,
+)
 from digestbot.core.command_parser.command import CommandBuilder
+from digestbot.core.common.Enums import SortingType
 from digestbot.core.db.dbengine import PostgreSQLEngine
-from digestbot.core.db.dbrequest.message import get_top_messages, get_top_messages_by_channel_id, \
-    get_top_messages_by_category_name
+from digestbot.core.db.dbrequest.message import (
+    get_top_messages,
+    get_top_messages_by_channel_id,
+    get_top_messages_by_category_name,
+)
 
-top_command = CommandBuilder('top')\
-            .add_argument(IntArgument('N', default=5))\
-            .add_argument(TimeDeltaArgument('time', default=timedelta(days=1)))\
-            .add_argument(ChoiceArgument('sorting_method', ['replies', 'length', 'reactions'],
-                                         default='replies'))\
-            .add_argument(StringArgument('channel', default=None))\
-            .build()
+top_command = (
+    CommandBuilder("top")
+    .add_argument(IntArgument("N", default=5))
+    .add_argument(TimeDeltaArgument("time", default=timedelta(days=1)))
+    .add_argument(
+        ChoiceArgument(
+            "sorting_method", ["replies", "length", "reactions"], default="replies"
+        )
+    )
+    .add_argument(StringArgument("channel", default=None))
+    .build()
+)
 
 
 @dataclass(frozen=True)
@@ -36,12 +50,14 @@ class TopCommandArgs:
     def _parse_channel(channel: Optional[str]) -> Dict[str, str]:
         if not channel:
             return {}
-        split = channel.strip('<>').split('|')
+        split = channel.strip("<>").split("|")
         if len(split) == 1:
-            return {'category_name': split[0]}
+            return {"category_name": split[0]}
         if len(split) == 2:
-            return {'category_id': split[0]}
-        raise ValueError(f'Channel Id format is not recognized (split result is {split}). Possible Slack API change')
+            return {"channel_id": split[0].lstrip("#")}
+        raise ValueError(
+            f"Channel Id format is not recognized (split result is {split}). Possible Slack API change"
+        )
 
     def is_all_channels_requested(self) -> bool:
         return self.category_name is None and self.channel_id is None
@@ -56,16 +72,13 @@ class TopCommandArgs:
             "length": "thread_length",
             "reactions": "reactions_rate",
         }
-        kwargs['sorting_method'] = sorting_type_mapper[kwargs['sorting_method']]
-        channel_parse = TopCommandArgs._parse_channel(kwargs['channel'])
+        kwargs["sorting_method"] = SortingType(
+            sorting_type_mapper[kwargs["sorting_method"]]
+        )
+        channel_parse = TopCommandArgs._parse_channel(kwargs["channel"])
+        del kwargs["channel"]
         kwargs.update(channel_parse)
         return TopCommandArgs(**kwargs)
-
-    __SORTING_TYPE_MAPPER = {
-        "replies": "reply_count",
-        "length": "thread_length",
-        "reactions": "reactions_rate",
-    }
 
 
 def __pretty_top_format(messages: List[Message]) -> str:
@@ -108,15 +121,19 @@ async def process_top_request(args: TopCommandArgs, db_engine: PostgreSQLEngine)
         "db_engine": db_engine,
         "sorting_type": args.sorting_method,
         "top_count": args.N,
-        "after_ts": Decimal(time.mktime((datetime.now() - args.time).timetuple()))
+        "after_ts": Decimal(time.mktime((datetime.now() - args.time).timetuple())),
     }
 
     if args.is_all_channels_requested():
         req_status, messages = await get_top_messages(**parameters)
     elif args.is_channel():
-        req_status, messages = await get_top_messages_by_channel_id(channel_id=args.channel_id, **parameters)
+        req_status, messages = await get_top_messages_by_channel_id(
+            channel_id=args.channel_id, **parameters
+        )
     else:
-        req_status, messages = await get_top_messages_by_category_name(category_name=args.category_name, **parameters)
+        req_status, messages = await get_top_messages_by_category_name(
+            category_name=args.category_name, **parameters
+        )
 
     if not req_status:
         formatted_message = (
