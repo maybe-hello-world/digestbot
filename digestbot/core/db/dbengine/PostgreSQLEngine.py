@@ -11,7 +11,7 @@ from digestbot.core.db.dbengine.utils.createdb import (
 class PostgreSQLEngine:
     def __init__(self):
         self.logger = LoggerFactory.create_logger("PostgreSQLEngine", config.LOG_LEVEL)
-        self.engine: asyncpg.Connection
+        self.engine: asyncpg.pool.Pool
 
     async def connect_to_database(
         self,

@@ -1,10 +1,11 @@
 import sys
 import slack
 import asyncio
-import digestbot.core.UserProcessing.ReqParser as ReqParser
-from digestbot.core.SlackAPI.Slacker import Slacker
+import digestbot.core.ui_processor.ReqParser as ReqParser
+import digestbot.core.ui_processor.common
+from digestbot.core.slack_api.Slacker import Slacker
 from digestbot.core import PostgreSQLEngine
-from digestbot.app.dbrequest.message import (
+from digestbot.core.db.dbrequest.message import (
     upsert_messages,
     get_messages_without_links,
     update_message_links,
@@ -56,8 +57,10 @@ async def handle_message(**payload) -> None:
     data = payload["data"]
     channel = data.get("channel", "")
     is_im = await slacker.is_direct_channel(channel) or False
+    if config.PM_ONLY and not is_im:
+        return None
 
-    message = ReqParser.__UserRequest(
+    message = digestbot.core.ui_processor.common.UserRequest(
         text=data.get("text", ""),
         user=data.get("user", "") or data.get("username", ""),
         channel=channel,

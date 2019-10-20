@@ -24,7 +24,7 @@ class Slacker:
     """
 
     def __init__(self, user_token: str, bot_token: str):
-        self.logger = LoggerFactory.create_logger("SlackAPI", config.LOG_LEVEL)
+        self.logger = LoggerFactory.create_logger("slack_api", config.LOG_LEVEL)
 
         self.web_client = slack.WebClient(token=user_token, run_async=True)
         self.rtm_client = slack.RTMClient(token=bot_token, run_async=True)
@@ -134,7 +134,8 @@ class Slacker:
 
         return messages
 
-    def _count_reaction_rate(self, messages: List[dict]) -> List[dict]:
+    @staticmethod
+    def _count_reaction_rate(messages: List[dict]) -> List[dict]:
         for mess in messages:
             mess.update(
                 {
