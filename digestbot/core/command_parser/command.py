@@ -16,14 +16,13 @@ class Command:
         args = {}
         params_idx = 0
         for arg in self.arguments:
+            args[arg.name] = arg.default
             if params_idx >= len(params):
-                break
+                continue
             p = arg.parse(params[params_idx])
             if isinstance(p, Parsed):
-                args[p.name] = p.value
+                args[arg.name] = p.value
                 params_idx += 1
-            elif isinstance(p, Default):
-                args[p.name] = p.value
         return await self.callback(args)
 
 

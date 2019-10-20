@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 
 class ParseResult:
@@ -7,16 +8,9 @@ class ParseResult:
 
 @dataclass(frozen=True)
 class Parsed(ParseResult):
-    name: str
-    value: object
+    value: Any
 
 
 @dataclass(frozen=True)
 class Default(ParseResult):
-    name: str
-    value: object
-
-
-@dataclass(frozen=True)
-class NotParsed(ParseResult):
-    pass
+    value: Any

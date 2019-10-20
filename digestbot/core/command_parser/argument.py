@@ -1,14 +1,15 @@
 from abc import abstractmethod
 from datetime import timedelta
-from typing import List, Optional
+from typing import List, Optional, Any
 
-from digestbot.core.command_parser.parse_result import ParseResult, Parsed, Default, NotParsed
+from digestbot.core.command_parser.parse_result import ParseResult, Parsed, Default
 
 
 class Argument:
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, default: Optional[Any]):
         self.name = name
+        self.default = default
 
     @abstractmethod
     def parse(self, text: str) -> ParseResult:
@@ -17,63 +18,58 @@ class Argument:
 
 class IntArgument(Argument):
 
-    def __init__(self, name: str, default: int):
-        super().__init__(name)
-        self.default = default
+    def __init__(self, name: str, default: Optional[int] = None):
+        super().__init__(name, default)
 
     def parse(self, text: str) -> ParseResult:
         result = _int_or_default(text)
         if result:
-            return Parsed(self.name, result)
+            return Parsed(result)
         else:
-            return Default(self.name, self.default)
+            return Default(self.default)
 
 
 class StringArgument(Argument):
 
-    def __init__(self, name: str):
-        super().__init__(name)
+    def __init__(self, name: str, default: Optional[str] = None):
+        super().__init__(name, default)
 
     def parse(self, text: str) -> ParseResult:
-        if not text:
-            return NotParsed()
-        return Parsed(self.name, text)
+        return Parsed(text)
 
 
 class ChoiceArgument(Argument):
 
-    def __init__(self, name: str, choices: List[str], default: str = None):
-        super().__init__(name)
+    def __init__(self, name: str, choices: List[str], default: Optional[str] = None):
+        super().__init__(name, default)
         self.choices = choices
-        self.default = default
 
     def parse(self, text: str) -> ParseResult:
         if text in self.choices:
-            return Parsed(self.name, text)
-        return Default(self.name, self.default)
+            return Parsed(text)
+        return Default(self.default)
 
 
 class DateArgument(Argument):
 
-    def __init__(self, name: str, default: timedelta = None):
-        super().__init__(name)
-        self.default = default
+    def __init__(self, name: str, default: Optional[timedelta] = None):
+        super().__init__(name, default)
 
     def parse(self, text: str) -> ParseResult:
         if not text or len(text) < 2:
-            return Default(self.name, self.default)
+            return Default(self.default)
         suffix = text[-1]
         count = _int_or_default(text[:-1])
         if not count:
-            return Default(self.name, self.default)
+            return Default(self.default)
         if suffix == 'w':
-            return Parsed(self.name, timedelta(weeks=count))
+            return Parsed(timedelta(weeks=count))
         elif suffix == 'd':
-            return Parsed(self.name, timedelta(days=count))
+            return Parsed(timedelta(days=count))
         elif suffix == 'h':
-            return Parsed(self.name, timedelta(hours=count))
+            return Parsed(timedelta(hours=count))
         else:
-            return Default(self.name, self.default)
+            return Default(self.default)
 
 
 def _int_or_default(text: str, default: Optional[int] = None) -> Optional[int]:
