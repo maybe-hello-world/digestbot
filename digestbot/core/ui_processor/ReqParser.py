@@ -1,37 +1,16 @@
-import re
-from enum import Enum, auto
-from typing import Optional
-
-from digestbot.core.slack_api.Slacker import Slacker
-from digestbot.core.db.dbengine import PostgreSQLEngine
+from digestbot.core.command_parser.command_parser import CommandParser
 from digestbot.core.common import config, LoggerFactory
+from digestbot.core.db.dbengine import PostgreSQLEngine
+from digestbot.core.slack_api.Slacker import Slacker
 from digestbot.core.ui_processor.common import UserRequest
-from digestbot.core.ui_processor.top_processor import __process_top_request
+from digestbot.core.ui_processor.top_processor import top_command, TopCommandArgs, process_top_request
 
 SYNTAX_RESPONSE = "Hello, <@{}>! I didn't understood your request, could you check your command? Thanks."
 
 _logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)
 
 
-class __CommandType(Enum):
-    """Parsed command type from user message"""
-
-    TOP_REQUEST = auto()
-
-
-def __parse_message_type(message: UserRequest) -> Optional[__CommandType]:
-    """
-    Parse message and return type of the command from the message
-
-    :param message: request from user
-    :return: command type or None if not parsed
-    """
-
-    # 'top ...' or '<@CWEHB72K> top ...'
-    if re.match(r"(<@[A-Z\d]+> )?top", message.text.strip()):
-        return __CommandType.TOP_REQUEST
-    else:
-        return None
+parser = CommandParser([top_command])
 
 
 async def process_message(
@@ -54,14 +33,10 @@ async def process_message(
         return
 
     # parse message and prepare message to answer
-    mtype = __parse_message_type(message=message)
-    if mtype == __CommandType.TOP_REQUEST:
-        text_to_answer = await __process_top_request(
-            message=message, db_engine=db_engine
-        )
-        if text_to_answer is not None:
-            await api.post_to_channel(channel_id=message.channel, text=text_to_answer)
-
-    await api.post_to_channel(
-        channel_id=message.channel, text=SYNTAX_RESPONSE.format(message.user)
-    )
+    parse_result = parser.parse(message.text)
+    if parse_result.command == top_command.name:
+        top_command_args = TopCommandArgs.from_dict(**parse_result.args)
+        text_to_answer = await process_top_request(top_command_args, db_engine)
+        await api.post_to_channel(channel_id=message.channel, text=text_to_answer)
+    else:
+        await api.post_to_channel(channel_id=message.channel, text=SYNTAX_RESPONSE.format(message.user))
