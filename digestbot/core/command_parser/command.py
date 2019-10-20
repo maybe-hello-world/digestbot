@@ -1,18 +1,18 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Dict, Any
 
 from digestbot.core.command_parser.argument import Argument
+from digestbot.core.command_parser.exception import TooManyArguments
 from digestbot.core.command_parser.parse_result import Parsed, Default
 
 
 class Command:
 
-    def __init__(self, name: str, arguments: List[Argument], callback):
+    def __init__(self, name: str, arguments: List[Argument]):
         self.name = name
         self.arguments = arguments
-        self.callback = callback
 
-    async def handle(self, params: List[str]):
+    def parse(self, params: List[str]) -> Dict[str, Any]:
         args = {}
         params_idx = 0
         for arg in self.arguments:
@@ -23,7 +23,9 @@ class Command:
             if isinstance(p, Parsed):
                 args[arg.name] = p.value
                 params_idx += 1
-        return await self.callback(args)
+        if params_idx < len(params):
+            raise TooManyArguments(f'Too many arguments for command {self.name}')
+        return args
 
 
 class CommandBuilder:
@@ -36,7 +38,7 @@ class CommandBuilder:
         self.arguments.append(argument)
         return self
 
-    def build(self, callback) -> Command:
-        return Command(self.name, self.arguments, callback)
+    def build(self) -> Command:
+        return Command(self.name, self.arguments)
 
 

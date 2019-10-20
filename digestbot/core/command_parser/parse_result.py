@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Dict
 
 
 class ParseResult:
@@ -14,3 +14,9 @@ class Parsed(ParseResult):
 @dataclass(frozen=True)
 class Default(ParseResult):
     value: Any
+
+
+@dataclass(frozen=True)
+class CommandParseResult:
+    command: str
+    args: Dict[str, Any]
