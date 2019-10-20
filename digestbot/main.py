@@ -26,7 +26,7 @@ async def crawl_messages() -> None:
         for ch_id, ch_name in ch_info:
             _logger.info(f"Channel: {ch_name}")
 
-            day_ago = datetime.now() - timedelta(days=10)
+            day_ago = datetime.now() - timedelta(days=1)
             messages = await slacker.get_channel_messages(ch_id, day_ago)
             if messages:
                 await upsert_messages(db_engine=db_engine, messages=messages)
