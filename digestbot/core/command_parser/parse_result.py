@@ -3,7 +3,7 @@ from typing import Any, Dict
 
 
 class ParseResult:
-    pass
+    value: Any
 
 
 @dataclass(frozen=True)

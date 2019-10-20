@@ -68,6 +68,8 @@ class DateArgument(Argument):
             return Parsed(timedelta(days=count))
         elif suffix == 'h':
             return Parsed(timedelta(hours=count))
+        elif suffix == 'm':
+            return Parsed(timedelta(minutes=count))
         else:
             return Default(self.default)
 
