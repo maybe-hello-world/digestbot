@@ -35,7 +35,7 @@ async def process_message(
     # parse message and prepare message to answer
     parse_result = parser.parse(message.text)
     if parse_result.command == top_command.name:
-        top_command_args = TopCommandArgs.from_dict(**parse_result.args)
+        top_command_args = TopCommandArgs.from_dict(parse_result.args)
         text_to_answer = await process_top_request(top_command_args, db_engine)
         await api.post_to_channel(channel_id=message.channel, text=text_to_answer)
     else:

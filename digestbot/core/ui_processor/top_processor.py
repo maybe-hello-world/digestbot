@@ -10,6 +10,7 @@ from typing import Optional, Any, Dict, List
 from digestbot.core import Message
 from digestbot.core.command_parser.argument import StringArgument, ChoiceArgument, TimeDeltaArgument, IntArgument
 from digestbot.core.command_parser.command import CommandBuilder
+from digestbot.core.common.Enums import SortingType
 from digestbot.core.db.dbengine import PostgreSQLEngine
 from digestbot.core.db.dbrequest.message import get_top_messages, get_top_messages_by_channel_id, \
     get_top_messages_by_category_name
@@ -40,7 +41,7 @@ class TopCommandArgs:
         if len(split) == 1:
             return {'category_name': split[0]}
         if len(split) == 2:
-            return {'category_id': split[0]}
+            return {'channel_id': split[0].lstrip('#')}
         raise ValueError(f'Channel Id format is not recognized (split result is {split}). Possible Slack API change')
 
     def is_all_channels_requested(self) -> bool:
@@ -56,16 +57,11 @@ class TopCommandArgs:
             "length": "thread_length",
             "reactions": "reactions_rate",
         }
-        kwargs['sorting_method'] = sorting_type_mapper[kwargs['sorting_method']]
+        kwargs['sorting_method'] = SortingType(sorting_type_mapper[kwargs['sorting_method']])
         channel_parse = TopCommandArgs._parse_channel(kwargs['channel'])
+        del kwargs['channel']
         kwargs.update(channel_parse)
         return TopCommandArgs(**kwargs)
-
-    __SORTING_TYPE_MAPPER = {
-        "replies": "reply_count",
-        "length": "thread_length",
-        "reactions": "reactions_rate",
-    }
 
 
 def __pretty_top_format(messages: List[Message]) -> str:
