@@ -1,14 +1,14 @@
 import unittest
 from datetime import timedelta
 
-from digestbot.core.command_parser.argument import DateArgument
+from digestbot.core.command_parser.argument import TimeDeltaArgument
 
 
-class DateArgumentTest(unittest.TestCase):
+class TimeDeltaArgumentArgumentTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.argument = DateArgument('date', default=None)
+        cls.argument = TimeDeltaArgument('date', default=None)
 
     def test_minutes(self):
         expected = timedelta(minutes=3)

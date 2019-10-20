@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Optional
 
-from digestbot.core.command_parser.argument import StringArgument, ChoiceArgument, DateArgument, IntArgument
+from digestbot.core.command_parser.argument import StringArgument, ChoiceArgument, TimeDeltaArgument, IntArgument
 from digestbot.core.command_parser.command import CommandBuilder
 from digestbot.core.command_parser.command_parser import CommandParser
 from digestbot.core.command_parser.exception import TooManyArguments
@@ -24,7 +24,7 @@ class TopCommandParsingTestCase(unittest.TestCase):
         cls.default = TopCommand(10, timedelta(days=1), 'replies', None)
         cls.top_command = CommandBuilder('top')\
             .add_argument(IntArgument('N', default=cls.default.N))\
-            .add_argument(DateArgument('time', default=cls.default.time))\
+            .add_argument(TimeDeltaArgument('time', default=cls.default.time))\
             .add_argument(ChoiceArgument('sorting_method', ['replies', 'length', 'reactions'],
                                          default=cls.default.sorting_method))\
             .add_argument(StringArgument('channel', default=cls.default.channel))\

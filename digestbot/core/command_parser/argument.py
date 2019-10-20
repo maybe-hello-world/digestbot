@@ -50,7 +50,7 @@ class ChoiceArgument(Argument):
         return Default(self.default)
 
 
-class DateArgument(Argument):
+class TimeDeltaArgument(Argument):
 
     def __init__(self, name: str, default: Optional[timedelta] = None):
         super().__init__(name, default)
