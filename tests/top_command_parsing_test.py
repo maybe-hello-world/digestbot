@@ -1,4 +1,3 @@
-import asyncio
 import unittest
 from dataclasses import dataclass
 from datetime import timedelta
@@ -8,7 +7,6 @@ from digestbot.core.command_parser.argument import StringArgument, ChoiceArgumen
 from digestbot.core.command_parser.command import CommandBuilder
 from digestbot.core.command_parser.command_parser import CommandParser
 from digestbot.core.command_parser.exception import TooManyArguments
-from digestbot.core.common.Enums import SortingType
 
 
 @dataclass(frozen=True)
