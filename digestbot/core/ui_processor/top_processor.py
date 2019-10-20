@@ -1,40 +1,41 @@
 import re
-from dataclasses import dataclass
-from enum import Enum, auto
-from datetime import datetime, timedelta
 import time
 from decimal import Decimal
-
-from digestbot.core.db.dbengine import PostgreSQLEngine
-from digestbot.core.SlackAPI.Slacker import Slacker
+from dataclasses import dataclass
+from datetime import timedelta, datetime
 from typing import Optional, List
 
-from digestbot.core.common.DataClasses import DBTopRequest
-from digestbot.core.common.Enums import SortingType, SORTING_TYPE_MAPPER
-from digestbot.core.common import config, LoggerFactory
-from digestbot.app.dbrequest.message import (
+from digestbot.core import Message
+from digestbot.core.common import LoggerFactory, config
+from digestbot.core.common.Enums import SortingType
+from digestbot.core.db.dbengine import PostgreSQLEngine
+from digestbot.core.db.dbrequest.message import (
     get_top_messages,
     get_top_messages_by_channel_id,
     get_top_messages_by_category_name,
 )
-from digestbot.core.db.models import Message
-
-SYNTAX_RESPONSE = "Hello, <@{}>! I didn't understood your request, could you check your command? Thanks."
+from digestbot.core.ui_processor.common import UserRequest
 
 
-class __CommandType(Enum):
-    """Parsed command type from user message"""
-
-    TOP_REQUEST = auto()
+_logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)
 
 
 @dataclass(frozen=True)
-class __UserRequest:
-    text: str  # user text
-    user: str  # author's username
-    channel: str  # ID of channel from Slack
-    ts: str  # timestamp of the message
-    is_im: bool  # is it private message to bot (or in public channel)
+class DBTopRequest:
+    after_ts: Decimal
+    top_count: int = 5
+    is_channel: bool = True
+    channel_id: Optional[
+        str
+    ] = None  # channel (starts with #) or preset (without #) name
+    sorting_type: SortingType = SortingType.REPLIES
+
+
+__SORTING_TYPE_MAPPER = {
+    "replies": "reply_count",
+    "length": "thread_length",
+    "reactions": "reactions_rate",
+}
 
 
 def __pretty_top_format(messages: List[Message]) -> str:
@@ -64,24 +65,9 @@ def __pretty_top_format(messages: List[Message]) -> str:
     return "\n\n".join(messages)
 
 
-def __parse_message_type(message: __UserRequest) -> Optional[__CommandType]:
-    """
-    Parse message and return type of the command from the message
-
-    :param message: request from user
-    :return: command type or None if not parsed
-    """
-
-    # 'top ...' or '<@CWEHB72K> top ...'
-    if re.match(r"(<@[A-Z\d]+> )?top", message.text.strip()):
-        return __CommandType.TOP_REQUEST
-    else:
-        return None
-
-
 async def __process_top_request(
-    message: __UserRequest, db_engine: PostgreSQLEngine
-) -> str:
+    message: UserRequest, db_engine: PostgreSQLEngine
+) -> Optional[str]:
     """
     Parse TOP_REQUEST command from user message
 
@@ -90,7 +76,7 @@ async def __process_top_request(
     :return: formatted message if parsed, None otherwise
     """
 
-    def __parse_text(_mes: __UserRequest) -> Optional[DBTopRequest]:
+    def __parse_text(_mes: UserRequest) -> Optional[DBTopRequest]:
         """
         Parse request and create DBTopRequest
 
@@ -109,7 +95,7 @@ async def __process_top_request(
         channel_pattern = fr"(?:{channel_name}|{preset_name})"
         time_pattern = r"\d+(?:m|h|d|w)"
         sorting_types = " " + "| ".join(
-            SORTING_TYPE_MAPPER.keys()
+            __SORTING_TYPE_MAPPER.keys()
         )  # one of several sorting types
         command_pattern = (
             fr""
@@ -136,7 +122,7 @@ async def __process_top_request(
 
         if sorting is not None:
             try:
-                sorting = SORTING_TYPE_MAPPER[sorting.strip()]
+                sorting = __SORTING_TYPE_MAPPER[sorting.strip()]
                 sorting = SortingType(sorting)
             except (ValueError, KeyError) as e:
                 _logger.exception(e)
@@ -167,9 +153,9 @@ async def __process_top_request(
 
         kwargs = {
             "after_ts": ts,
-            "amount": amount,
+            "top_count": amount,
             "is_channel": is_channel,
-            "channel": channel,
+            "channel_id": channel,
             "sorting_type": sorting,
         }
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
@@ -178,23 +164,23 @@ async def __process_top_request(
 
     db_request = __parse_text(_mes=message)
     if db_request is None:
-        return SYNTAX_RESPONSE.format(message.user)
+        return None
 
     pars = {
         "db_engine": db_engine,
         "sorting_type": db_request.sorting_type,
-        "top_count": db_request.amount,
+        "top_count": db_request.top_count,
         "after_ts": db_request.after_ts,
     }
-    if db_request.channel is None:
+    if db_request.channel_id is None:
         req_status, messages = await get_top_messages(**pars)
     elif db_request.is_channel:
         req_status, messages = await get_top_messages_by_channel_id(
-            channel_id=db_request.channel, **pars
+            channel_id=db_request.channel_id, **pars
         )
     else:
         req_status, messages = await get_top_messages_by_category_name(
-            category_name=db_request.channel, **pars
+            category_name=db_request.channel_id, **pars
         )
 
     if not req_status:
@@ -211,37 +197,3 @@ async def __process_top_request(
         formatted_message = __pretty_top_format(messages)
 
     return formatted_message
-
-
-async def process_message(
-    message: __UserRequest, bot_name: str, api: Slacker, db_engine: PostgreSQLEngine
-) -> None:
-    """
-    Parse user request and answer
-    :param message: user message to be processed
-    :param bot_name: current name of the bot
-    :param api: api class for usage
-    :param db_engine: db engine for database operations
-    """
-
-    # do not answer on own messages
-    if message.user == bot_name:
-        return
-
-    # answer only on direct messages and mentions in chats
-    if api.user_id not in message.text and not message.is_im:
-        return
-
-    # parse message and prepare message to answer
-    mtype = __parse_message_type(message=message)
-    if mtype == __CommandType.TOP_REQUEST:
-        text_to_answer = await __process_top_request(
-            message=message, db_engine=db_engine
-        )
-    else:
-        text_to_answer = SYNTAX_RESPONSE.format(message.user)
-
-    await api.post_to_channel(channel_id=message.channel, text=text_to_answer)
-
-
-_logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)

@@ -4,10 +4,10 @@ Parse configuration variables from env vars and raise Exceptions if needed
 
 import os
 import logging
-from digestbot.core.common import LoggerFactory as _log_factory
+from digestbot.core.common.LoggerFactory import create_logger as _create_logger
 
 
-_logger = _log_factory.create_logger(__name__, logging.WARNING)
+_logger = _create_logger(__name__, logging.WARNING)
 
 
 # User token for message access
@@ -60,3 +60,8 @@ if LOG_LEVEL not in __available_log_levels:
     )
     LOG_LEVEL = "info"
 LOG_LEVEL = __available_log_levels[LOG_LEVEL]
+
+
+# Private messages only
+PM_ONLY = os.getenv("PM_ONLY", "False").strip().lower()
+PM_ONLY = PM_ONLY == "true"
