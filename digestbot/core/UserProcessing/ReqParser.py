@@ -53,7 +53,7 @@ def __pretty_top_format(messages: List[Message]) -> str:
         template.format(
             i,
             x.username,
-            x.text[:15],
+            x.text[:50],
             x.reply_count,
             x.reply_users_count,
             x.reactions_rate,
@@ -104,17 +104,27 @@ async def __process_top_request(
             command_text = command_text[command_text.index(">") + 1 :].strip()
 
         # damn regexps
-        channel_pattern = r"(?:<#)?[\d_a-zA-Z\|]+>?"  # channel or preset name
+        channel_name = r"<#[\d_\-a-zA-Z\|]+>"  # channel name
+        preset_name = r"[A-Za-z]+"  # preset name
+        channel_pattern = fr"(?:{channel_name}|{preset_name})"
+        time_pattern = r"\d+(?:m|h|d|w)"
         sorting_types = " " + "| ".join(
             SORTING_TYPE_MAPPER.keys()
         )  # one of several sorting types
-        command_pattern = fr"top(?P<amount> [\d]+)?(?P<channel> {channel_pattern})?(?P<sorting>{sorting_types})?"
+        command_pattern = (
+            fr""
+            fr"top(?P<amount> [\d]+)?"
+            fr"(?P<channel> {channel_pattern})?"
+            fr"(?P<time> {time_pattern})?"
+            fr"(?P<sorting>{sorting_types})?"
+        )
         parse_result = re.fullmatch(command_pattern, command_text)
 
         if parse_result is None:
             return None
         amount = parse_result.group("amount")
         channel = parse_result.group("channel")
+        time_str = parse_result.group("time")
         sorting = parse_result.group("sorting")
 
         if amount is not None:
@@ -132,6 +142,18 @@ async def __process_top_request(
                 _logger.exception(e)
                 sorting = None
 
+        try:
+            assert time_str is not None
+            time_str = time_str.strip()
+            time_amount = int(time_str[:-1])
+            time_type = time_str[-1]
+            _mapper = {"m": "minutes", "h": "hours", "d": "days", "w": "weeks"}
+            time_type = _mapper[time_type]
+            kwargs = {time_type: time_amount}
+            td = timedelta(**kwargs)
+        except (AssertionError, ZeroDivisionError, KeyError):
+            td = timedelta(days=1)
+
         is_channel = False
         if channel is not None:
             channel = channel.strip()
@@ -140,8 +162,7 @@ async def __process_top_request(
                 channel = channel.strip("<>#")
                 channel = channel[: channel.index("|")]  # AJLK323BKJ|general
 
-        # TODO: IMPORTANT!! parse initial time from user request
-        ts = datetime.now() - timedelta(days=1)
+        ts = datetime.now() - td
         ts = Decimal(time.mktime(ts.timetuple()))
 
         kwargs = {
