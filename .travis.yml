@@ -16,7 +16,7 @@ install:
     - source "$HOME/miniconda/etc/profile.d/conda.sh"
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
-    - conda create -q -n digest -f environment.yml
+    - conda env create -f environment.yml -n digest
     - conda activate digest
 
 # start containers -> sleep 10 secs -> get restart count of running containers -> sum restart count and check == 0
