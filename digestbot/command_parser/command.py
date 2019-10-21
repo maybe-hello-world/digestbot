@@ -25,7 +25,7 @@ class Command:
                 args[arg.name] = p.value
                 params_idx += 1
         if params_idx < len(params):
-            raise TooManyArguments(f'Too many arguments for command {self.name}')
+            raise TooManyArguments(f'Too many arguments provided for command `{self.name}`')
         return args
 
 
