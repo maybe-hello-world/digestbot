@@ -13,7 +13,7 @@ class Parsed(ParseResult):
 
 @dataclass(frozen=True)
 class NotParsed(ParseResult):
-    default_value: Any
+    value: Any
 
 
 @dataclass(frozen=True)
