@@ -12,4 +12,4 @@ before_script:
 script:
     - docker-compose up -d 
     - sleep 10
-    - docker inspect --format "{{.RestartCount}}" $(docker ps -aq) | paste -sd+ | bc | xargs test 0 -eq && echo "No restarts happened" && exit 0 || echo "restarts happened" && docker logs $(docker ps -aq) && travis_terminate 1
+    - docker inspect --format "{{.RestartCount}}" $(docker ps -aq) | paste -sd+ | bc | xargs test 0 -eq && echo "No restarts happened" && exit 0 || echo "restarts happened" && docker-compose logs && travis_terminate 1
