@@ -2,7 +2,7 @@ from abc import abstractmethod
 from datetime import timedelta
 from typing import List, Optional, Any
 
-from digestbot.command_parser.parse_result import ParseResult, Parsed, Default
+from digestbot.command_parser.parse_result import ParseResult, Parsed, NotParsed
 
 
 class Argument:
@@ -26,7 +26,7 @@ class IntArgument(Argument):
         if result:
             return Parsed(result)
         else:
-            return Default(self.default)
+            return NotParsed(self.default)
 
 
 class StringArgument(Argument):
@@ -47,7 +47,7 @@ class ChoiceArgument(Argument):
     def parse(self, text: str) -> ParseResult:
         if text in self.choices:
             return Parsed(text)
-        return Default(self.default)
+        return NotParsed(self.default)
 
 
 class TimeDeltaArgument(Argument):
@@ -57,11 +57,11 @@ class TimeDeltaArgument(Argument):
 
     def parse(self, text: str) -> ParseResult:
         if not text or len(text) < 2:
-            return Default(self.default)
+            return NotParsed(self.default)
         suffix = text[-1]
         count = _int_or_default(text[:-1])
         if not count:
-            return Default(self.default)
+            return NotParsed(self.default)
         if suffix == 'w':
             return Parsed(timedelta(weeks=count))
         elif suffix == 'd':
@@ -71,7 +71,7 @@ class TimeDeltaArgument(Argument):
         elif suffix == 'm':
             return Parsed(timedelta(minutes=count))
         else:
-            return Default(self.default)
+            return NotParsed(self.default)
 
 
 def _int_or_default(text: str, default: Optional[int] = None) -> Optional[int]:

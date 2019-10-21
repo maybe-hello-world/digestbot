@@ -12,8 +12,8 @@ class Parsed(ParseResult):
 
 
 @dataclass(frozen=True)
-class Default(ParseResult):
-    value: Any
+class NotParsed(ParseResult):
+    default_value: Any
 
 
 @dataclass(frozen=True)
