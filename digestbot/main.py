@@ -1,7 +1,7 @@
 import sys
 import slack
 import asyncio
-import digestbot.core.ui_processor.ReqParser as ReqParser
+from digestbot.core.ui_processor.request_parser import process_message
 import digestbot.core.ui_processor.common
 from digestbot.core.slack_api.Slacker import Slacker
 from digestbot.core import PostgreSQLEngine
@@ -68,9 +68,7 @@ async def handle_message(**payload) -> None:
         is_im=is_im,
     )
 
-    await ReqParser.process_message(
-        message=message, bot_name=config.BOT_NAME, api=slacker, db_engine=db_engine
-    )
+    await process_message(message=message, bot_name=config.BOT_NAME, api=slacker, db_engine=db_engine)
 
 
 if __name__ == "__main__":
