@@ -9,8 +9,7 @@ class Category:
     channel_ids: List[str]
 
 
-# TODO: change after permalinks_update fix (do not work with Messages, but with own type)
-@dataclass(frozen=False)
+@dataclass(frozen=True)
 class Message:
     username: str
     text: str

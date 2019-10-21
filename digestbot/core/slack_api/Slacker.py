@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from functools import reduce
 from decimal import Decimal
 
+import asyncio
+
 from digestbot.core.db.models import Message
 from digestbot.core.common import config, LoggerFactory
 from digestbot.core.utils import reaction_ranking
@@ -237,9 +239,24 @@ class Slacker:
         :return: List of these messages with added permalinks
         """
 
-        for mess in messages:
-            mess.link = await self.get_permalink(mess.channel_id, mess.timestamp)
-            # TODO: make async?
+        links = await asyncio.gather(
+            *[self.get_permalink(mess.channel_id, mess.timestamp) for mess in messages]
+        )
+
+        messages = [
+            Message(
+                username=mess.username,
+                text=mess.text,
+                timestamp=mess.timestamp,
+                reply_count=mess.reply_count,
+                reply_users_count=mess.reply_users_count,
+                thread_length=mess.thread_length,
+                channel_id=mess.channel_id,
+                reactions_rate=mess.reactions_rate,
+                link=link,
+            )
+            for mess, link in zip(messages, links)
+        ]
 
         return messages
 
