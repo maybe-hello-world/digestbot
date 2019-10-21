@@ -1,7 +1,7 @@
 import unittest
 from datetime import timedelta
 
-from digestbot.core.command_parser.argument import TimeDeltaArgument
+from digestbot.command_parser.argument import TimeDeltaArgument
 
 
 class TimeDeltaArgumentArgumentTest(unittest.TestCase):

@@ -1,4 +1,4 @@
-from digestbot.core.command_parser.command_parser import CommandParser
+from digestbot.command_parser.command_parser import CommandParser
 from digestbot.core.common import config, LoggerFactory
 from digestbot.core.db.dbengine import PostgreSQLEngine
 from digestbot.core.slack_api.Slacker import Slacker

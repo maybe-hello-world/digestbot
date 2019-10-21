@@ -2,7 +2,7 @@ from abc import abstractmethod
 from datetime import timedelta
 from typing import List, Optional, Any
 
-from digestbot.core.command_parser.parse_result import ParseResult, Parsed, Default
+from digestbot.command_parser.parse_result import ParseResult, Parsed, Default
 
 
 class Argument:

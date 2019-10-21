@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import List, Dict, Any
 
-from digestbot.core.command_parser.argument import Argument
-from digestbot.core.command_parser.exception import TooManyArguments
-from digestbot.core.command_parser.parse_result import Parsed
+from digestbot.command_parser.argument import Argument
+from digestbot.command_parser.exception import TooManyArguments
+from digestbot.command_parser.parse_result import Parsed
 
 
 class Command:

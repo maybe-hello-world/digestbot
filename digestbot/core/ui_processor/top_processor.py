@@ -8,8 +8,8 @@ from datetime import timedelta, datetime
 from typing import Optional, Any, Dict, List
 
 from digestbot.core import Message
-from digestbot.core.command_parser.argument import StringArgument, ChoiceArgument, TimeDeltaArgument, IntArgument
-from digestbot.core.command_parser.command import CommandBuilder
+from digestbot.command_parser.argument import StringArgument, ChoiceArgument, TimeDeltaArgument, IntArgument
+from digestbot.command_parser.command import CommandBuilder
 from digestbot.core.common.Enums import SortingType
 from digestbot.core.db.dbengine import PostgreSQLEngine
 from digestbot.core.db.dbrequest.message import get_top_messages, get_top_messages_by_channel_id, \

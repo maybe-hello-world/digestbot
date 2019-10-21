@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Optional
 
-from digestbot.core.command_parser.argument import StringArgument, ChoiceArgument, TimeDeltaArgument, IntArgument
-from digestbot.core.command_parser.command import CommandBuilder
-from digestbot.core.command_parser.command_parser import CommandParser
-from digestbot.core.command_parser.exception import TooManyArguments
+from digestbot.command_parser.argument import StringArgument, ChoiceArgument, TimeDeltaArgument, IntArgument
+from digestbot.command_parser.command import CommandBuilder
+from digestbot.command_parser.command_parser import CommandParser
+from digestbot.command_parser.exception import TooManyArguments
 
 
 @dataclass(frozen=True)
