@@ -11,7 +11,6 @@ before_script:
     - echo "SLACK_USER_TOKEN=$SLACK_USER_TOKEN" >> .env
 
 before_install:
-    - sudo apt-get update
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - source "$HOME/miniconda/etc/profile.d/conda.sh"
@@ -21,7 +20,7 @@ before_install:
 
 install:
     - conda env create -f environment.yml -n digest
-    - source activate digest
+    - conda activate digest
 
 # start containers -> sleep 10 secs -> get restart count of running containers -> sum restart count and check == 0
 script:
