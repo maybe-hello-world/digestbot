@@ -74,35 +74,33 @@ async def handle_message(**payload) -> None:
 
 
 if __name__ == "__main__":
-    slacker = Slacker(
-        user_token=config.SLACK_USER_TOKEN, bot_token=config.SLACK_BOT_TOKEN
-    )
-
     loop = asyncio.get_event_loop()
 
     # connect to database
     db_engine = PostgreSQLEngine()
-    connection_future = lambda: db_engine.connect_to_database(
-        user=config.DB_USER,
-        password=config.DB_PASS,
-        database_name=config.DB_NAME,
-        host=config.DB_HOST,
-        port=config.DB_PORT,
-    )
 
     connected = False
     for i in range(5):
-        status = connection_future()
-        loop.run_until_complete(status)
+        connection = db_engine.connect_to_database(
+            user=config.DB_USER,
+            password=config.DB_PASS,
+            database_name=config.DB_NAME,
+            host=config.DB_HOST,
+            port=config.DB_PORT,
+        )
+        status = loop.run_until_complete(connection)
         if status != 0:
             connected = True
             break
-        _logger.warning(f"Could not connect to database, attempt #{i}. Retrying...")
         time.sleep(3)
 
     if not connected:
-        _logger.error("Could not connect to database. Exiting...")
+        _logger.error("Could not connect to database after 5 attempts. Exiting...")
         sys.exit(1)
+
+    slacker = Slacker(
+        user_token=config.SLACK_USER_TOKEN, bot_token=config.SLACK_BOT_TOKEN
+    )
 
     # Instantiate crawler timer with corresponding function
     crawler_task = loop.create_task(crawl_messages())
