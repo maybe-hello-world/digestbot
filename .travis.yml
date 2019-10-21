@@ -4,14 +4,24 @@ python:
 
 services:
     - docker
-    
+
 before_script:
     - echo "DB_PASS=$DB_PASS" > .env
     - echo "SLACK_BOT_TOKEN=$SLACK_BOT_TOKEN" >> .env
     - echo "SLACK_USER_TOKEN=$SLACK_USER_TOKEN" >> .env
 
+install:
+    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - source "$HOME/miniconda/etc/profile.d/conda.sh"
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda create -q -n digest -f environment.yml
+    - conda activate digest
+
 # start containers -> sleep 10 secs -> get restart count of running containers -> sum restart count and check == 0
 script:
-    - docker-compose up -d 
+    - docker-compose up -d
     - sleep 10
     - docker inspect --format "{{.RestartCount}}" $(docker ps -aq) | paste -sd+ | bc | xargs test 0 -eq && echo "No restarts happened" && docker container ls && exit 0 || echo "restarts happened" && docker-compose logs && travis_terminate 1
+    - python -m unittest discover -s tests
