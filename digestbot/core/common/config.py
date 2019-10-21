@@ -34,7 +34,7 @@ except ValueError:
 
 
 # App name in slack (important for not answering own messages)
-BOT_NAME = os.getenv("BOT_NAME", "digest-bot")
+BOT_NAME = os.getenv("BOT_NAME", "digestbot")
 
 
 # Database settings

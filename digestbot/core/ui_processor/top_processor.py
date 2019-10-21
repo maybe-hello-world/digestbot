@@ -124,6 +124,9 @@ async def process_top_request(args: TopCommandArgs, db_engine: PostgreSQLEngine)
         "after_ts": Decimal(time.mktime((datetime.now() - args.time).timetuple())),
     }
 
+    if args.N < 0:
+        return "Number of messages should be positive."
+
     if args.is_all_channels_requested():
         req_status, messages = await get_top_messages(**parameters)
     elif args.is_channel():
