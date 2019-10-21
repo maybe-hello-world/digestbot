@@ -24,7 +24,7 @@ install:
 
 # start containers -> sleep 10 secs -> get restart count of running containers -> sum restart count and check == 0
 script:
+    - python -m unittest discover -s tests
     - docker-compose up -d
     - sleep 10
     - docker inspect --format "{{.RestartCount}}" $(docker ps -aq) | paste -sd+ | bc | xargs test 0 -eq && echo "No restarts happened" && docker container ls || { echo "restarts happened" && docker-compose logs && travis_terminate 1; }
-    - python -m unittest discover -s tests
