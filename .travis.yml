@@ -8,8 +8,8 @@ services:
 before_script:
     - touch .env
 
-# start containers -> sleep 10 secs -> get running containers -> count lines in output ->
-# check that 2 containers are running (+1 string of output == 3 strings at all) or travis_terminate
+# start containers -> sleep 10 secs -> get restart count of running containers -> sum restart count and check == 0
 script:
     - docker-compose up -d 
-    - sleep 10 && docker container ls | wc -l | xargs test 3 -eq && echo "2 containers are running, all is ok" && exit 0 || echo "some containers are not running, check output" && travis_terminate 1
+    - sleep 10
+    - docker inspect --format "{{.RestartCount}}" $(docker ps -aq) | paste -sd+ | bc | xargs test 0 -eq && echo "No restarts happened" && exit 0 || echo "restarts happened" && docker logs $(docker ps -aq) && travis_terminate 1
