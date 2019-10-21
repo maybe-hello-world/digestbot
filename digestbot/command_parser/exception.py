@@ -1,3 +1,3 @@
 
-class TooManyArguments(Exception):
+class TooManyArgumentsError(Exception):
     pass

@@ -1,5 +1,5 @@
 from digestbot.command_parser.command_parser import CommandParser
-from digestbot.command_parser.exception import TooManyArguments
+from digestbot.command_parser.exception import TooManyArgumentsError
 from digestbot.core.common import config, LoggerFactory
 from digestbot.core.db.dbengine import PostgreSQLEngine
 from digestbot.core.slack_api.Slacker import Slacker
@@ -42,5 +42,5 @@ async def process_message(
             await api.post_to_channel(channel_id=message.channel, text=text_to_answer)
         else:
             await api.post_to_channel(channel_id=message.channel, text=SYNTAX_RESPONSE.format(message.user))
-    except TooManyArguments as exception:
+    except TooManyArgumentsError as exception:
         await api.post_to_channel(channel_id=message.channel, text=str(exception))

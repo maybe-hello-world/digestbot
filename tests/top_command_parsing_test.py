@@ -6,7 +6,7 @@ from typing import Optional
 from digestbot.command_parser.argument import StringArgument, ChoiceArgument, TimeDeltaArgument, IntArgument
 from digestbot.command_parser.command import CommandBuilder
 from digestbot.command_parser.command_parser import CommandParser
-from digestbot.command_parser.exception import TooManyArguments
+from digestbot.command_parser.exception import TooManyArgumentsError
 
 
 @dataclass(frozen=True)
@@ -58,9 +58,9 @@ class TopCommandParsingTestCase(unittest.TestCase):
         self.assertIsNone(result)
 
     def test_too_many_arguments(self):
-        with self.assertRaises(TooManyArguments):
+        with self.assertRaises(TooManyArgumentsError):
             self.command_parser.parse('top a a')
-        with self.assertRaises(TooManyArguments):
+        with self.assertRaises(TooManyArgumentsError):
             self.command_parser.parse('top a a a a a a a a a a')
 
 

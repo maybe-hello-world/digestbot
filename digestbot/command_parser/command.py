@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Dict, Any
 
 from digestbot.command_parser.argument import Argument
-from digestbot.command_parser.exception import TooManyArguments
+from digestbot.command_parser.exception import TooManyArgumentsError
 from digestbot.command_parser.parse_result import Parsed
 
 
@@ -25,7 +25,7 @@ class Command:
                 args[arg.name] = p.value
                 params_idx += 1
         if params_idx < len(params):
-            raise TooManyArguments(f'Too many arguments provided for command `{self.name}`')
+            raise TooManyArgumentsError(f'Too many arguments provided for command `{self.name}`')
         return args
 
 
