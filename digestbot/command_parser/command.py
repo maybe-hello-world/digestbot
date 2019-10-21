@@ -8,7 +8,6 @@ from digestbot.command_parser.parse_result import Parsed
 
 
 class Command:
-
     def __init__(self, name: str, arguments: List[Argument]):
         self.name = name
         self.arguments = arguments
@@ -25,12 +24,13 @@ class Command:
                 args[arg.name] = p.value
                 params_idx += 1
         if params_idx < len(params):
-            raise TooManyArgumentsError(f'Too many arguments provided for command `{self.name}`')
+            raise TooManyArgumentsError(
+                f"Too many arguments provided for command `{self.name}`"
+            )
         return args
 
 
 class CommandBuilder:
-
     def __init__(self, name):
         self.name = name
         self.arguments = []
@@ -41,5 +41,3 @@ class CommandBuilder:
 
     def build(self) -> Command:
         return Command(self.name, self.arguments)
-
-

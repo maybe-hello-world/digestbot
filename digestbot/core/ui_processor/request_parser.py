@@ -4,7 +4,11 @@ from digestbot.core.common import config, LoggerFactory
 from digestbot.core.db.dbengine import PostgreSQLEngine
 from digestbot.core.slack_api.Slacker import Slacker
 from digestbot.core.ui_processor.common import UserRequest
-from digestbot.core.ui_processor.top_processor import top_command, TopCommandArgs, process_top_request
+from digestbot.core.ui_processor.top_processor import (
+    top_command,
+    TopCommandArgs,
+    process_top_request,
+)
 
 SYNTAX_RESPONSE = "Hello, <@{}>! I didn't understood your request, could you check your command? Thanks."
 
@@ -41,6 +45,8 @@ async def process_message(
             text_to_answer = await process_top_request(top_command_args, db_engine)
             await api.post_to_channel(channel_id=message.channel, text=text_to_answer)
         else:
-            await api.post_to_channel(channel_id=message.channel, text=SYNTAX_RESPONSE.format(message.user))
+            await api.post_to_channel(
+                channel_id=message.channel, text=SYNTAX_RESPONSE.format(message.user)
+            )
     except TooManyArgumentsError as exception:
         await api.post_to_channel(channel_id=message.channel, text=str(exception))

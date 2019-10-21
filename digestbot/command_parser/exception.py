@@ -1,3 +1,2 @@
-
 class TooManyArgumentsError(Exception):
     pass

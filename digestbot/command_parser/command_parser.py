@@ -7,7 +7,6 @@ from digestbot.command_parser.parse_result import CommandParseResult
 
 
 class CommandParser:
-
     def __init__(self, commands: List[Command]):
         self.commands = commands
 

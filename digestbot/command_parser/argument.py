@@ -6,7 +6,6 @@ from digestbot.command_parser.parse_result import ParseResult, Parsed, NotParsed
 
 
 class Argument:
-
     def __init__(self, name: str, default: Optional[Any]):
         self.name = name
         self.default = default
@@ -17,7 +16,6 @@ class Argument:
 
 
 class IntArgument(Argument):
-
     def __init__(self, name: str, default: Optional[int] = None):
         super().__init__(name, default)
 
@@ -30,7 +28,6 @@ class IntArgument(Argument):
 
 
 class StringArgument(Argument):
-
     def __init__(self, name: str, default: Optional[str] = None):
         super().__init__(name, default)
 
@@ -39,7 +36,6 @@ class StringArgument(Argument):
 
 
 class ChoiceArgument(Argument):
-
     def __init__(self, name: str, choices: List[str], default: Optional[str] = None):
         super().__init__(name, default)
         self.choices = choices
@@ -51,7 +47,6 @@ class ChoiceArgument(Argument):
 
 
 class TimeDeltaArgument(Argument):
-
     def __init__(self, name: str, default: Optional[timedelta] = None):
         super().__init__(name, default)
 
@@ -62,13 +57,13 @@ class TimeDeltaArgument(Argument):
         count = _int_or_default(text[:-1])
         if not count:
             return NotParsed(self.default)
-        if suffix == 'w':
+        if suffix == "w":
             return Parsed(timedelta(weeks=count))
-        elif suffix == 'd':
+        elif suffix == "d":
             return Parsed(timedelta(days=count))
-        elif suffix == 'h':
+        elif suffix == "h":
             return Parsed(timedelta(hours=count))
-        elif suffix == 'm':
+        elif suffix == "m":
             return Parsed(timedelta(minutes=count))
         else:
             return NotParsed(self.default)
