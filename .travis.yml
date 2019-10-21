@@ -4,12 +4,27 @@ python:
 
 services:
     - docker
-    
-before_script:
-    - touch .env
 
-# start containers -> sleep 10 secs -> get running containers -> count lines in output ->
-# check that 2 containers are running (+1 string of output == 3 strings at all) or travis_terminate
+before_script:
+    - echo "DB_PASS=$DB_PASS" > .env
+    - echo "SLACK_BOT_TOKEN=$SLACK_BOT_TOKEN" >> .env
+    - echo "SLACK_USER_TOKEN=$SLACK_USER_TOKEN" >> .env
+
+before_install:
+    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - source "$HOME/miniconda/etc/profile.d/conda.sh"
+    - hash -r
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+
+install:
+    - conda env create -f environment.yml -n digest
+    - conda activate digest
+
+# start containers -> sleep 10 secs -> get restart count of running containers -> sum restart count and check == 0
 script:
-    - docker-compose up -d 
-    - sleep 10 && docker container ls | wc -l | xargs test 3 -eq && echo "2 containers are running, all is ok" && exit 0 || echo "some containers are not running, check output" && travis_terminate 1
+    - docker-compose up -d
+    - sleep 10
+    - docker inspect --format "{{.RestartCount}}" $(docker ps -aq) | paste -sd+ | bc | xargs test 0 -eq && echo "No restarts happened" && docker container ls || { echo "restarts happened" && docker-compose logs && travis_terminate 1; }
+    - python -m unittest discover -s tests

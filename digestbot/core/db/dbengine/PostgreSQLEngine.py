@@ -59,6 +59,9 @@ class PostgreSQLEngine:
         except asyncpg.UndefinedObjectError:
             status = 0
             self.logger.error(f"User '{user}' does not exist")
+        except OSError:
+            status = 0
+            self.logger.warning("Could not connect to the database.")
 
         if status == 1:
             status = await self.connect_to_database(

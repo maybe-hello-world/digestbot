@@ -13,7 +13,7 @@ from digestbot.core.db.dbrequest.message import (
 from digestbot.core.common import config, LoggerFactory
 from datetime import datetime, timedelta
 import signal
-
+import time
 
 _logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)
 slacker: Slacker
@@ -74,26 +74,33 @@ async def handle_message(**payload) -> None:
 
 
 if __name__ == "__main__":
-    slacker = Slacker(
-        user_token=config.SLACK_USER_TOKEN, bot_token=config.SLACK_BOT_TOKEN
-    )
-
     loop = asyncio.get_event_loop()
 
     # connect to database
     db_engine = PostgreSQLEngine()
-    status = db_engine.connect_to_database(
-        user=config.DB_USER,
-        password=config.DB_PASS,
-        database_name=config.DB_NAME,
-        host=config.DB_HOST,
-        port=config.DB_PORT,
-    )
-    loop.run_until_complete(status)
-    if status == 0:
-        # TODO: change?
-        _logger.error("Could not connect to database. Exiting...")
+
+    connected = False
+    for i in range(5):
+        connection = db_engine.connect_to_database(
+            user=config.DB_USER,
+            password=config.DB_PASS,
+            database_name=config.DB_NAME,
+            host=config.DB_HOST,
+            port=config.DB_PORT,
+        )
+        status = loop.run_until_complete(connection)
+        if status != 0:
+            connected = True
+            break
+        time.sleep(3)
+
+    if not connected:
+        _logger.error("Could not connect to database after 5 attempts. Exiting...")
         sys.exit(1)
+
+    slacker = Slacker(
+        user_token=config.SLACK_USER_TOKEN, bot_token=config.SLACK_BOT_TOKEN
+    )
 
     # Instantiate crawler timer with corresponding function
     crawler_task = loop.create_task(crawl_messages())
