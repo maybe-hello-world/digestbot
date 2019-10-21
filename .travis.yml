@@ -15,10 +15,11 @@ before_install:
     - chmod +x miniconda.sh
     - ./miniconda.sh -b
     - export PATH=/home/travis/miniconda/bin:$PATH
+    - conda update --yes conda
 
 install:
     - conda env create -f environment.yml -n digest
-    - conda activate digest
+    - source activate digest
 
 # start containers -> sleep 10 secs -> get restart count of running containers -> sum restart count and check == 0
 script:
