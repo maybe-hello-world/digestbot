@@ -13,7 +13,7 @@ from digestbot.core.db.dbrequest.message import (
 from digestbot.core.common import config, LoggerFactory
 from datetime import datetime, timedelta
 import signal
-
+import time
 
 _logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)
 slacker: Slacker
@@ -82,16 +82,25 @@ if __name__ == "__main__":
 
     # connect to database
     db_engine = PostgreSQLEngine()
-    status = db_engine.connect_to_database(
+    connection_future = lambda: db_engine.connect_to_database(
         user=config.DB_USER,
         password=config.DB_PASS,
         database_name=config.DB_NAME,
         host=config.DB_HOST,
         port=config.DB_PORT,
     )
-    loop.run_until_complete(status)
-    if status == 0:
-        # TODO: change?
+
+    connected = False
+    for i in range(5):
+        status = connection_future()
+        loop.run_until_complete(status)
+        if status != 0:
+            connected = True
+            break
+        _logger.warning(f"Could not connect to database, attempt #{i}. Retrying...")
+        time.sleep(3)
+
+    if not connected:
         _logger.error("Could not connect to database. Exiting...")
         sys.exit(1)
 
