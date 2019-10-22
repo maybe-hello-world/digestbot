@@ -18,7 +18,10 @@ from digestbot.core.ui_processor.presets_processor import (
     process_presets_request,
 )
 
-SYNTAX_RESPONSE = "Oops! <@{}>, I didn't understood your request, could you check your command? Thanks."
+SYNTAX_RESPONSE = (
+    "Oops! <@{}>, I didn't understood your request, could you check your command? "
+    "Or ask for `help` if you don't know what to do. Thanks."
+)
 
 _logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)
 
