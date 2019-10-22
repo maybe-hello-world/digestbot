@@ -28,12 +28,14 @@ class Slacker:
     def __init__(self, user_token: str, bot_token: str):
         self.logger = LoggerFactory.create_logger("slack_api", config.LOG_LEVEL)
 
-        self.web_client = slack.WebClient(token=user_token, run_async=True)
+        self.bot_web_client = slack.WebClient(token=bot_token, run_async=True)
+        self.user_web_client = slack.WebClient(token=user_token, run_async=True)
         self.rtm_client = slack.RTMClient(token=bot_token, run_async=True)
 
         try:
-            self.web_client.auth_test()
+            self.bot_web_client.auth_test()
             ans = slack.WebClient(token=bot_token).auth_test()
+            self.user_web_client.auth_test()
         except errors.SlackClientError as e:
             self.logger.exception(e)
             raise
@@ -57,7 +59,7 @@ class Slacker:
         :return: True if direct messages, False if not, None if have no connections or other problems
         """
         try:
-            ch_info = await self.web_client.conversations_info(channel=channel_id)
+            ch_info = await self.bot_web_client.conversations_info(channel=channel_id)
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
@@ -81,7 +83,7 @@ class Slacker:
         types = "public_channel" if public_only else "public_channel, private_channel"
 
         try:
-            channels = await self.web_client.channels_list(
+            channels = await self.bot_web_client.channels_list(
                 exclude_archive=exclude_archive, types=types
             )
         except errors.SlackClientError as e:
@@ -106,7 +108,7 @@ class Slacker:
             return len(mes.get("text", []))
 
         try:
-            answer = await self.web_client.conversations_replies(
+            answer = await self.user_web_client.conversations_replies(
                 channel=ch_id, ts=mes.get("ts", 0)
             )
         except errors.SlackClientError as e:
@@ -178,7 +180,7 @@ class Slacker:
             kws.update({"latest": latest})
 
         try:
-            answer = await self.web_client.conversations_history(**kws)
+            answer = await self.user_web_client.conversations_history(**kws)
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
@@ -221,7 +223,7 @@ class Slacker:
         """
 
         try:
-            answer = await self.web_client.chat_getPermalink(
+            answer = await self.bot_web_client.chat_getPermalink(
                 channel=channel_id, message_ts=str(message_ts)
             )
         except errors.SlackClientError as e:
@@ -270,7 +272,7 @@ class Slacker:
         """
         try:
             if text:
-                await self.web_client.chat_postMessage(
+                await self.bot_web_client.chat_postMessage(
                     channel=channel_id, text=text, as_user="false", link_names="true"
                 )
         except errors.SlackClientError as e:
