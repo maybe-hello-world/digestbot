@@ -9,15 +9,17 @@ import asyncio
 from digestbot.core.db.models import Message
 from digestbot.core.common import config, LoggerFactory
 from digestbot.core.utils import reaction_ranking
+from digestbot.resilence_library.retryafter import RetryAfterSlack
 
-import nest_asyncio
 
 import slack
 import slack.errors as errors
 
 # Bug in slackclient v2.2.0:
 # https://stackoverflow.com/questions/57154308/why-am-i-getting-runtimeerror-this-event-loop-is-already-running
-nest_asyncio.apply()
+# TODO: remove if no problems
+# import nest_asyncio
+# nest_asyncio.apply()
 
 
 class Slacker:
@@ -27,6 +29,7 @@ class Slacker:
 
     def __init__(self, user_token: str, bot_token: str):
         self.logger = LoggerFactory.create_logger("slack_api", config.LOG_LEVEL)
+        self.retry_policy = RetryAfterSlack(repeat=5)
 
         self.bot_web_client = slack.WebClient(token=bot_token, run_async=True)
         self.user_web_client = slack.WebClient(token=user_token, run_async=True)
@@ -59,7 +62,9 @@ class Slacker:
         :return: True if direct messages, False if not, None if have no connections or other problems
         """
         try:
-            ch_info = await self.bot_web_client.conversations_info(channel=channel_id)
+            ch_info = await self.retry_policy.execute(
+                lambda: self.bot_web_client.conversations_info(channel=channel_id)
+            )
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
@@ -83,8 +88,10 @@ class Slacker:
         types = "public_channel" if public_only else "public_channel, private_channel"
 
         try:
-            channels = await self.bot_web_client.channels_list(
-                exclude_archive=exclude_archive, types=types
+            channels = await self.retry_policy.execute(
+                lambda: self.bot_web_client.channels_list(
+                    exclude_archive=exclude_archive, types=types
+                )
             )
         except errors.SlackClientError as e:
             self.logger.exception(e)
@@ -108,8 +115,10 @@ class Slacker:
             return len(mes.get("text", []))
 
         try:
-            answer = await self.user_web_client.conversations_replies(
-                channel=ch_id, ts=mes.get("ts", 0)
+            answer = await self.retry_policy.execute(
+                lambda: self.user_web_client.conversations_replies(
+                    channel=ch_id, ts=mes.get("ts", 0)
+                )
             )
         except errors.SlackClientError as e:
             self.logger.exception(e)
@@ -171,7 +180,7 @@ class Slacker:
         allowed_subtypes = {"thread_broadcast", "bot_message", "file_share", None}
 
         # to unixtime
-        oldest = oldest or datetime.now() - timedelta(days=1)
+        oldest = oldest or (datetime.now() - timedelta(days=1))
         oldest = int(time.mktime(oldest.utctimetuple()))
 
         kws = {"channel": channel_id, "oldest": oldest, "limit": limit}
@@ -180,7 +189,9 @@ class Slacker:
             kws.update({"latest": latest})
 
         try:
-            answer = await self.user_web_client.conversations_history(**kws)
+            answer = await self.retry_policy.execute(
+                lambda: self.user_web_client.conversations_history(**kws)
+            )
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
@@ -223,8 +234,10 @@ class Slacker:
         """
 
         try:
-            answer = await self.bot_web_client.chat_getPermalink(
-                channel=channel_id, message_ts=str(message_ts)
+            answer = await self.retry_policy.execute(
+                lambda: self.bot_web_client.chat_getPermalink(
+                    channel=channel_id, message_ts=str(message_ts)
+                )
             )
         except errors.SlackClientError as e:
             self.logger.exception(e)
@@ -272,8 +285,13 @@ class Slacker:
         """
         try:
             if text:
-                await self.bot_web_client.chat_postMessage(
-                    channel=channel_id, text=text, as_user="false", link_names="true"
+                await self.retry_policy.execute(
+                    lambda: self.bot_web_client.chat_postMessage(
+                        channel=channel_id,
+                        text=text,
+                        as_user="false",
+                        link_names="true",
+                    )
                 )
         except errors.SlackClientError as e:
             self.logger.exception(e)
