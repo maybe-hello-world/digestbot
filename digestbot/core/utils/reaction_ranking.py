@@ -23,7 +23,7 @@ def get_react_score(reactions: List[dict]) -> float:
 
 
 # yes, during import time
-reactions_dict = defaultdict(lambda: 0)
+reactions_dict = defaultdict(lambda: 0.1)
 try:
     __location__ = os.path.realpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__))

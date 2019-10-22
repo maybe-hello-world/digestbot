@@ -24,14 +24,18 @@ async def crawl_messages() -> None:
     while True:
         # get messages and insert them into database
         ch_info = await slacker.get_channels_list()
-        for ch_id, ch_name in ch_info:
-            _logger.info(f"Channel: {ch_name}")
+        if ch_info:
+            for ch_id, ch_name in ch_info:
+                _logger.debug(f"Channel: {ch_name}")
 
-            day_ago = datetime.now() - timedelta(days=1)
-            messages = await slacker.get_channel_messages(ch_id, day_ago)
-            if messages:
-                await upsert_messages(db_engine=db_engine, messages=messages)
-            _logger.info(str(messages))
+                day_ago = datetime.now() - timedelta(days=1)
+                messages = await slacker.get_channel_messages(ch_id, day_ago)
+                if messages:
+                    await upsert_messages(db_engine=db_engine, messages=messages)
+                _logger.debug(str(messages))
+            _logger.info(
+                f"Messages from {len(ch_info)} channels parsed and sent to the database."
+            )
 
         # update messages without permalinks
         req_status, empty_links_messages = await get_messages_without_links(
@@ -68,7 +72,9 @@ async def handle_message(**payload) -> None:
         is_im=is_im,
     )
 
-    await process_message(message=message, bot_name=config.BOT_NAME, api=slacker, db_engine=db_engine)
+    await process_message(
+        message=message, bot_name=config.BOT_NAME, api=slacker, db_engine=db_engine
+    )
 
 
 if __name__ == "__main__":

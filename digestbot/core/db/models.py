@@ -19,4 +19,4 @@ class Message:
     thread_length: int
     channel_id: str
     link: Optional[str]
-    reactions_rate: int = 0
+    reactions_rate: float = 0.0

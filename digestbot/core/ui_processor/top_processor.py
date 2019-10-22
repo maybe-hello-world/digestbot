@@ -89,24 +89,25 @@ def __pretty_top_format(messages: List[Message]) -> str:
     :return: string to be send to the channel
     """
     template = (
-        "{}. Author: <@{}>\n"
-        "Text: {}.... "
-        "The message has {} replies from {} users and reaction rate equal to {}.\n"
-        "Link to the message: {}"
+        "{}. <@{}> | <#{}>\n"
+        "{}...\n"
+        "Replies: {} from {} users. Reactions rate: {}.\n"
+        "Link: {}"
     )
     messages = (
         template.format(
             i,
             x.username,
+            x.channel_id,
             x.text[:200],
             x.reply_count,
             x.reply_users_count,
-            x.reactions_rate,
+            round(x.reactions_rate, 2),
             x.link,
         )
         for i, x in enumerate(messages, start=1)
     )
-    return "\n\n".join(messages)
+    return "\n\n\n".join(messages)
 
 
 async def process_top_request(args: TopCommandArgs, db_engine: PostgreSQLEngine) -> str:
