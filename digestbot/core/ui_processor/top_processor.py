@@ -102,7 +102,7 @@ def __pretty_top_format(messages: List[Message]) -> str:
             x.text[:200],
             x.reply_count,
             x.reply_users_count,
-            x.reactions_rate,
+            round(x.reactions_rate, 2),
             x.link,
         )
         for i, x in enumerate(messages, start=1)
