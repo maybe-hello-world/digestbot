@@ -81,7 +81,7 @@ class ConfigParserTest(unittest.TestCase):
         del os.environ["BOT_NAME"]
 
         importlib.reload(self.config)
-        self.assertEqual("digest-bot", self.config.BOT_NAME)
+        self.assertEqual("digestbot", self.config.BOT_NAME)
 
     def test_db_user_positive(self):
         os.environ["DB_USER"] = "testvalue"

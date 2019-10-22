@@ -9,13 +9,21 @@ from digestbot.core.ui_processor.top_processor import (
     TopCommandArgs,
     process_top_request,
 )
+from digestbot.core.ui_processor.help_processor import (
+    help_command,
+    process_help_request,
+)
+from digestbot.core.ui_processor.presets_processor import (
+    presets_command,
+    process_presets_request,
+)
 
-SYNTAX_RESPONSE = "Hello, <@{}>! I didn't understood your request, could you check your command? Thanks."
+SYNTAX_RESPONSE = "Oops! <@{}>, I didn't understood your request, could you check your command? Thanks."
 
 _logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)
 
 
-parser = CommandParser([top_command])
+parser = CommandParser([top_command, help_command, presets_command])
 
 
 async def process_message(
@@ -40,13 +48,18 @@ async def process_message(
     # parse message and prepare message to answer
     try:
         parse_result = parser.parse(message.text)
-        if parse_result and parse_result.command == top_command.name:
+
+        if not parse_result:
+            text_to_answer = SYNTAX_RESPONSE.format(message.user)
+        elif parse_result.command == top_command.name:
             top_command_args = TopCommandArgs.from_dict(parse_result.args)
             text_to_answer = await process_top_request(top_command_args, db_engine)
-            await api.post_to_channel(channel_id=message.channel, text=text_to_answer)
+        elif parse_result.command == help_command.name:
+            text_to_answer = process_help_request(parse_result.args)
+        elif parse_result.command == presets_command.name:
+            text_to_answer = await process_presets_request(db_engine)
         else:
-            await api.post_to_channel(
-                channel_id=message.channel, text=SYNTAX_RESPONSE.format(message.user)
-            )
+            text_to_answer = SYNTAX_RESPONSE.format(message.user)
+        await api.post_to_channel(channel_id=message.channel, text=text_to_answer)
     except TooManyArgumentsError as exception:
         await api.post_to_channel(channel_id=message.channel, text=str(exception))
