@@ -14,7 +14,7 @@ class CommandParser:
         split = text.split()
         if not split:
             return None
-        command_name = split[0]
+        command_name = split[0].lower()
         for c in self.commands:
             if command_name == c.name:
                 return CommandParseResult(command_name, c.parse(split[1:]))

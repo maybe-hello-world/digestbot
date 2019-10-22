@@ -89,7 +89,8 @@ def __pretty_top_format(messages: List[Message]) -> str:
     :return: string to be send to the channel
     """
     template = (
-        "{}. Author: <@{}>, text: {}.... "
+        "{}. Author: <@{}>\n"
+        "Text: {}.... "
         "The message has {} replies from {} users and reaction rate equal to {}.\n"
         "Link to the message: {}"
     )
@@ -97,7 +98,7 @@ def __pretty_top_format(messages: List[Message]) -> str:
         template.format(
             i,
             x.username,
-            x.text[:50],
+            x.text[:200],
             x.reply_count,
             x.reply_users_count,
             x.reactions_rate,
