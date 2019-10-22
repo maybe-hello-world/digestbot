@@ -33,6 +33,17 @@ except ValueError:
     CRAWL_INTERVAL = 900
 
 
+# what oldest messages to get (in days)
+MESSAGE_DELTA_DAYS = os.getenv("MESSAGE_DELTA_DAYS", "1")
+try:
+    MESSAGE_DELTA_DAYS = int(MESSAGE_DELTA_DAYS)
+except ValueError:
+    _logger.warning(
+        f"Could not parse message delta interval: f{MESSAGE_DELTA_DAYS}, default value 1 is used."
+    )
+    MESSAGE_DELTA_DAYS = 1
+
+
 # App name in slack (important for not answering own messages)
 BOT_NAME = os.getenv("BOT_NAME", "digestbot")
 
