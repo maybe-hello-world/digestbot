@@ -107,7 +107,7 @@ def __pretty_top_format(messages: List[Message]) -> str:
         )
         for i, x in enumerate(messages, start=1)
     )
-    return "\n\n".join(messages)
+    return "\n\n\n".join(messages)
 
 
 async def process_top_request(args: TopCommandArgs, db_engine: PostgreSQLEngine) -> str:
