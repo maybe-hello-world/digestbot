@@ -9,8 +9,7 @@ import asyncio
 from digestbot.core.db.models import Message
 from digestbot.core.common import config, LoggerFactory
 from digestbot.core.utils import reaction_ranking
-from digestbot.resilence_library.retryafter import RetryAfterSlack
-
+from digestbot.resilence_library.retryafter import RetryAfterSlack, RetryAfterError
 
 import slack
 import slack.errors as errors
@@ -65,6 +64,9 @@ class Slacker:
             ch_info = await self.retry_policy.execute(
                 lambda: self.bot_web_client.conversations_info(channel=channel_id)
             )
+        except (RetryAfterError, asyncio.TimeoutError):
+            self.logger.warning("Timeout during is_direct_channel request")
+            return None
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
@@ -93,6 +95,9 @@ class Slacker:
                     exclude_archive=exclude_archive, types=types
                 )
             )
+        except (RetryAfterError, asyncio.TimeoutError):
+            self.logger.warning("Timeout during get_channel_list request")
+            return None
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
@@ -120,6 +125,9 @@ class Slacker:
                     channel=ch_id, ts=mes.get("ts", 0)
                 )
             )
+        except (RetryAfterError, asyncio.TimeoutError):
+            self.logger.warning("Timeout during count_thread_length request")
+            return 0
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return 0
@@ -192,6 +200,9 @@ class Slacker:
             answer = await self.retry_policy.execute(
                 lambda: self.user_web_client.conversations_history(**kws)
             )
+        except (RetryAfterError, asyncio.TimeoutError):
+            self.logger.warning("Timeout during get_channel_messages request")
+            return None
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
@@ -239,6 +250,9 @@ class Slacker:
                     channel=channel_id, message_ts=str(message_ts)
                 )
             )
+        except (asyncio.TimeoutError, RetryAfterError):
+            self.logger.debug("Too much permalinks requested, will try next time.")
+            return None
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
@@ -293,5 +307,8 @@ class Slacker:
                         link_names="true",
                     )
                 )
+        except (RetryAfterError, asyncio.TimeoutError):
+            self.logger.warning("Couldn't post to channel due to timeout.")
+            return None
         except errors.SlackClientError as e:
             self.logger.exception(e)
