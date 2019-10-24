@@ -253,6 +253,11 @@ class Slacker:
         except (asyncio.TimeoutError, RetryAfterError):
             self.logger.debug("Too much permalinks requested, will try next time.")
             return None
+        except errors.SlackApiError as e:
+            if e.response.get("error", "") == "message_not_found":
+                return "Sorry, message was deleted :("
+            self.logger.exception(e)
+            return None
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
