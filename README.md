@@ -1,4 +1,5 @@
-# digestbot
+# digestbot 
+[![Build Status](https://travis-ci.com/artyomche9/digestbot.svg?branch=develop)](https://travis-ci.com/artyomche9/digestbot)
 
 Bot for slack, who send you top messages whenever you want!  
 
