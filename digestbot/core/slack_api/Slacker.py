@@ -215,6 +215,16 @@ class Slacker:
         messages = await self._count_thread_lengths(channel_id, messages)
         messages = self._count_reaction_rate(messages)
 
+        for x in messages:
+            new_x = x.get("text", " ")
+            if "<!" in new_x:
+                new_x = (
+                    new_x.replace("<!everyone>", "everyone")
+                    .replace("<!channel>", "channel")
+                    .replace("<!here>", "here")
+                )
+                x["text"] = new_x
+
         # return only needed statistics
         messages = [
             Message(
