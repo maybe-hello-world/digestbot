@@ -1,11 +1,12 @@
 import sys
+
 import slack
 import asyncio
 
+import digestbot.core.ui_processor.common
 from digestbot.core.internal_processing.crawler import crawl_messages
 from digestbot.core.internal_processing.timer import timer_processor
 from digestbot.core.ui_processor.request_parser import process_message
-import digestbot.core.ui_processor.common
 from digestbot.core.slack_api.Slacker import Slacker
 from digestbot.core import PostgreSQLEngine
 from digestbot.core.common import config, LoggerFactory

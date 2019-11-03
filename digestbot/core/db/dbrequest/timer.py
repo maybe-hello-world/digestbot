@@ -69,8 +69,15 @@ async def get_nearest_timer(db_engine: PostgreSQLEngine) -> Optional[Timer]:
     """
     try:
         answer = await db_engine.make_fetch_rows(request)
+        if not answer:
+            return None
+        answer = answer[0]
         answer = Timer(**answer)
         return answer
     except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
+        db_engine.logger.exception(e)
+        return None
+    except Exception as e:
+        db_engine.logger.error("Error! Unhandled exception!")
         db_engine.logger.exception(e)
         return None

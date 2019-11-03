@@ -22,14 +22,15 @@ async def timer_processor(
 
         # sleep until that time if time - current_time > 0
         run_time = nearest_timer.next_start
-        run_delta = datetime.now() - run_time
+        now = datetime.now().replace(tzinfo=None)
+        run_delta = run_time - now
         run_delta = run_delta.total_seconds()
         if run_delta > 5:
             await asyncio.sleep(run_delta)
 
         # run top command and return result to the user
         u_message = UserRequest(
-            user="User",
+            user="user",
             text=nearest_timer.top_command,
             channel=nearest_timer.channel_id,
             is_im=True,
@@ -44,7 +45,7 @@ async def timer_processor(
             logger.exception(e)
 
         # set next_start to next_start + timedelta
-        next_time = nearest_timer.next_start + nearest_timer.delta
+        next_time = datetime.now().replace(tzinfo=None) + nearest_timer.delta
         new_timer = Timer(
             channel_id=nearest_timer.channel_id,
             timer_name=nearest_timer.timer_name,

@@ -10,7 +10,7 @@ def create_timers_table() -> str:
             delta INTERVAL NOT NULL,
             next_start TIMESTAMP WITH TIME ZONE NOT NULL,
             top_command TEXT NOT NULL,
-            PRIMARY KEY(username, timer_name)
+            PRIMARY KEY(channel_id, timer_name)
         );
     """
 
@@ -112,7 +112,11 @@ async def create_tables(connection: asyncpg.Connection, logger: Logger) -> bool:
     :param logger: logger for logging
     :return: status execution: 0 - Fail, 1 - Success
     """
-    tables = {"Category": create_category_table(), "Message": create_message_table()}
+    tables = {
+        "Category": create_category_table(),
+        "Message": create_message_table(),
+        "Timer": create_timers_table(),
+    }
 
     big_query = "\n".join(tables.values())
     logger.info(f"Will be created new tables: {', '.join(tables.keys())}")
