@@ -16,7 +16,7 @@ from digestbot.core.ui_processor.help_processor import (
 from digestbot.core.ui_processor.presets_processor import (
     presets_command,
     process_presets_request,
-)
+    presets_parser)
 
 SYNTAX_RESPONSE = (
     "Oops! <@{}>, I didn't understood your request, could you check your command? "
@@ -26,7 +26,7 @@ SYNTAX_RESPONSE = (
 _logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)
 
 
-parser = CommandParser([top_command, help_command, presets_command])
+parser = CommandParser([top_command, help_command, presets_command], sub_parsers=[presets_parser])
 
 
 async def process_message(
