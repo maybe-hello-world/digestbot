@@ -5,11 +5,12 @@ from logging import Logger
 def create_category_table() -> str:
     return """
         CREATE TABLE Category (
+            id BIGSERIAL NOT NULL PRIMARY KEY, 
             username TEXT,  -- username is null if category created by developers
             name TEXT NOT NULL,
             channel_ids TEXT[],
 
-            PRIMARY KEY (username, name)
+            UNIQUE (username, name)
         );
 
         CREATE INDEX category_name_idx ON category (name);

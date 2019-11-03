@@ -5,6 +5,7 @@ from decimal import Decimal
 
 @dataclass(frozen=True)
 class Category:
+    id: int
     username: Optional[str]
     name: str
     channel_ids: List[str]

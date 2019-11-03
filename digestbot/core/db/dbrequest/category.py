@@ -1,4 +1,4 @@
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Optional
 import asyncpg
 
 from digestbot.core import Category, PostgreSQLEngine
@@ -87,6 +87,45 @@ async def get_category_by_name(
         category = None
 
     return status, category
+
+
+async def get_categories(db_engine: PostgreSQLEngine, user_id: Optional[str], include_global: bool = True) -> List[Category]:
+    user_query = """SELECT * FROM category WHERE username = $1"""
+    global_query = """SELECT * FROM category WHERE username IS NULL"""
+
+    union_query = f"""{user_query} UNION ALL {global_query}"""
+
+    if user_id is None:
+        return request_categories_to_category_class(await db_engine.make_fetch_rows(global_query))
+    else:
+        if include_global:
+            return request_categories_to_category_class(await db_engine.make_fetch_rows(union_query, user_id))
+        else:
+            return request_categories_to_category_class(await db_engine.make_fetch_rows(user_query, user_id))
+
+
+async def add_or_update_category(db_engine: PostgreSQLEngine, user_id: Optional[str], name: str, channels: List[str]) -> Category:
+    query = """INSERT INTO category (username, name, channel_ids) 
+                VALUES ($1, $2, $3) 
+                ON CONFLICT (username, name)
+                DO UPDATE SET 
+                    username = excluded.username, 
+                    name = excluded.name, 
+                    channel_ids = excluded.channel_ids
+                RETURNING *"""
+
+    result = await db_engine.make_fetch_rows(query, user_id, name, channels)
+    return request_categories_to_category_class(result)[0]
+
+
+async def remove_category(db_engine: PostgreSQLEngine, user_id: str, name: str) -> Optional[Category]:
+    query = """DELETE FROM category WHERE username = $1 AND name = $2 RETURNING *"""
+
+    result = await db_engine.make_fetch_rows(query, user_id, name)
+
+    if not result:
+        return None
+    return request_categories_to_category_class(result)[0]
 
 
 async def get_all_categories(

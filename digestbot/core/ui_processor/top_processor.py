@@ -110,7 +110,7 @@ def __pretty_top_format(messages: List[Message]) -> str:
     return "\n\n\n".join(messages)
 
 
-async def process_top_request(args: TopCommandArgs, db_engine: PostgreSQLEngine) -> str:
+async def process_top_request(args: TopCommandArgs, db_engine: PostgreSQLEngine, user_id: str) -> str:
     """
     Returns formatted message with top-messages to user
 
@@ -137,7 +137,7 @@ async def process_top_request(args: TopCommandArgs, db_engine: PostgreSQLEngine)
         )
     else:
         req_status, messages = await get_top_messages_by_category_name(
-            category_name=args.category_name, **parameters
+            category_name=args.category_name, user_id=user_id, **parameters
         )
 
     if not req_status:

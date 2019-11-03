@@ -15,6 +15,24 @@ class Argument:
         pass
 
 
+class MultiArgument:
+    def __init__(self, name: str, default: Optional[Any]):
+        self.name = name
+        self.default = default
+
+    @abstractmethod
+    def parse(self, texts: List[str]) -> ParseResult:
+        pass
+
+
+class StringMultiArgument(MultiArgument):
+    def __init__(self, name: str, default: Optional[str] = None):
+        super().__init__(name, default or [])
+
+    def parse(self, texts: List[str]) -> ParseResult:
+        return Parsed(texts)
+
+
 class IntArgument(Argument):
     def __init__(self, name: str, default: Optional[int] = None):
         super().__init__(name, default)
