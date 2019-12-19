@@ -6,6 +6,7 @@ def create_timers_table() -> str:
     return """
         CREATE TABLE Timer (
             channel_id TEXT NOT NULL,
+            username TEXT NOT NULL,
             timer_name TEXT NOT NULL,
             delta INTERVAL NOT NULL,
             next_start TIMESTAMP WITH TIME ZONE NOT NULL,

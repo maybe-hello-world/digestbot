@@ -27,6 +27,7 @@ class Message:
 @dataclass(frozen=True)
 class Timer:
     channel_id: str
+    username: str
     timer_name: str
     delta: timedelta
     next_start: datetime

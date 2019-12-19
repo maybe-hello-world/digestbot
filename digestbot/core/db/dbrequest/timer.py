@@ -37,8 +37,8 @@ async def remove_timer(
 
 async def upsert_timer(db_engine: PostgreSQLEngine, timer: Timer) -> bool:
     request = """
-        INSERT INTO timer (channel_id, timer_name, delta, next_start, top_command)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO timer (channel_id, username, timer_name, delta, next_start, top_command)
+        VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (channel_id, timer_name)
         DO UPDATE SET
             delta = EXCLUDED.delta,
@@ -49,6 +49,7 @@ async def upsert_timer(db_engine: PostgreSQLEngine, timer: Timer) -> bool:
         await db_engine.make_execute(
             request,
             timer.channel_id,
+            timer.username,
             timer.timer_name,
             timer.delta,
             timer.next_start,

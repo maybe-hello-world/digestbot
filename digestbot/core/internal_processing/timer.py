@@ -30,7 +30,7 @@ async def timer_processor(
 
         # run top command and return result to the user
         u_message = UserRequest(
-            user="user",
+            user=nearest_timer.username,
             text=nearest_timer.top_command,
             channel=nearest_timer.channel_id,
             is_im=True,
@@ -48,6 +48,7 @@ async def timer_processor(
         next_time = datetime.now().replace(tzinfo=None) + nearest_timer.delta
         new_timer = Timer(
             channel_id=nearest_timer.channel_id,
+            username=nearest_timer.username,
             timer_name=nearest_timer.timer_name,
             delta=nearest_timer.delta,
             next_start=next_time,
