@@ -69,6 +69,18 @@ class TimeDeltaArgument(Argument):
             return NotParsed(self.default)
 
 
+class ExactArgument(Argument):
+    def __init__(self, name: str, value: str):
+        super().__init__(name, value)
+        self.value = value
+
+    def parse(self, text: str) -> ParseResult:
+        if text == self.value:
+            return Parsed(self.value)
+        else:
+            return NotParsed(self.value)
+
+
 def _int_or_default(text: str, default: Optional[int] = None) -> Optional[int]:
     try:
         return int(text)
