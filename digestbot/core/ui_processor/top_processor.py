@@ -5,7 +5,7 @@ import time
 from decimal import Decimal
 from dataclasses import dataclass
 from datetime import timedelta, datetime
-from typing import Optional, Any, Dict, List
+from typing import Optional, Any, Dict, List, Callable
 
 from digestbot.core import Message
 from digestbot.command_parser.argument import (
@@ -23,18 +23,16 @@ from digestbot.core.db.dbrequest.message import (
     get_top_messages_by_category_name,
 )
 
-top_command = (
-    CommandBuilder("top")
-    .add_argument(IntArgument("N", default=5))
-    .add_argument(TimeDeltaArgument("time", default=timedelta(days=1)))
-    .add_argument(
-        ChoiceArgument(
-            "sorting_method", ["replies", "length", "reactions"], default="replies"
-        )
-    )
-    .add_argument(StringArgument("channel", default=None))
-    .build()
+top_arguments = (
+    IntArgument("N", default=5),
+    TimeDeltaArgument("time", default=timedelta(days=1)),
+    ChoiceArgument(
+        "sorting_method", ["replies", "length", "reactions"], default="replies"
+    ),
+    StringArgument("channel", default=None),
 )
+
+top_command = CommandBuilder("top").extend_with_arguments(top_arguments).build()
 
 
 @dataclass(frozen=True)
