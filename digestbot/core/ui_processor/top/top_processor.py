@@ -1,82 +1,17 @@
-from __future__ import annotations
-
 import time
 
 from decimal import Decimal
-from dataclasses import dataclass
-from datetime import timedelta, datetime
-from typing import Optional, Any, Dict, List, Callable
+from datetime import datetime
+from typing import List
 
-from digestbot.core import Message
-from digestbot.command_parser.argument import (
-    StringArgument,
-    ChoiceArgument,
-    TimeDeltaArgument,
-    IntArgument,
-)
-from digestbot.command_parser.command import CommandBuilder
-from digestbot.core.common.Enums import SortingType
-from digestbot.core.db.dbengine import PostgreSQLEngine
+from digestbot.core.db.models import Message
+from digestbot.core.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
 from digestbot.core.db.dbrequest.message import (
     get_top_messages,
     get_top_messages_by_channel_id,
     get_top_messages_by_category_name,
 )
-
-top_arguments = (
-    IntArgument("N", default=5),
-    TimeDeltaArgument("time", default=timedelta(days=1)),
-    ChoiceArgument(
-        "sorting_method", ["replies", "length", "reactions"], default="replies"
-    ),
-    StringArgument("channel", default=None),
-)
-
-top_command = CommandBuilder("top").extend_with_arguments(top_arguments).build()
-
-
-@dataclass(frozen=True)
-class TopCommandArgs:
-    N: int
-    time: timedelta
-    sorting_method: str
-
-    channel_id: Optional[str] = None
-    category_name: Optional[str] = None
-
-    @staticmethod
-    def _parse_channel(channel: Optional[str]) -> Dict[str, str]:
-        if not channel:
-            return {}
-        split = channel.strip("<>").split("|")
-        if len(split) == 1:
-            return {"category_name": split[0]}
-        if len(split) == 2:
-            return {"channel_id": split[0].lstrip("#")}
-        raise ValueError(
-            f"Channel Id format is not recognized (split result is {split}). Possible Slack API change"
-        )
-
-    def is_all_channels_requested(self) -> bool:
-        return self.category_name is None and self.channel_id is None
-
-    def is_channel(self) -> bool:
-        return self.channel_id is not None
-
-    @staticmethod
-    def from_dict(kwargs: Dict[str, Any]) -> TopCommandArgs:
-        sorting_type_mapper = {
-            "replies": "reply_count",
-            "length": "thread_length",
-            "reactions": "reactions_rate",
-        }
-        kwargs["sorting_method"] = SortingType(
-            sorting_type_mapper[kwargs["sorting_method"]]
-        )
-        channel_parse = TopCommandArgs._parse_channel(kwargs["channel"])
-        del kwargs["channel"]
-        kwargs.update(channel_parse)
-        return TopCommandArgs(**kwargs)
+from digestbot.core.ui_processor.top.top_command import TopCommandArgs
 
 
 def __pretty_top_format(messages: List[Message]) -> str:

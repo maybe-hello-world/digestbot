@@ -71,7 +71,7 @@ class TimeDeltaArgument(Argument):
 
 class ExactArgument(Argument):
     def __init__(self, name: str, value: str):
-        super().__init__(name, value)
+        super().__init__(name, default=None)
         self.value = value
 
     def parse(self, text: str) -> ParseResult:

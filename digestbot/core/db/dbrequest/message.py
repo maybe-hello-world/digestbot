@@ -2,8 +2,9 @@ from typing import List, Tuple, Any
 from decimal import Decimal
 import asyncpg
 
-from digestbot.core import Message, PostgreSQLEngine
+from digestbot.core.db.models import Message
 from digestbot.core.common.Enums import SortingType
+from digestbot.core.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
 
 
 def make_insert_values_from_messages_array(messages: List[Message]) -> List[tuple]:

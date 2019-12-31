@@ -1,18 +1,19 @@
 from typing import List, Tuple, Optional
 import asyncpg
 
-from digestbot.core import PostgreSQLEngine, Timer
+from digestbot.core.db.models import Timer
+from digestbot.core.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
 
 
 async def list_timers(
-    db_engine: PostgreSQLEngine, channel_id: str
+    db_engine: PostgreSQLEngine, username: str
 ) -> Tuple[bool, Optional[List[Timer]]]:
     request = """
         SELECT * FROM timer
-        WHERE channel_id == ($1)
+        WHERE username = ($1)
     """
     try:
-        timers = await db_engine.make_fetch_rows(request, channel_id)
+        timers = await db_engine.make_fetch_rows(request, username)
         result = [Timer(**x) for x in timers]
         return True, result
     except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
@@ -20,15 +21,45 @@ async def list_timers(
         return False, None
 
 
+async def check_timer_existence(
+    db_engine: PostgreSQLEngine, timer_name: str, username: str
+) -> Tuple[bool, Optional[bool]]:
+    request = """
+                SELECT COUNT(*) FROM timer
+                WHERE username = ($1) AND timer_name = ($2)
+            """
+    try:
+        timers_count = await db_engine.make_fetch_rows(request, username, timer_name)
+        return True, timers_count[0]["count"] > 0
+    except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
+        db_engine.logger.exception(e)
+        return False, None
+
+
+async def count_timers(
+    db_engine: PostgreSQLEngine, username: str
+) -> Tuple[bool, Optional[int]]:
+    request = """
+        SELECT COUNT(*) FROM timer
+        WHERE username = ($1)
+    """
+    try:
+        timers_count = await db_engine.make_fetch_rows(request, username)
+        return True, timers_count[0]["count"]
+    except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
+        db_engine.logger.exception(e)
+        return False, None
+
+
 async def remove_timer(
-    db_engine: PostgreSQLEngine, channel_id: str, timer_name: str
+    db_engine: PostgreSQLEngine, username: str, timer_name: str
 ) -> bool:
     request = """
         DELETE FROM timer
-        WHERE channel_id == ($1) AND timer_name == ($2)
+        WHERE username = ($1) AND timer_name = ($2)
     """
     try:
-        await db_engine.make_execute(request, channel_id, timer_name)
+        await db_engine.make_execute(request, username, timer_name)
         return True
     except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
         db_engine.logger.exception(e)
@@ -39,7 +70,7 @@ async def upsert_timer(db_engine: PostgreSQLEngine, timer: Timer) -> bool:
     request = """
         INSERT INTO timer (channel_id, username, timer_name, delta, next_start, top_command)
         VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT (channel_id, timer_name)
+        ON CONFLICT (username, timer_name)
         DO UPDATE SET
             delta = EXCLUDED.delta,
             next_start = EXCLUDED.next_start,

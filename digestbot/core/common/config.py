@@ -83,3 +83,13 @@ LOG_LEVEL = __available_log_levels[LOG_LEVEL]
 # Private messages only
 PM_ONLY = os.getenv("PM_ONLY", "False").strip().lower()
 PM_ONLY = PM_ONLY == "true"
+
+# how many timers are available for each user
+TIMERS_LIMIT = os.getenv("TIMERS_LIMIT", "5")
+try:
+    TIMERS_LIMIT = int(TIMERS_LIMIT)
+except ValueError:
+    _logger.warning(
+        f"Could not parse timers limit value: f{TIMERS_LIMIT}, default value 5 is used."
+    )
+    TIMERS_LIMIT = 5

@@ -9,9 +9,9 @@ def create_timers_table() -> str:
             username TEXT NOT NULL,
             timer_name TEXT NOT NULL,
             delta INTERVAL NOT NULL,
-            next_start TIMESTAMP WITH TIME ZONE NOT NULL,
+            next_start TIMESTAMP WITHOUT TIME ZONE NOT NULL,
             top_command TEXT NOT NULL,
-            PRIMARY KEY(channel_id, timer_name)
+            PRIMARY KEY(username, timer_name)
         );
     """
 

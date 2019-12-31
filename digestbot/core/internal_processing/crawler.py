@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from logging import Logger
 
 from digestbot.core.common import config
-from digestbot.core.db.dbengine import PostgreSQLEngine
+from digestbot.core.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
 from digestbot.core.db.dbrequest.message import (
     upsert_messages,
     get_messages_without_links,
