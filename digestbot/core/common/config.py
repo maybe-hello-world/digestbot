@@ -90,6 +90,6 @@ try:
     TIMERS_LIMIT = int(TIMERS_LIMIT)
 except ValueError:
     _logger.warning(
-        f"Could not parse timers limit value: f{TIMERS_LIMIT}, default value 5 is used."
+        f"Could not parse timers limit value: {TIMERS_LIMIT}, default value 5 is used."
     )
     TIMERS_LIMIT = 5
