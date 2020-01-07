@@ -112,7 +112,7 @@ async def add_timer(
         )
 
     timer_exist, timer_name = True, ""
-    while timer_exist:
+    while timer_exist:  # TODO: remove while and take out to separate module
         timer_name = f"{''.join(random.choices(string.ascii_lowercase, k=4))}"
         timer_check_success, timer_exist = await check_timer_existence(
             db_engine=db_engine, timer_name=timer_name, username=username
