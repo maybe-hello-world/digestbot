@@ -13,7 +13,6 @@ from digestbot.core.ui_processor.request_parser import process_message
 async def timer_processor(
     slacker: Slacker, logger: Logger, db_engine: PostgreSQLEngine
 ):
-    await asyncio.sleep(10)  # let slacker and crawler start first
     while True:
         # get min(next_start)
         nearest_timer = await get_nearest_timer(db_engine=db_engine)

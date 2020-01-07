@@ -4,7 +4,10 @@ import slack
 import asyncio
 
 import digestbot.core.ui_processor.common
-from digestbot.core.internal_processing.crawler import crawl_messages
+from digestbot.core.internal_processing.crawler import (
+    crawl_messages,
+    crawl_messages_once,
+)
 from digestbot.core.internal_processing.timer import timer_processor
 from digestbot.core.ui_processor.request_parser import process_message
 from digestbot.core.slack_api.Slacker import Slacker
@@ -72,6 +75,11 @@ if __name__ == "__main__":
 
     slacker = Slacker(
         user_token=config.SLACK_USER_TOKEN, bot_token=config.SLACK_BOT_TOKEN
+    )
+
+    # initial crawling before starting UI
+    loop.run_until_complete(
+        crawl_messages_once(slacker=slacker, db_engine=db_engine, logger=_logger)
     )
 
     # Instantiate crawler with corresponding function
