@@ -119,14 +119,14 @@ async def add_timer(
         db_engine=db_engine, timer=timer, max_timers_count=TIMERS_LIMIT
     )
     if result is None:
-        _logger.warning(f"Unsuccessful database timer upsert, timer: {timer}")
+        _logger.warning(f"Unsuccessful database timer insert, timer: {timer}")
         return (
             "Some error occurred during timer creation. "
             "Please, try later or notify developer team about this situation. Thanks."
         )
     elif result:
         return (
-            f"Timer {timer.timer_name} succesfully created. "
+            f"Timer {timer.timer_name} successfully created. "
             f"Next start time: {timer.next_start.strftime('%Y-%m-%d %H:%M:%S')} UTC"
         )
     else:

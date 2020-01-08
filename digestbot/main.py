@@ -8,7 +8,11 @@ from digestbot.core.internal_processing.crawler import (
     crawl_messages,
     crawl_messages_once,
 )
-from digestbot.core.internal_processing.timer import timer_processor
+from digestbot.core.internal_processing.timer import (
+    timer_processor,
+    timers_update_once,
+    timers_updater,
+)
 from digestbot.core.ui_processor.request_parser import process_message
 from digestbot.core.slack_api.Slacker import Slacker
 from digestbot.core.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
@@ -82,6 +86,11 @@ if __name__ == "__main__":
         crawl_messages_once(slacker=slacker, db_engine=db_engine, logger=_logger)
     )
 
+    # check and update user timers and send users notifications about overdue timers
+    loop.run_until_complete(
+        timers_update_once(slacker=slacker, db_engine=db_engine, logger=_logger)
+    )
+
     # Instantiate crawler with corresponding function
     crawler_task = loop.create_task(
         crawl_messages(slacker=slacker, db_engine=db_engine, logger=_logger)
@@ -92,8 +101,15 @@ if __name__ == "__main__":
         timer_processor(slacker=slacker, db_engine=db_engine, logger=_logger)
     )
 
+    # Instantiate timers_updater
+    timers_updater_task = loop.create_task(
+        timers_updater(slacker=slacker, db_engine=db_engine, logger=_logger)
+    )
+
     # start Real-Time Listener and crawler
-    overall_tasks = asyncio.gather(slacker.start_listening(), crawler_task, timer_task)
+    overall_tasks = asyncio.gather(
+        slacker.start_listening(), crawler_task, timer_task, timers_updater_task
+    )
     try:
         signal.signal(
             signal.SIGTERM, lambda *args: exec("raise KeyboardInterrupt")

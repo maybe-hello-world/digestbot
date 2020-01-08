@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Tuple, Optional
 import asyncpg
 
@@ -133,15 +134,18 @@ async def update_timer_next_start(
         return None
 
 
-async def get_nearest_timer(db_engine: PostgreSQLEngine) -> Optional[Timer]:
+async def get_nearest_timer(
+    db_engine: PostgreSQLEngine, time_border: datetime
+) -> Optional[Timer]:
     request = """
         SELECT * FROM timer
         WHERE next_start = (
             SELECT MIN(next_start) FROM timer
+            WHERE next_start > $1
         );
     """
     try:
-        answer = await db_engine.make_fetch_rows(request)
+        answer = await db_engine.make_fetch_rows(request, time_border)
         if not answer:
             return None
         answer = answer[0]
@@ -152,5 +156,27 @@ async def get_nearest_timer(db_engine: PostgreSQLEngine) -> Optional[Timer]:
         return None
     except Exception as e:
         db_engine.logger.error("Error! Unhandled exception!")
+        db_engine.logger.exception(e)
+        return None
+
+
+async def get_overdue_timers(
+    db_engine: PostgreSQLEngine, time_border: datetime
+) -> Optional[List[Timer]]:
+    """
+    Return timers with next_start date < time_border date
+
+    :return: None if any error, List of timers otherwise
+    """
+    request = """
+        SELECT * FROM timer
+        WHERE next_start < $1
+    """
+
+    try:
+        overdue_timers = await db_engine.make_fetch_rows(request, time_border)
+        result = [Timer(**x) for x in overdue_timers]
+        return result
+    except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
         db_engine.logger.exception(e)
         return None
