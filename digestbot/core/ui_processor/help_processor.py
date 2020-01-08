@@ -68,7 +68,7 @@ def timers_help() -> str:
         "\n\n"
         "*timers rm* - removes one of your timers\n"
         "Syntax: `timers rm <timer_name>`\n"
-        "`timer_name`: name of timer (created automatically)"
+        "`timer_name`: name of timer (created automatically)\n"
         "Example:\n"
         "`timers rm oncx`"
     )
