@@ -66,18 +66,21 @@ async def remove_timer(
         return False
 
 
-async def upsert_timer(db_engine: PostgreSQLEngine, timer: Timer) -> bool:
+async def insert_timer(
+    db_engine: PostgreSQLEngine, timer: Timer, max_timers_count: int
+) -> Optional[bool]:
     request = """
-        INSERT INTO timer (channel_id, username, timer_name, delta, next_start, top_command)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT (username, timer_name)
-        DO UPDATE SET
-            delta = EXCLUDED.delta,
-            next_start = EXCLUDED.next_start,
-            top_command = EXCLUDED.top_command;
+        WITH rows AS (
+            INSERT INTO timer (channel_id, username, timer_name, delta, next_start, top_command)
+            (SELECT $1, $2, $3, $4, $5, $6
+            WHERE (SELECT COUNT(*) FROM timer WHERE username = $2) < $7)
+            RETURNING 1
+        )
+        SELECT count(*) FROM rows;
     """
+
     try:
-        await db_engine.make_execute(
+        result = await db_engine.make_fetch_rows(
             request,
             timer.channel_id,
             timer.username,
@@ -85,11 +88,49 @@ async def upsert_timer(db_engine: PostgreSQLEngine, timer: Timer) -> bool:
             timer.delta,
             timer.next_start,
             timer.top_command,
+            max_timers_count,
         )
-        return True
+        return result[0]["count"] == 1
     except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
         db_engine.logger.exception(e)
-        return False
+        return None
+
+
+async def update_timer_next_start(
+    db_engine: PostgreSQLEngine, timer: Timer
+) -> Optional[bool]:
+    request = """
+        WITH rows AS (
+            UPDATE timer SET
+            next_start = $3
+            WHERE username = $1 AND timer_name = $2
+            RETURNING 1
+        )
+        SELECT COUNT(*) FROM rows;
+    """
+    try:
+        result = await db_engine.make_fetch_rows(
+            request, timer.username, timer.timer_name, timer.next_start
+        )
+        rows_updated = result[0]["count"]
+        if rows_updated > 1:
+            db_engine.logger.critical(
+                f"Timers with similar names within one user are existing! "
+                f"Username: {timer.username}, "
+                f"timer name: {timer.timer_name}, "
+                f"amount: {rows_updated}"
+            )
+            return True
+
+        return rows_updated == 1
+    except (
+        asyncpg.QueryCanceledError,
+        asyncpg.ConnectionFailureError,
+        KeyError,
+        IndexError,
+    ) as e:
+        db_engine.logger.exception(e)
+        return None
 
 
 async def get_nearest_timer(db_engine: PostgreSQLEngine) -> Optional[Timer]:

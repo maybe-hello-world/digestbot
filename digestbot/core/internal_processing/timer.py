@@ -4,7 +4,7 @@ from logging import Logger
 
 from digestbot.core.db.models import Timer
 from digestbot.core.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
-from digestbot.core.db.dbrequest.timer import get_nearest_timer, upsert_timer
+from digestbot.core.db.dbrequest.timer import get_nearest_timer, update_timer_next_start
 from digestbot.core.slack_api import Slacker
 from digestbot.core.ui_processor.common import UserRequest
 from digestbot.core.ui_processor.request_parser import process_message
@@ -40,15 +40,21 @@ async def timer_processor(
             ts="",
         )
 
+        # set next_start to next_start + timedelta
+        next_time = datetime.utcnow() + nearest_timer.delta
+
         try:
             await process_message(
                 message=u_message, bot_name="", api=slacker, db_engine=db_engine
             )
+            await slacker.post_to_channel(
+                channel_id=u_message.channel,
+                text=f"Next start: {next_time.strftime('%Y-%m-%d %H:%M:%S')} UTC",
+            )
+
         except Exception as e:
             logger.exception(e)
 
-        # set next_start to next_start + timedelta
-        next_time = datetime.utcnow() + nearest_timer.delta
         new_timer = Timer(
             channel_id=nearest_timer.channel_id,
             username=nearest_timer.username,
@@ -57,4 +63,10 @@ async def timer_processor(
             next_start=next_time,
             top_command=nearest_timer.top_command,
         )
-        await upsert_timer(db_engine=db_engine, timer=new_timer)
+        result = await update_timer_next_start(db_engine=db_engine, timer=new_timer)
+        if result is None:
+            logger.critical(
+                "Timer wasn't updated due to DB problems! "
+                "Exiting timers processing to avoid spamming to users..."
+            )
+            break

@@ -14,11 +14,10 @@ from digestbot.core.ui_processor.timers.timers_command import (
     timers_rm_command,
 )
 from digestbot.core.db.dbrequest.timer import (
-    count_timers,
-    upsert_timer,
     check_timer_existence,
     remove_timer,
     list_timers,
+    insert_timer,
 )
 
 _logger = create_logger(__name__, LOG_LEVEL)
@@ -86,24 +85,6 @@ async def add_timer(
             "Please, see `help timers` for syntax and arguments."
         )
 
-    # get current timer count for the user and check max limit
-    count_success, timer_number = await count_timers(
-        db_engine=db_engine, username=username
-    )
-
-    if not count_success:
-        _logger.warning(
-            "Couldn't get number of timers created by user, allowing him to create another one..."
-        )
-        timer_number = 0
-
-    if timer_number >= TIMERS_LIMIT:
-        return (
-            "Maximum number of timers for this user achieved. "
-            "Please, consider removing one of your existing timers to be available to add another one. "
-            f"Current limit: {TIMERS_LIMIT} timers."
-        )
-
     timer_delta = args["timer_freq"]
     if timer_delta.total_seconds() < 3600:
         return (
@@ -134,17 +115,25 @@ async def add_timer(
         top_command=str_top_command,
     )
 
-    result = await upsert_timer(db_engine=db_engine, timer=timer)
-    if result:
+    result = await insert_timer(
+        db_engine=db_engine, timer=timer, max_timers_count=TIMERS_LIMIT
+    )
+    if result is None:
+        _logger.warning(f"Unsuccessful database timer upsert, timer: {timer}")
+        return (
+            "Some error occurred during timer creation. "
+            "Please, try later or notify developer team about this situation. Thanks."
+        )
+    elif result:
         return (
             f"Timer {timer.timer_name} succesfully created. "
             f"Next start time: {timer.next_start.strftime('%Y-%m-%d %H:%M:%S')} UTC"
         )
     else:
-        _logger.warning(f"Unsuccessful database timer upsert, timer: {timer}")
         return (
-            "Some error occurred during timer creation. "
-            "Please, try later or notify developer team about this situation. Thanks."
+            "Maximum number of timers for this user achieved. "
+            "Please, consider removing one of your existing timers to be available to add another one. "
+            f"Current limit: {TIMERS_LIMIT} timers."
         )
 
 
