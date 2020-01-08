@@ -25,12 +25,12 @@ async def check_timer_existence(
     db_engine: PostgreSQLEngine, timer_name: str, username: str
 ) -> Tuple[bool, Optional[bool]]:
     request = """
-                SELECT COUNT(*) FROM timer
-                WHERE username = ($1) AND timer_name = ($2)
+                SELECT EXISTS(SELECT * FROM timer
+                WHERE username = ($1) AND timer_name = ($2))
             """
     try:
         timers_count = await db_engine.make_fetch_rows(request, username, timer_name)
-        return True, timers_count[0]["count"] > 0
+        return True, timers_count[0]["exists"]
     except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
         db_engine.logger.exception(e)
         return False, None
