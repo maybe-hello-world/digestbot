@@ -42,7 +42,7 @@ async def crawl_messages_once(
 
 async def crawl_messages(slacker: Slacker, logger: Logger, db_engine: PostgreSQLEngine):
     while True:
-        await crawl_messages_once(slacker=slacker, logger=logger, db_engine=db_engine)
-
         # wait for next time
         await asyncio.sleep(config.CRAWL_INTERVAL)
+
+        await crawl_messages_once(slacker=slacker, logger=logger, db_engine=db_engine)
