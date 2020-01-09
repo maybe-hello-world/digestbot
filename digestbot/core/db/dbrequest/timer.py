@@ -46,7 +46,7 @@ async def count_timers(
     """
     try:
         timers_count = await db_engine.make_fetch_rows(request, username)
-        return True, timers_count[0]["count"]
+        return True, timers_count[0][0]
     except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
         db_engine.logger.exception(e)
         return False, None
