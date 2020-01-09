@@ -9,9 +9,9 @@ from digestbot.core.internal_processing.crawler import (
     crawl_messages_once,
 )
 from digestbot.core.internal_processing.timer import (
-    timer_processor,
-    timers_update_once,
-    timers_updater,
+    process_timers,
+    update_timers_once,
+    update_timers,
 )
 from digestbot.core.ui_processor.request_parser import process_message
 from digestbot.core.slack_api.Slacker import Slacker
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     # check and update user timers and send users notifications about overdue timers
     loop.run_until_complete(
-        timers_update_once(slacker=slacker, db_engine=db_engine, logger=_logger)
+        update_timers_once(slacker=slacker, db_engine=db_engine, logger=_logger)
     )
 
     # Instantiate crawler with corresponding function
@@ -98,12 +98,12 @@ if __name__ == "__main__":
 
     # Instantiate timer processor with corresponding function
     timer_task = loop.create_task(
-        timer_processor(slacker=slacker, db_engine=db_engine, logger=_logger)
+        process_timers(slacker=slacker, db_engine=db_engine, logger=_logger)
     )
 
     # Instantiate timers_updater
     timers_updater_task = loop.create_task(
-        timers_updater(slacker=slacker, db_engine=db_engine, logger=_logger)
+        update_timers(slacker=slacker, db_engine=db_engine, logger=_logger)
     )
 
     # start Real-Time Listener and crawler

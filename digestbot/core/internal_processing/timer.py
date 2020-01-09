@@ -15,9 +15,7 @@ from digestbot.core.ui_processor.request_parser import process_message
 from digestbot.core.common.config import OVERDUE_MINUTES
 
 
-async def timer_processor(
-    slacker: Slacker, logger: Logger, db_engine: PostgreSQLEngine
-):
+async def process_timers(slacker: Slacker, logger: Logger, db_engine: PostgreSQLEngine):
     while True:
         time_border = datetime.utcnow() - timedelta(minutes=OVERDUE_MINUTES)
 
@@ -50,7 +48,7 @@ async def timer_processor(
         )
 
         # set next_start to next_start + timedelta
-        next_time = datetime.utcnow() + nearest_timer.delta
+        next_time = nearest_timer.next_start + nearest_timer.delta
 
         try:
             await process_message(
@@ -81,7 +79,7 @@ async def timer_processor(
             break
 
 
-async def timers_update_once(
+async def update_timers_once(
     slacker: Slacker, logger: Logger, db_engine: PostgreSQLEngine
 ):
     """
@@ -136,8 +134,8 @@ async def timers_update_once(
     logger.debug(f"{len(overdue_timers)} overdue timers updated.")
 
 
-async def timers_updater(slacker: Slacker, logger: Logger, db_engine: PostgreSQLEngine):
+async def update_timers(slacker: Slacker, logger: Logger, db_engine: PostgreSQLEngine):
     while True:
-        await asyncio.sleep(300)
+        await asyncio.sleep(OVERDUE_MINUTES)
 
-        await timers_update_once(slacker=slacker, logger=logger, db_engine=db_engine)
+        await update_timers_once(slacker=slacker, logger=logger, db_engine=db_engine)

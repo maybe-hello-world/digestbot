@@ -31,7 +31,7 @@ async def check_timer_existence(
             """
     try:
         timers_count = await db_engine.make_fetch_rows(request, username, timer_name)
-        return True, timers_count[0]["exists"]
+        return True, timers_count[0][0]
     except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
         db_engine.logger.exception(e)
         return False, None
@@ -71,13 +71,10 @@ async def insert_timer(
     db_engine: PostgreSQLEngine, timer: Timer, max_timers_count: int
 ) -> Optional[bool]:
     request = """
-        WITH rows AS (
-            INSERT INTO timer (channel_id, username, timer_name, delta, next_start, top_command)
-            (SELECT $1, $2, $3, $4, $5, $6
-            WHERE (SELECT COUNT(*) FROM timer WHERE username = $2) < $7)
-            RETURNING 1
-        )
-        SELECT count(*) FROM rows;
+        INSERT INTO timer (channel_id, username, timer_name, delta, next_start, top_command)
+        (SELECT $1, $2, $3, $4, $5, $6
+        WHERE (SELECT COUNT(*) FROM timer WHERE username = $2) < $7)
+        RETURNING True
     """
 
     try:
@@ -91,7 +88,7 @@ async def insert_timer(
             timer.top_command,
             max_timers_count,
         )
-        return result[0]["count"] == 1
+        return len(result) > 0  # len == 1 when insertion succeeded, 0 otherwise
     except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
         db_engine.logger.exception(e)
         return None
@@ -101,19 +98,16 @@ async def update_timer_next_start(
     db_engine: PostgreSQLEngine, timer: Timer
 ) -> Optional[bool]:
     request = """
-        WITH rows AS (
-            UPDATE timer SET
-            next_start = $3
-            WHERE username = $1 AND timer_name = $2
-            RETURNING 1
-        )
-        SELECT COUNT(*) FROM rows;
+        UPDATE timer SET
+        next_start = $3
+        WHERE username = $1 AND timer_name = $2
+        RETURNING True
     """
     try:
         result = await db_engine.make_fetch_rows(
             request, timer.username, timer.timer_name, timer.next_start
         )
-        rows_updated = result[0]["count"]
+        rows_updated = len(result)
         if rows_updated > 1:
             db_engine.logger.critical(
                 f"Timers with similar names within one user are existing! "
@@ -124,12 +118,7 @@ async def update_timer_next_start(
             return True
 
         return rows_updated == 1
-    except (
-        asyncpg.QueryCanceledError,
-        asyncpg.ConnectionFailureError,
-        KeyError,
-        IndexError,
-    ) as e:
+    except (asyncpg.QueryCanceledError, asyncpg.ConnectionFailureError) as e:
         db_engine.logger.exception(e)
         return None
 
