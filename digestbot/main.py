@@ -1,53 +1,28 @@
 import sys
+
 import slack
 import asyncio
-from digestbot.core.ui_processor.request_parser import process_message
+
 import digestbot.core.ui_processor.common
-from digestbot.core.slack_api.Slacker import Slacker
-from digestbot.core import PostgreSQLEngine
-from digestbot.core.db.dbrequest.message import (
-    upsert_messages,
-    get_messages_without_links,
-    update_message_links,
+from digestbot.core.internal_processing.crawler import (
+    crawl_messages,
+    crawl_messages_once,
 )
+from digestbot.core.internal_processing.timer import (
+    process_timers,
+    update_timers_once,
+    update_timers,
+)
+from digestbot.core.ui_processor.request_parser import process_message
+from digestbot.core.slack_api.Slacker import Slacker
+from digestbot.core.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
 from digestbot.core.common import config, LoggerFactory
-from datetime import datetime, timedelta
 import signal
 import time
 
 _logger = LoggerFactory.create_logger(__name__, config.LOG_LEVEL)
 slacker: Slacker
 db_engine: PostgreSQLEngine
-
-
-async def crawl_messages() -> None:
-    while True:
-        # get messages and insert them into database
-        ch_info = await slacker.get_channels_list()
-        if ch_info:
-            for ch_id, ch_name in ch_info:
-                _logger.debug(f"Channel: {ch_name}")
-
-                prev_date = datetime.now() - timedelta(days=config.MESSAGE_DELTA_DAYS)
-                messages = await slacker.get_channel_messages(ch_id, prev_date)
-                if messages:
-                    await upsert_messages(db_engine=db_engine, messages=messages)
-                _logger.debug(str(messages))
-            _logger.info(
-                f"Messages from {len(ch_info)} channels parsed and sent to the database."
-            )
-
-        # update messages without permalinks
-        req_status, empty_links_messages = await get_messages_without_links(
-            db_engine=db_engine
-        )
-        if req_status and empty_links_messages:
-            messages = await slacker.update_permalinks(messages=empty_links_messages)
-            await update_message_links(db_engine=db_engine, messages=messages)
-            _logger.debug(f"Updated permalinks for {len(messages)} messages.")
-
-        # wait for next time
-        await asyncio.sleep(config.CRAWL_INTERVAL)
 
 
 @slack.RTMClient.run_on(event="message")
@@ -106,11 +81,35 @@ if __name__ == "__main__":
         user_token=config.SLACK_USER_TOKEN, bot_token=config.SLACK_BOT_TOKEN
     )
 
-    # Instantiate crawler timer with corresponding function
-    crawler_task = loop.create_task(crawl_messages())
+    # initial crawling before starting UI
+    loop.run_until_complete(
+        crawl_messages_once(slacker=slacker, db_engine=db_engine, logger=_logger)
+    )
+
+    # check and update user timers and send users notifications about overdue timers
+    loop.run_until_complete(
+        update_timers_once(slacker=slacker, db_engine=db_engine, logger=_logger)
+    )
+
+    # Instantiate crawler with corresponding function
+    crawler_task = loop.create_task(
+        crawl_messages(slacker=slacker, db_engine=db_engine, logger=_logger)
+    )
+
+    # Instantiate timer processor with corresponding function
+    timer_task = loop.create_task(
+        process_timers(slacker=slacker, db_engine=db_engine, logger=_logger)
+    )
+
+    # Instantiate timers_updater
+    timers_updater_task = loop.create_task(
+        update_timers(slacker=slacker, db_engine=db_engine, logger=_logger)
+    )
 
     # start Real-Time Listener and crawler
-    overall_tasks = asyncio.gather(slacker.start_listening(), crawler_task)
+    overall_tasks = asyncio.gather(
+        slacker.start_listening(), crawler_task, timer_task, timers_updater_task
+    )
     try:
         signal.signal(
             signal.SIGTERM, lambda *args: exec("raise KeyboardInterrupt")

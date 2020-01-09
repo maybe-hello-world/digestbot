@@ -1,11 +1,12 @@
+import logging
+
+import sys
 from slack import errors
 from asyncio import sleep
 from typing import Callable, TypeVar, Optional
 
-from digestbot.core.common import config
 from digestbot.resilence_library.policy import Policy
 from digestbot.resilence_library.exception import PolicyError
-from digestbot.core.common.LoggerFactory import create_logger
 
 
 T = TypeVar("T")
@@ -18,7 +19,18 @@ class RetryAfterError(PolicyError):
 class RetryAfterSlack(Policy):
     def __init__(self, repeat: int):
         self.repeat = repeat
-        self.logger = create_logger("RetryAfter-Policy", config.LOG_LEVEL)
+
+        logger = logging.getLogger("RetryAfter-Policy")
+        logger.setLevel("INFO")
+
+        handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%m.%d.%Y-%I:%M:%S",
+        )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        self.logger = logger
 
     @staticmethod
     def __int_or_none(val: str) -> Optional[int]:

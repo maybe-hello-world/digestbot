@@ -1,7 +1,8 @@
 from typing import List, Tuple, Any
 import asyncpg
 
-from digestbot.core import Category, PostgreSQLEngine
+from digestbot.core.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
+from digestbot.core.db.models import Category
 
 
 def array_channel_ids_to_sql_insert_request(channel_ids: List[str]) -> str:
