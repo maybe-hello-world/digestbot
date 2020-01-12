@@ -2,6 +2,20 @@ import asyncpg
 from logging import Logger
 
 
+def create_timers_table() -> str:
+    return """
+        CREATE TABLE Timer (
+            channel_id TEXT NOT NULL,
+            username TEXT NOT NULL,
+            timer_name TEXT NOT NULL,
+            delta INTERVAL NOT NULL,
+            next_start TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+            top_command TEXT NOT NULL,
+            PRIMARY KEY(username, timer_name)
+        );
+    """
+
+
 def create_category_table() -> str:
     return """
         CREATE TABLE Category (
@@ -105,7 +119,11 @@ async def create_tables(connection: asyncpg.Connection, logger: Logger) -> bool:
     :param logger: logger for logging
     :return: status execution: 0 - Fail, 1 - Success
     """
-    tables = {"Category": create_category_table(), "Message": create_message_table()}
+    tables = {
+        "Category": create_category_table(),
+        "Message": create_message_table(),
+        "Timer": create_timers_table(),
+    }
 
     big_query = "\n".join(tables.values())
     logger.info(f"Will be created new tables: {', '.join(tables.keys())}")

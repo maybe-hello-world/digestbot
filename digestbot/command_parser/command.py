@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Iterable
 
 from digestbot.command_parser.argument import Argument, MultiArgument
 from digestbot.command_parser.exception import TooManyArgumentsError
@@ -42,6 +42,10 @@ class CommandBuilder:
 
     def add_argument(self, argument: Union[MultiArgument, Argument]) -> CommandBuilder:
         self.arguments.append(argument)
+        return self
+
+    def extend_with_arguments(self, arguments: Iterable[Argument]):
+        self.arguments.extend(arguments)
         return self
 
     def build(self) -> Command:
