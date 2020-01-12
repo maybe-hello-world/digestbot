@@ -35,10 +35,30 @@ def general_help() -> str:
 
 def presets_help() -> str:
     return (
-        "Return all available presets with channels.\n\n"
-        "Syntax: `presets`\n\n"
-        "Examples:\n"
-        "`presets`"
+        "Allows you to add, remove or list your own presets. "
+        "Preset is a set that contains references to one or more channels. "
+        "There are two types of presets: global and local:\n"
+        "* global - predefined presets (by bot authors, contributions are welcome :) )\n"
+        "* local - presets that you can create\n\n"
+        "With help of presets you can union channels in categories that may interest you\n"
+        "*presets add* - add new preset or update existing\n"
+        "Syntax: `presets add <name> <channel1> [channel2] ... [channelN]`\n"
+        "Arguments:\n"
+        "`name`: name for preset. Any non-whitespace string (example: `--_DROP_TABLE_presets;`). "
+        "Beware: local presets name can override global preset if their names are same"
+        " (we will warn about it if you try to create overriding preset)\n\n"
+        "`channelN`: preset channel list\n"
+        "Example: `presets add interesting_projects #proj_punch_to_face #ods_pet_projects`\n\n"
+        "*presets rm* - remove existing preset\n"
+        "Syntax: `presets rm <name>`\n"
+        "Arguments:\n"
+        "`name`: name of existing preset\n"
+        "Example: `presets rm interesting_projects`\n\n"
+        "*presets ls* - list available presets\n"
+        "Syntax: `presets ls [local]`\n"
+        "Arguments:\n"
+        "`local` - include in result only yours presets (without it - shows all)\n"
+        "Example: `presets ls`\n\n"
     )
 
 
