@@ -24,47 +24,6 @@ def request_categories_to_category_class(
     return [Category(**category) for category in request_categories]
 
 
-async def create_categories(
-    db_engine: PostgreSQLEngine, categories: List[Category]
-) -> bool:
-    request = f"""
-    INSERT INTO category (name, channel_ids)
-    VALUES {make_insert_values_from_messages_array(categories)};
-    """
-    try:
-        await db_engine.make_execute(request)
-        status = True
-    except asyncpg.QueryCanceledError or asyncpg.ConnectionFailureError:
-        db_engine.logger.warn(
-            f"Categories '{str(categories)}' was not passed into database."
-        )
-        status = False
-
-    return status
-
-
-async def upsert_categories(
-    db_engine: PostgreSQLEngine, categories: List[Category]
-) -> bool:
-    request = f"""
-    INSERT INTO category (name, channel_ids)
-    VALUES {make_insert_values_from_messages_array(categories)}
-    ON CONFLICT (name)
-    DO UPDATE SET
-        channel_ids = EXCLUDED.channel_ids;
-    """
-    try:
-        await db_engine.make_execute(request)
-        status = True
-    except asyncpg.QueryCanceledError or asyncpg.ConnectionFailureError:
-        db_engine.logger.warn(
-            f"Categories '{str(categories)}' was not passed into database."
-        )
-        status = False
-
-    return status
-
-
 async def get_category_by_name(
     db_engine: PostgreSQLEngine, name: str
 ) -> Tuple[bool, Category]:
@@ -105,9 +64,13 @@ async def get_categories(db_engine: PostgreSQLEngine, user_id: Optional[str], in
             return request_categories_to_category_class(await db_engine.make_fetch_rows(user_query, user_id))
 
 
-async def add_or_update_category(db_engine: PostgreSQLEngine, user_id: Optional[str], name: str, channels: List[str]) -> Category:
+async def add_or_update_category(
+        db_engine: PostgreSQLEngine,
+        user_id: Optional[str],
+        name: str, channels: List[str],
+        max_user_categories_count: int) -> Optional[Category]:
     query = """INSERT INTO category (username, name, channel_ids) 
-                VALUES ($1, $2, $3) 
+                (SELECT $1, $2, $3 WHERE (SELECT COUNT(*) FROM category WHERE username = $1) < $4)
                 ON CONFLICT (username, name)
                 DO UPDATE SET 
                     username = excluded.username, 
@@ -115,8 +78,11 @@ async def add_or_update_category(db_engine: PostgreSQLEngine, user_id: Optional[
                     channel_ids = excluded.channel_ids
                 RETURNING *"""
 
-    result = await db_engine.make_fetch_rows(query, user_id, name, channels)
-    return request_categories_to_category_class(result)[0]
+    result = await db_engine.make_fetch_rows(query, user_id, name, channels, max_user_categories_count)
+    result_categories = request_categories_to_category_class(result)
+    if result_categories:
+        return result_categories[0]
+    return None
 
 
 async def remove_category(db_engine: PostgreSQLEngine, user_id: str, name: str) -> Optional[Category]:

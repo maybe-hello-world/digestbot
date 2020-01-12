@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 from digestbot.command_parser.command import Command
 from digestbot.command_parser.parse_result import CommandParseResult
