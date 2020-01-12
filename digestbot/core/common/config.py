@@ -104,3 +104,12 @@ except ValueError:
         f"Could not parse overdue minutes value: {OVERDUE_MINUTES}, default value 10 is used."
     )
     OVERDUE_MINUTES = 10
+
+PRESETS_LIMIT = os.getenv("PRESETS_LIMIT", "20")
+try:
+    PRESETS_LIMIT = int(PRESETS_LIMIT)
+except ValueError:
+    _logger.warning(
+        f"Could not parse presets limit value: {PRESETS_LIMIT}, default value 20 is used."
+    )
+    PRESETS_LIMIT = 20

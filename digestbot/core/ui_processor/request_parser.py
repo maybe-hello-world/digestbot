@@ -1,9 +1,13 @@
+from asyncpg import PostgresError
+
 from digestbot.command_parser.command_parser import CommandParser
 from digestbot.command_parser.exception import TooManyArgumentsError
 from digestbot.core.common import config, LoggerFactory
 from digestbot.core.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
 from digestbot.core.slack_api.Slacker import Slacker
 from digestbot.core.ui_processor.common import UserRequest
+from digestbot.core.ui_processor.timers.timers_command import timers_parser
+from digestbot.core.ui_processor.timers.timers_processor import process_timers_request
 from digestbot.core.ui_processor.top.top_processor import process_top_request
 from digestbot.core.ui_processor.top.top_command import top_command, TopCommandArgs
 from digestbot.core.ui_processor.help_processor import (
@@ -11,14 +15,11 @@ from digestbot.core.ui_processor.help_processor import (
     process_help_request,
 )
 from digestbot.core.ui_processor.presets.presets_processor import (
-    process_presets_request,
+    process_presets,
 )
 from digestbot.core.ui_processor.presets.presets_command import (
     presets_command,
-    presets_parser,
-)
-from digestbot.core.ui_processor.timers.timers_processor import process_timers_request
-from digestbot.core.ui_processor.timers.timers_command import timers_parser
+    presets_parser)
 
 SYNTAX_RESPONSE = (
     "Oops! <@{}>, I didn't understood your request, could you check your command? "
@@ -61,11 +62,11 @@ async def process_message(
             text_to_answer = SYNTAX_RESPONSE.format(message.user)
         elif parse_result.command == top_command.name:
             top_command_args = TopCommandArgs.from_dict(parse_result.args)
-            text_to_answer = await process_top_request(top_command_args, db_engine)
+            text_to_answer = await process_top_request(top_command_args, db_engine, message.user)
         elif parse_result.command == help_command.name:
             text_to_answer = process_help_request(parse_result.args)
-        elif parse_result.command == presets_command.name:
-            text_to_answer = await process_presets_request(db_engine)
+        elif parse_result.is_sub_parser(presets_parser.name):
+            text_to_answer = await process_presets(parse_result.sub_parser_result, message.user, db_engine)
         elif parse_result.command == timers_parser.name:
             text_to_answer = await process_timers_request(
                 channel_id=message.channel,
@@ -79,3 +80,7 @@ async def process_message(
         await api.post_to_channel(channel_id=message.channel, text=text_to_answer)
     except TooManyArgumentsError as exception:
         await api.post_to_channel(channel_id=message.channel, text=str(exception))
+    except PostgresError as exception:
+        _logger.exception(exception)
+        await api.post_to_channel(channel_id=message.channel,
+                                  text="Sorry. We have problems with database! Please contact developers")

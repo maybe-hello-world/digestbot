@@ -7,6 +7,8 @@ from datetime import timedelta, datetime
 
 @dataclass(frozen=True)
 class Category:
+    id: int
+    username: Optional[str]
     name: str
     channel_ids: List[str]
 

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Optional
 from decimal import Decimal
 import asyncpg
 
@@ -176,22 +176,26 @@ async def get_top_messages_by_category_name(
     after_ts: Decimal,
     sorting_type: SortingType = SortingType.REPLIES,
     top_count: int = 10,
+    user_id: Optional[str] = None
 ) -> Tuple[bool, List[Message]]:
     request = f"""
+    WITH categories AS (
+        SELECT *
+        FROM category
+        WHERE name = $1
+          AND (username = $2 OR username IS NULL)
+        ORDER BY username NULLS LAST
+        LIMIT 1
+    )
     SELECT message.* FROM message
-    JOIN category
-    ON message.channel_id=ANY(category.channel_ids)
-
-    WHERE
-        category.name=($1)
-    AND
-        message.timestamp >= {after_ts}
-
-    ORDER BY {sorting_type.value} DESC
-    LIMIT {top_count};
+        JOIN categories category
+        ON message.channel_id=ANY(category.channel_ids)
+        WHERE message.timestamp >= {after_ts}
+        ORDER BY {sorting_type.value} DESC
+        LIMIT {top_count};
     """
     try:
-        messages_base = await db_engine.make_fetch_rows(request, category_name)
+        messages_base = await db_engine.make_fetch_rows(request, category_name, user_id)
         status = True
         messages = request_messages_to_message_class(messages_base)
     except asyncpg.QueryCanceledError or asyncpg.ConnectionFailureError:

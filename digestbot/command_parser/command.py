@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import List, Dict, Any, Iterable
+from typing import List, Dict, Any, Union, Iterable
 
-from digestbot.command_parser.argument import Argument
+from digestbot.command_parser.argument import Argument, MultiArgument
 from digestbot.command_parser.exception import TooManyArgumentsError
 from digestbot.command_parser.parse_result import Parsed
 
 
 class Command:
-    def __init__(self, name: str, arguments: List[Argument]):
+    def __init__(self, name: str, arguments: List[Union[MultiArgument, Argument]]):
         self.name = name
         self.arguments = arguments
 
@@ -19,7 +19,12 @@ class Command:
             args[arg.name] = arg.default
             if params_idx >= len(params):
                 continue
-            p = arg.parse(params[params_idx])
+            if isinstance(arg, MultiArgument):
+                p = arg.parse(params[params_idx:])
+                args[arg.name] = p.value
+                return args
+            else:
+                p = arg.parse(params[params_idx])
             if isinstance(p, Parsed):
                 args[arg.name] = p.value
                 params_idx += 1
@@ -35,7 +40,7 @@ class CommandBuilder:
         self.name = name
         self.arguments = []
 
-    def add_argument(self, argument: Argument) -> CommandBuilder:
+    def add_argument(self, argument: Union[MultiArgument, Argument]) -> CommandBuilder:
         self.arguments.append(argument)
         return self
 

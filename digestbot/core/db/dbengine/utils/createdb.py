@@ -19,24 +19,30 @@ def create_timers_table() -> str:
 def create_category_table() -> str:
     return """
         CREATE TABLE Category (
-            name VARCHAR NOT NULL PRIMARY KEY,
-            channel_ids VARCHAR(30)[]
+            id BIGSERIAL NOT NULL PRIMARY KEY, 
+            username TEXT,  -- username is null if category created by developers
+            name TEXT NOT NULL,
+            channel_ids TEXT[],
+
+            UNIQUE (username, name)
         );
+
+        CREATE INDEX category_name_idx ON category (name);
     """
 
 
 def create_message_table() -> str:
     return """
         CREATE TABLE Message (
-            username VARCHAR(30) NOT NULL,
-            text VARCHAR NOT NULL,
+            username TEXT NOT NULL,
+            text TEXT NOT NULL,
             timestamp DECIMAL NOT NULL,
             reply_count INTEGER NOT NULL,
             reply_users_count INTEGER NOT NULL,
             reactions_rate FLOAT,
             thread_length INTEGER NOT NULL,
-            channel_id VARCHAR(30),
-            link VARCHAR NULL,
+            channel_id TEXT,
+            link TEXT NULL,
             PRIMARY KEY(channel_id, timestamp)
         );
     """
