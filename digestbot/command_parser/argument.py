@@ -26,7 +26,7 @@ class MultiArgument:
 
 
 class StringMultiArgument(MultiArgument):
-    def __init__(self, name: str, default: Optional[str] = None):
+    def __init__(self, name: str, default: Optional[List[str]] = None):
         super().__init__(name, default or [])
 
     def parse(self, texts: List[str]) -> ParseResult:

@@ -1,5 +1,5 @@
 from digestbot.command_parser.parse_result import CommandParseResult
-from digestbot.core.db.dbengine import PostgreSQLEngine
+from digestbot.core.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
 from digestbot.core.db.dbrequest.category import get_categories, add_or_update_category, remove_category
 from digestbot.core.ui_processor.common import parse_channel_id
 from digestbot.core.ui_processor.presets.presets_command import presets_add_command, presets_ls_command, \
