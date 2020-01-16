@@ -2,9 +2,13 @@ from dataclasses import dataclass
 from typing import List, Optional
 from decimal import Decimal
 
+from datetime import timedelta, datetime
+
 
 @dataclass(frozen=True)
 class Category:
+    id: int
+    username: Optional[str]
     name: str
     channel_ids: List[str]
 
@@ -20,3 +24,13 @@ class Message:
     channel_id: str
     link: Optional[str]
     reactions_rate: float = 0.0
+
+
+@dataclass(frozen=True)
+class Timer:
+    channel_id: str
+    username: str
+    timer_name: str
+    delta: timedelta
+    next_start: datetime
+    top_command: str

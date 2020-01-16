@@ -2,27 +2,47 @@ import asyncpg
 from logging import Logger
 
 
+def create_timers_table() -> str:
+    return """
+        CREATE TABLE Timer (
+            channel_id TEXT NOT NULL,
+            username TEXT NOT NULL,
+            timer_name TEXT NOT NULL,
+            delta INTERVAL NOT NULL,
+            next_start TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+            top_command TEXT NOT NULL,
+            PRIMARY KEY(username, timer_name)
+        );
+    """
+
+
 def create_category_table() -> str:
     return """
         CREATE TABLE Category (
-            name VARCHAR NOT NULL PRIMARY KEY,
-            channel_ids VARCHAR(30)[]
+            id BIGSERIAL NOT NULL PRIMARY KEY, 
+            username TEXT,  -- username is null if category created by developers
+            name TEXT NOT NULL,
+            channel_ids TEXT[],
+
+            UNIQUE (username, name)
         );
+
+        CREATE INDEX category_name_idx ON category (name);
     """
 
 
 def create_message_table() -> str:
     return """
         CREATE TABLE Message (
-            username VARCHAR(30) NOT NULL,
-            text VARCHAR NOT NULL,
+            username TEXT NOT NULL,
+            text TEXT NOT NULL,
             timestamp DECIMAL NOT NULL,
             reply_count INTEGER NOT NULL,
             reply_users_count INTEGER NOT NULL,
             reactions_rate FLOAT,
             thread_length INTEGER NOT NULL,
-            channel_id VARCHAR(30),
-            link VARCHAR NULL,
+            channel_id TEXT,
+            link TEXT NULL,
             PRIMARY KEY(channel_id, timestamp)
         );
     """
@@ -99,7 +119,11 @@ async def create_tables(connection: asyncpg.Connection, logger: Logger) -> bool:
     :param logger: logger for logging
     :return: status execution: 0 - Fail, 1 - Success
     """
-    tables = {"Category": create_category_table(), "Message": create_message_table()}
+    tables = {
+        "Category": create_category_table(),
+        "Message": create_message_table(),
+        "Timer": create_timers_table(),
+    }
 
     big_query = "\n".join(tables.values())
     logger.info(f"Will be created new tables: {', '.join(tables.keys())}")

@@ -15,6 +15,24 @@ class Argument:
         pass
 
 
+class MultiArgument:
+    def __init__(self, name: str, default: Optional[Any]):
+        self.name = name
+        self.default = default
+
+    @abstractmethod
+    def parse(self, texts: List[str]) -> ParseResult:
+        pass
+
+
+class StringMultiArgument(MultiArgument):
+    def __init__(self, name: str, default: Optional[List[str]] = None):
+        super().__init__(name, default or [])
+
+    def parse(self, texts: List[str]) -> ParseResult:
+        return Parsed(texts)
+
+
 class IntArgument(Argument):
     def __init__(self, name: str, default: Optional[int] = None):
         super().__init__(name, default)
@@ -67,6 +85,18 @@ class TimeDeltaArgument(Argument):
             return Parsed(timedelta(minutes=count))
         else:
             return NotParsed(self.default)
+
+
+class ExactArgument(Argument):
+    def __init__(self, name: str, value: str):
+        super().__init__(name, default=None)
+        self.value = value
+
+    def parse(self, text: str) -> ParseResult:
+        if text == self.value:
+            return Parsed(self.value)
+        else:
+            return NotParsed(None)
 
 
 def _int_or_default(text: str, default: Optional[int] = None) -> Optional[int]:
