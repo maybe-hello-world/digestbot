@@ -95,7 +95,6 @@ async def update_timers_once(
         logger.warning("Database problems occurred while timers updating. Exiting...")
         return
     elif not overdue_timers:
-        logger.debug("No overdue timers exist.")
         return
 
     # update each timer and notify the timer creator
@@ -136,6 +135,6 @@ async def update_timers_once(
 
 async def update_timers(slacker: Slacker, logger: Logger, db_engine: PostgreSQLEngine):
     while True:
-        await asyncio.sleep(OVERDUE_MINUTES)
+        await asyncio.sleep(OVERDUE_MINUTES * 60)
 
         await update_timers_once(slacker=slacker, logger=logger, db_engine=db_engine)
