@@ -28,7 +28,7 @@ try:
     CRAWL_INTERVAL = int(CRAWL_INTERVAL)
 except ValueError:
     _logger.warning(
-        f"Could not parse crawl interval: f{CRAWL_INTERVAL}, default value 900 is used."
+        f"Could not parse crawl interval: f{CRAWL_INTERVAL}, default value 900 seconds is used."
     )
     CRAWL_INTERVAL = 900
 
