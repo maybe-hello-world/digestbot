@@ -17,7 +17,7 @@ Sure! To deploy your bot you have to:
 * Prepare needed environment variables in .env file (see env.template)
 * Deploy this bot using prepared docker-compose file with bot and database or pull bot from dockerhub:
 _maybehelloworld/digestbot:latest_
-    * Do not forget to pass environment variables to bot from .env file or by in any other way
+    * Do not forget to pass environment variables to bot from .env file or in any other way
 * Done!
 
 
