@@ -3,8 +3,7 @@ Here’s an overview of what the digestbot team is looking to work on over the n
 
 This is a living doc that will evolve as priorities grow and shift. Please feel free to file issues on this repository if you have questions, concerns, or suggestions.
 
-## What we are working on..
-* **Your own presets:** we would like to give you a possibilty to create your own presets (visible only for you)
-and use them for top message selecting.
+## What we are working on:
+* **Internal refactoring:** right now we are planning a global internal refactoring to divide UI from internal logic and simplify adding other UIs (like telegram bots, etc)
 
-* **Scheduled digest:** create a timer for any top command and receive fresh digest just-in-time! :) 
+* **Issues solving:** see "Issues" for more information
