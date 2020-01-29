@@ -11,6 +11,7 @@ from digestbot.command_parser.argument import (
 )
 from digestbot.command_parser.command import CommandBuilder
 from digestbot.core.common.Enums import SortingType
+from digestbot.core.ui_processor.common import parse_channel_id
 
 top_arguments = (
     IntArgument("N", default=5),
@@ -33,17 +34,18 @@ class TopCommandArgs:
     category_name: Optional[str] = None
 
     @staticmethod
-    def _parse_channel(channel: Optional[str]) -> Dict[str, str]:
-        if not channel:
+    def _parse_channel(source_name: Optional[str]) -> Dict[str, str]:
+        if not source_name:
             return {}
-        split = channel.strip("<>").split("|")
-        if len(split) == 1:
-            return {"category_name": split[0]}
-        if len(split) == 2:
-            return {"channel_id": split[0].lstrip("#")}
-        raise ValueError(
-            f"Channel Id format is not recognized (split result is {split}). Possible Slack API change"
-        )
+
+        channel_uid = parse_channel_id(channel=source_name)
+
+        # Either ID successfully parsed...
+        if channel_uid:
+            return {"channel_id": channel_uid}
+
+        # ...or it is category name. No other ways.
+        return {"category_name": source_name}
 
     def is_all_channels_requested(self) -> bool:
         return self.category_name is None and self.channel_id is None
