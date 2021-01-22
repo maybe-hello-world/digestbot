@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     # start Real-Time Listener and crawler
     overall_tasks = asyncio.gather(
-        slacker.start_listening(),
+        # slacker.start_listening(),
         # crawler_task,
         timer_task,
         timers_updater_task
