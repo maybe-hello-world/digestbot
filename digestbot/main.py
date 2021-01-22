@@ -82,9 +82,9 @@ if __name__ == "__main__":
     )
 
     # initial crawling before starting UI
-    loop.run_until_complete(
-        crawl_messages_once(slacker=slacker, db_engine=db_engine, logger=_logger)
-    )
+    # loop.run_until_complete(
+    #     crawl_messages_once(slacker=slacker, db_engine=db_engine, logger=_logger)
+    # )
 
     # check and update user timers and send users notifications about overdue timers
     loop.run_until_complete(
@@ -92,9 +92,9 @@ if __name__ == "__main__":
     )
 
     # Instantiate crawler with corresponding function
-    crawler_task = loop.create_task(
-        crawl_messages(slacker=slacker, db_engine=db_engine, logger=_logger)
-    )
+    # crawler_task = loop.create_task(
+    #     crawl_messages(slacker=slacker, db_engine=db_engine, logger=_logger)
+    # )
 
     # Instantiate timer processor with corresponding function
     timer_task = loop.create_task(
@@ -108,7 +108,10 @@ if __name__ == "__main__":
 
     # start Real-Time Listener and crawler
     overall_tasks = asyncio.gather(
-        slacker.start_listening(), crawler_task, timer_task, timers_updater_task
+        slacker.start_listening(),
+        # crawler_task,
+        timer_task,
+        timers_updater_task
     )
     try:
         signal.signal(

@@ -5,6 +5,17 @@ services:
     restart: always
     depends_on:
       - postgres
+      - crawler # TODO: remove, now just to avoid double tables creation
+    env_file:
+      - .env
+
+  crawler:
+    build:
+      context: .
+      dockerfile: crawler/Dockerfile
+    restart: always
+    depends_on:
+      - postgres
     env_file:
       - .env
 
