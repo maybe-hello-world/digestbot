@@ -2,7 +2,7 @@ from typing import List, Optional
 from decimal import Decimal
 from datetime import timedelta, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Category(BaseModel):
@@ -16,9 +16,9 @@ class Message(BaseModel):
     username: str
     text: str
     timestamp: Decimal
-    reply_count: int
-    reply_users_count: int
-    thread_length: int
+    reply_count: int = Field(..., ge=0)
+    reply_users_count: int = Field(..., ge=0)
+    thread_length: int = Field(..., ge=0)
     channel_id: str
     link: Optional[str] = None
     reactions_rate: float = 0.0

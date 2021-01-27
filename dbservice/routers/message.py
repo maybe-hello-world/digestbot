@@ -4,29 +4,29 @@ from Enum import SortingType  # TODO: return to common
 from models import Message
 from typing import List, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query, HTTPException
 
 router = APIRouter()
 
 
 @router.post("/")
 async def insert_messages(messages: List[Message]):
-    raise NotImplementedError
+    raise HTTPException(status_code=500, detail="Method not implemented")
 
 
 @router.put("/")
 async def upsert_messages(messages: List[Message]):
-    raise NotImplementedError
+    raise HTTPException(status_code=500, detail="Method not implemented")
 
 
 @router.get("/linkless", response_model=List[Message])
 async def get_linkless_messages():
-    raise NotImplementedError
+    raise HTTPException(status_code=500, detail="Method not implemented")
 
 
 @router.patch("/links")
 async def update_message_links(messages: List[Message]):
-    raise NotImplementedError
+    raise HTTPException(status_code=500, detail="Method not implemented")
 
 
 @router.get("/top", response_model=List[Message])
@@ -36,9 +36,9 @@ async def get_top_messages(
         category_name: Optional[str] = None,
         user_id: Optional[str] = None,
         sorting_type: SortingType = SortingType.REPLIES,
-        top_count: int = 10,
+        top_count: int = Query(default=10, ge=1),
 ):
-    raise NotImplementedError
+    raise HTTPException(status_code=500, detail="Method not implemented")
 
 
 def get_top_messages_empty(
