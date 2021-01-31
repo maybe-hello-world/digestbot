@@ -9,7 +9,7 @@ class TimerDAO:
     def __init__(self, engine: DBEngine):
         self.engine = engine
 
-    async def list_timers(self, username: str) -> Optional[List[Timer]]:
+    async def list_timers(self, username: str) -> List[Timer]:
         request = "SELECT * FROM timer WHERE username = ($1)"
 
         timers = await self.engine.make_fetch_rows(request, username)

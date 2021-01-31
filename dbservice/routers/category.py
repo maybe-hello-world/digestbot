@@ -43,7 +43,7 @@ async def delete_category(user_id: str, name: str):
     result = await category_dao.remove_category(user_id, name)
     if not result:
         raise HTTPException(
-            status_code=400,
+            status_code=404,
             detail=f"Could not find category with name {name}. Please, check name again."
         )
 
