@@ -30,6 +30,18 @@ services:
     env_file:
       - .env
 
+  dbservice:
+    build:
+      context: .
+      dockerfile: dbservice/Dockerfile
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+
   postgres:
     image: "postgres:alpine"
     restart: always
