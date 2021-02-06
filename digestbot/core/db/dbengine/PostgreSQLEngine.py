@@ -71,6 +71,7 @@ class PostgreSQLEngine:
         if status == 2:
             async with self.engine.acquire() as connection:
                 exist_tables = await check_exist_tables(connection)
+                self.logger.info(f"Tables exist: {exist_tables}")
 
             if not exist_tables:
                 async with self.engine.acquire() as connection:

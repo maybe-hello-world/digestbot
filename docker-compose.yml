@@ -26,7 +26,7 @@ services:
       dockerfile: crawler/Dockerfile
     restart: always
     depends_on:
-      - postgres
+      - dbservice
     env_file:
       - .env
 

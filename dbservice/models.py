@@ -1,30 +1,22 @@
-from typing import List, Optional
-from decimal import Decimal
 from datetime import timedelta, datetime
-
 from pydantic import BaseModel, Field
+from typing import Optional
+
+from common.models import Category, Message, Timer
 
 
-class Category(BaseModel):
-    id: int
+class Category(Category, BaseModel):
     username: Optional[str] = None
-    name: str
-    channel_ids: List[str]
 
 
-class Message(BaseModel):
-    username: str
-    text: str
-    timestamp: Decimal
+class Message(Message, BaseModel):
     reply_count: int = Field(..., ge=0)
     reply_users_count: int = Field(..., ge=0)
     thread_length: int = Field(..., ge=0)
-    channel_id: str
     link: Optional[str] = None
-    reactions_rate: float = 0.0
 
 
-class Timer(BaseModel):
+class Timer(Timer, BaseModel):
     channel_id: str
     username: str
     timer_name: str

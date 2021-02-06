@@ -25,7 +25,8 @@ async def insert_timer(timer: Timer):
     if not result:
         raise HTTPException(
             status_code=400,
-            detail="Maximum amount of timers reached. Please, remove one of existing categories"
+            detail="Maximum number of timers for this user achieved. "
+                   "Please, consider removing one of your existing timers to be allowed to add another one."
         )
 
     return timer

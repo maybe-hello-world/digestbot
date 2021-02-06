@@ -63,21 +63,12 @@ PM_ONLY = os.getenv("PM_ONLY", "False").strip().lower()
 PM_ONLY = PM_ONLY == "true"
 
 
-PRESETS_LIMIT = os.getenv("PRESETS_LIMIT", "20")
+# how much time is allowed to miss and not count and overdue timer
+OVERDUE_MINUTES = os.getenv("OVERDUE_MINUTES", "10")
 try:
-    PRESETS_LIMIT = int(PRESETS_LIMIT)
+    OVERDUE_MINUTES = int(OVERDUE_MINUTES)
 except ValueError:
     _logger.warning(
-        f"Could not parse presets limit value: {PRESETS_LIMIT}, default value 20 is used."
+        f"Could not parse overdue minutes value: {OVERDUE_MINUTES}, default value 10 is used."
     )
-    PRESETS_LIMIT = 20
-
-# how many timers are available for each user
-TIMERS_LIMIT = os.getenv("TIMERS_LIMIT", "5")
-try:
-    TIMERS_LIMIT = int(TIMERS_LIMIT)
-except ValueError:
-    _logger.warning(
-        f"Could not parse timers limit value: {TIMERS_LIMIT}, default value 5 is used."
-    )
-    TIMERS_LIMIT = 5
+    OVERDUE_MINUTES = 10

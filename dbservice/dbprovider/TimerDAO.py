@@ -94,7 +94,7 @@ class TimerDAO:
         """
         Return timers with next_start date < time_border date
 
-        :return: None if any error, List of timers otherwise
+        :return: List of timers (possibly empty)
         """
         request = """
             SELECT * FROM timer

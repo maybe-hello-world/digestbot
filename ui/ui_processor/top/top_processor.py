@@ -4,13 +4,9 @@ from decimal import Decimal
 from datetime import datetime
 from typing import List
 
-from common.db.models import Message
-from common.db.dbengine.PostgreSQLEngine import PostgreSQLEngine
-from common.db.dbrequest.message import (
-    get_top_messages,
-    get_top_messages_by_channel_id,
-    get_top_messages_by_category_name,
-)
+import requests as r
+
+from common.models import Message
 from .top_command import TopCommandArgs
 
 
@@ -43,17 +39,18 @@ def __pretty_top_format(messages: List[Message]) -> str:
     return "\n\n\n".join(messages)
 
 
-async def process_top_request(args: TopCommandArgs, db_engine: PostgreSQLEngine, user_id: str) -> str:
+async def process_top_request(args: TopCommandArgs, db_service: str, user_id: str) -> str:
     """
     Returns formatted message with top-messages to user
 
     :param args: arguments parsed from user message (see top_command)
-    :param db_engine: db engine for database operations
+    :param db_service: url of service for database operations
+    :param user_id: ID of the user
     :return: formatted message
     """
+    base_url = f"http://{db_service}/messages/top"
 
     parameters = {
-        "db_engine": db_engine,
         "sorting_type": args.sorting_method,
         "top_count": args.N,
         "after_ts": Decimal(time.mktime((datetime.now() - args.time).timetuple())),
@@ -63,27 +60,25 @@ async def process_top_request(args: TopCommandArgs, db_engine: PostgreSQLEngine,
         return "Number of messages should be positive."
 
     if args.is_all_channels_requested():
-        req_status, messages = await get_top_messages(**parameters)
+        pass  # Nothing to add
     elif args.is_channel():
-        req_status, messages = await get_top_messages_by_channel_id(
-            channel_id=args.channel_id, **parameters
-        )
+        parameters['channel_id'] = args.channel_id
     else:
-        req_status, messages = await get_top_messages_by_category_name(
-            category_name=args.category_name, user_id=user_id, **parameters
-        )
+        parameters['category_name'] = args.category_name
+        parameters['user_id'] = user_id
 
-    if not req_status:
-        formatted_message = (
-            "Sorry, some error occured during message handling. "
+    answer = r.get(base_url, params=parameters, timeout=10)
+    if answer.status_code != 200:
+        return (
+            "Sorry, some error occurred during message handling. "
             "Please, contact bot developers. Thanks."
         )
-    elif not messages:
-        formatted_message = (
-            "No messages to print. Either category/channel/messages not found, "
-            "or something gonna wrong."
+
+    messages = answer.json()
+    if not messages:
+        return (
+            "No messages to print. Either category/channel/messages not found "
+            "or something went wrong."
         )
     else:
-        formatted_message = __pretty_top_format(messages)
-
-    return formatted_message
+        return __pretty_top_format(messages)
