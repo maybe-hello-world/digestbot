@@ -6,21 +6,17 @@ import os
 import logging
 from common.LoggerFactory import create_logger as _create_logger
 
-
 _logger = _create_logger(__name__, logging.WARNING)
-
 
 # User token for message access
 SLACK_USER_TOKEN = os.getenv("SLACK_USER_TOKEN", None)
 if SLACK_USER_TOKEN is None:
     raise Exception("SLACK_USER_TOKEN is not provided.")
 
-
 # Bot token for bot access (post to channels etc)
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN", None)
 if SLACK_BOT_TOKEN is None:
     raise Exception("SLACK_BOT_TOKEN is not provided.")
-
 
 # How often to crawl messages from chats
 CRAWL_INTERVAL = os.getenv("CRAWL_INTERVAL", "900")
@@ -32,7 +28,6 @@ except ValueError:
     )
     CRAWL_INTERVAL = 900
 
-
 # what oldest messages to get (in days)
 MESSAGE_DELTA_DAYS = os.getenv("MESSAGE_DELTA_DAYS", "1")
 try:
@@ -42,22 +37,6 @@ except ValueError:
         f"Could not parse message delta interval: f{MESSAGE_DELTA_DAYS}, default value 1 is used."
     )
     MESSAGE_DELTA_DAYS = 1
-
-
-# Database settings
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASS = os.getenv("DB_PASS", "postgres")
-DB_NAME = os.getenv("DB_NAME", "postgres")
-DB_HOST = os.getenv("DB_HOST", "postgres")
-DB_PORT = os.getenv("DB_PORT", 5432)
-try:
-    DB_PORT = int(DB_PORT)
-except ValueError:
-    _logger.warning(
-        f"Could not parse DB_PORT: f{DB_PORT}, default value '5432' is used."
-    )
-    DB_PORT = 5432
-
 
 # Log level
 __available_log_levels = {
@@ -74,3 +53,6 @@ if LOG_LEVEL not in __available_log_levels:
     )
     LOG_LEVEL = "info"
 LOG_LEVEL = __available_log_levels[LOG_LEVEL]
+
+# Database service URL
+DB_URL = os.getenv("DB_URL", "dbservice:80")

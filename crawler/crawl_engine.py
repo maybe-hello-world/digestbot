@@ -10,9 +10,9 @@ import crawler.config as config
 
 
 async def crawl_messages_once(
-    slacker: Slacker, logger: Logger, db_service: str
+    slacker: Slacker, logger: Logger
 ) -> None:
-    base_url = f"http://{db_service}/"
+    base_url = f"http://{config.DB_URL}/"
 
     # get messages and insert them into database
     ch_info = await slacker.get_channels_list()
@@ -47,12 +47,12 @@ async def crawl_messages_once(
             logger.debug(f"Updated permalinks for {len(messages)} messages.")
 
 
-async def crawl_messages(slacker: Slacker, logger: Logger, db_service: str):
+async def crawl_messages(slacker: Slacker, logger: Logger):
     while True:
         # wait for next time
         await asyncio.sleep(config.CRAWL_INTERVAL)
 
         try:
-            await crawl_messages_once(slacker=slacker, logger=logger, db_service=db_service)
+            await crawl_messages_once(slacker=slacker, logger=logger)
         except Exception as e:
             logger.exception(e)

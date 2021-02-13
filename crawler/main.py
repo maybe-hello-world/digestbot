@@ -1,7 +1,5 @@
 import asyncio
 import config
-import sys
-import time
 
 from common.LoggerFactory import create_logger
 from common.Slacker import Slacker
@@ -21,7 +19,7 @@ if __name__ == '__main__':
 
     # Instantiate crawler with corresponding function
     crawler_task = loop.create_task(
-        crawl_messages(slacker=slacker, logger=logger, db_service="dbservice:80")
+        crawl_messages(slacker=slacker, logger=logger)
     )
 
     loop.run_until_complete(crawler_task)
