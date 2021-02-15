@@ -1,0 +1,180 @@
+[
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "Choose the options for your top messages selection:"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": "Amount of messages to display:"
+    },
+    "block_id": "top_amount_selector",
+    "accessory": {
+      "type": "static_select",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "N"
+      },
+      "initial_option": {
+        "text": {
+          "type": "plain_text",
+          "text": "5"
+        },
+        "value": "5"
+      },
+      "options": [
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "3"
+          },
+          "value": "3"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "5"
+          },
+          "value": "5"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "10"
+          },
+          "value": "10"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "15"
+          },
+          "value": "15"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "20"
+          },
+          "value": "20"
+        }
+      ],
+      "action_id": "top_amount_selector"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": "Since:"
+    }
+  },
+  {
+    "type": "actions",
+    "block_id": "top_datetime_selector",
+    "elements": [
+      {
+        "type": "timepicker",
+        "action_id": "delta_timepicker",
+        "initial_time": "00:00",
+      },
+      {
+        "type": "datepicker",
+        "action_id": "delta_datepicker",
+        "initial_date": "{{ today }}"
+    }
+    ]
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Sorting methods:"
+    },
+    "block_id": "top_sorting_selector",
+    "accessory": {
+      "type": "static_select",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "Select a method"
+      },
+      "initial_option": {
+        "text": {
+          "type": "plain_text",
+          "text": "replies"
+        },
+        "value": "replies"
+      },
+      "options": [
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "replies"
+          },
+          "value": "reply_count"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "length"
+          },
+          "value": "thread_length"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "reactions"
+          },
+          "value": "reactions_rate"
+        }
+      ],
+      "action_id": "top_sorting_selector"
+    }
+  },
+  {
+    "type": "section",
+    "block_id": "section_channels",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Pick a channel or preset from the dropdown list"
+    },
+    "block_id": "top_preset_selector",
+    "accessory": {
+      "action_id": "top_preset_selector",
+      "type": "static_select",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "Select an item"
+      },
+      "options": [
+        {% for text, value in sources %}
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "{{ text }}"
+          },
+          "value": "{{ value }}"
+        },
+        {% endfor %}
+      ]
+    }
+  },
+  {
+  "type": "actions",
+  "elements": [
+    {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Submit"
+      },
+      "value": "top_submission",
+      "action_id": "top_submission"
+    }
+  ]
+}
+]

@@ -20,7 +20,7 @@ class Slacker:
     Slack API wrapper
     """
 
-    def __init__(self, user_token: str, bot_token: str, logger: Logger):
+    def __init__(self, user_token: str, bot_token: str, logger: Logger, async_init: bool = False):
         self.logger = logger
         self.retry_policy = RetryAfterSlack(repeat=5)
 
@@ -28,10 +28,26 @@ class Slacker:
         self.user_web_client = slack.WebClient(token=user_token, run_async=True)
         self.rtm_client = slack.RTMClient(token=bot_token, run_async=True)
 
+        if async_init:
+            return
+
         try:
             self.bot_web_client.auth_test()
             ans = slack.WebClient(token=bot_token).auth_test()
             self.user_web_client.auth_test()
+        except errors.SlackClientError as e:
+            self.logger.exception(e)
+            raise
+        else:
+            self.user_id = ans["user_id"]
+
+        self.logger.info("Slack API connection successfully established.")
+
+    async def __ainit__(self, bot_token: str):
+        try:
+            await self.bot_web_client.auth_test()
+            ans = await slack.WebClient(token=bot_token, run_async=True).auth_test()
+            await self.user_web_client.auth_test()
         except errors.SlackClientError as e:
             self.logger.exception(e)
             raise
@@ -69,14 +85,14 @@ class Slacker:
         return is_im
 
     async def get_channels_list(
-        self, exclude_archive: bool = True, public_only: bool = True
+            self, exclude_archive: bool = True, public_only: bool = True
     ) -> Optional[List[Tuple[str, str]]]:
         """
         Get channel names and IDs
 
         :param exclude_archive: whether to exclude archived chats
         :param public_only: whether to use private channels
-        :return: List of tuples (channel_name, channel_id) or None if any error
+        :return: List of tuples (channel_id, channel_name) or None if any error
         """
 
         # get channels
@@ -132,7 +148,7 @@ class Slacker:
         return sum_length
 
     async def _count_thread_lengths(
-        self, channel_id: str, messages: List[dict]
+            self, channel_id: str, messages: List[dict]
     ) -> List[dict]:
         """
         Update messages with length in chars
@@ -163,11 +179,11 @@ class Slacker:
         return messages
 
     async def get_channel_messages(
-        self,
-        channel_id: str,
-        oldest: datetime = None,
-        latest: datetime = None,
-        limit: int = 100000,
+            self,
+            channel_id: str,
+            oldest: datetime = None,
+            latest: datetime = None,
+            limit: int = 100000,
     ) -> Optional[List[Message]]:
         """
         Get list of messages and their statistics from the given channel from _oldest_ until now
@@ -214,8 +230,8 @@ class Slacker:
             if "<!" in new_x:
                 new_x = (
                     new_x.replace("<!everyone>", "everyone")
-                    .replace("<!channel>", "channel")
-                    .replace("<!here>", "here")
+                        .replace("<!channel>", "channel")
+                        .replace("<!here>", "here")
                 )
                 x["text"] = new_x
 
@@ -238,7 +254,7 @@ class Slacker:
         return messages
 
     async def get_permalink(
-        self, channel_id: str, message_ts: Decimal
+            self, channel_id: str, message_ts: Decimal
     ) -> Optional[str]:
         """
         Get permalink for given message in given channel
@@ -312,6 +328,30 @@ class Slacker:
                     lambda: self.bot_web_client.chat_postMessage(
                         channel=channel_id,
                         text=text,
+                        as_user="false",
+                        link_names="true",
+                    )
+                )
+        except (RetryAfterError, asyncio.TimeoutError):
+            self.logger.warning("Couldn't post to channel due to timeout.")
+            return None
+        except errors.SlackClientError as e:
+            self.logger.exception(e)
+
+    async def post_blocks_to_channel(self, channel_id: str, blocks: str) -> None:
+        """
+        Post given text to given chat
+
+        :param channel_id: Slack channel ID
+        :param blocks: encoded string of blocks
+        :return: Nothing
+        """
+        try:
+            if blocks:
+                await self.retry_policy.execute(
+                    lambda: self.bot_web_client.chat_postMessage(
+                        channel=channel_id,
+                        blocks=blocks,
                         as_user="false",
                         link_names="true",
                     )
