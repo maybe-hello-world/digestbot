@@ -320,7 +320,9 @@ class Slacker:
             "channel": channel_id,
             t_par: data,
             "as_user": "false",
-            "link_names": "true"
+            "link_names": "true",
+            "unfurl_links": "true",
+            "unfurl_media": "true"
         }
 
         try:
