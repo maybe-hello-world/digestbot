@@ -126,7 +126,7 @@ async def top_interaction(data: dict):
     selected_datetime -= timedelta(seconds=tz_offset)
     request_parameters['after_ts'] = Decimal(time.mktime(selected_datetime.timetuple()))
 
-    base_url = f"http://{config.DB_URL}/messages/top"
+    base_url = f"http://{config.DB_URL}/message/top"
     answer = r.get(base_url, params=request_parameters, timeout=10)
     if answer.status_code != 200:
         result = (

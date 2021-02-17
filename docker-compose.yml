@@ -9,14 +9,16 @@ services:
     env_file:
       - .env
 
-  ui:
+  uiservice:
     build:
       context: .
-      dockerfile: ui/Dockerfile
+      dockerfile: uiservice/Dockerfile
     restart: always
+    ports:
+      - "80:80"
+      - "443:80"
     depends_on:
-      - postgres
-      - crawler # TODO: remove, now just to avoid double tables creation
+      - dbservice
     env_file:
       - .env
 
@@ -35,8 +37,6 @@ services:
       context: .
       dockerfile: dbservice/Dockerfile
     restart: always
-    ports:
-      - "80:80"
     depends_on:
       - postgres
     env_file:

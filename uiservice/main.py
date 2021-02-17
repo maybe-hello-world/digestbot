@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any
 import urllib.parse
 
@@ -79,7 +80,7 @@ async def startup():
     await container.slacker.__ainit__(bot_token=config.SLACK_BOT_TOKEN)
 
     container.jinja_env = Environment(
-        loader=PackageLoader('uiservice', 'resources'),
+        loader=PackageLoader(os.path.basename(os.path.dirname(__file__)), 'resources'),
         autoescape=False
     )
 
