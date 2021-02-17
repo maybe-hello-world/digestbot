@@ -80,7 +80,7 @@
       {
         "type": "timepicker",
         "action_id": "delta_timepicker",
-        "initial_time": "00:00",
+        "initial_time": "00:00"
       },
       {
         "type": "datepicker",
@@ -98,6 +98,7 @@
     "block_id": "top_sorting_selector",
     "accessory": {
       "type": "static_select",
+      "action_id": "top_sorting_selector",
       "placeholder": {
         "type": "plain_text",
         "text": "Select a method"
@@ -107,7 +108,7 @@
           "type": "plain_text",
           "text": "replies"
         },
-        "value": "replies"
+        "value": "reply_count"
       },
       "options": [
         {
@@ -131,21 +132,26 @@
           },
           "value": "reactions_rate"
         }
-      ],
-      "action_id": "top_sorting_selector"
+      ]
     }
   },
   {
     "type": "section",
-    "block_id": "section_channels",
+    "block_id": "top_preset_selector",
     "text": {
       "type": "mrkdwn",
       "text": "Pick a channel or preset from the dropdown list"
     },
-    "block_id": "top_preset_selector",
     "accessory": {
       "action_id": "top_preset_selector",
       "type": "static_select",
+      "initial_option": {
+        "text": {
+          "type": "plain_text",
+          "text": "all"
+        },
+        "value": "all"
+      },
       "placeholder": {
         "type": "plain_text",
         "text": "Select an item"

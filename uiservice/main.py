@@ -9,7 +9,7 @@ from jinja2 import Environment, PackageLoader
 import config
 from common.LoggerFactory import create_logger
 from common.Slacker import Slacker
-from routers import request_parser
+from routers import request_parser, top
 import extras
 import container
 
@@ -57,6 +57,10 @@ async def interactivity(tasks: BackgroundTasks, payload: Request):
     body = (await payload.body()).decode("utf-8")
     body = body[8:]  # remove 'payload='
     body = json.loads(urllib.parse.unquote(body))
+
+    if await top.top_interaction_eligibility(body):
+        tasks.add_task(top.top_interaction, body)
+        return
 
 
     print(body)

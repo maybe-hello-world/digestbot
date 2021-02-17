@@ -314,6 +314,26 @@ class Slacker:
 
         return messages
 
+    async def __postMessage(self, channel_id: str, data: str, is_blocks: bool) -> None:
+        t_par = "blocks" if is_blocks else "text"
+        params = {
+            "channel": channel_id,
+            t_par: data,
+            "as_user": "false",
+            "link_names": "true"
+        }
+
+        try:
+            if data:
+                await self.retry_policy.execute(
+                    lambda: self.bot_web_client.chat_postMessage(**params)
+                )
+        except (RetryAfterError, asyncio.TimeoutError):
+            self.logger.warning("Couldn't post to channel due to timeout.")
+            return None
+        except errors.SlackClientError as e:
+            self.logger.exception(e)
+
     async def post_to_channel(self, channel_id: str, text: str) -> None:
         """
         Post given text to given chat
@@ -322,21 +342,8 @@ class Slacker:
         :param text: text to be posted
         :return: Nothing
         """
-        try:
-            if text:
-                await self.retry_policy.execute(
-                    lambda: self.bot_web_client.chat_postMessage(
-                        channel=channel_id,
-                        text=text,
-                        as_user="false",
-                        link_names="true",
-                    )
-                )
-        except (RetryAfterError, asyncio.TimeoutError):
-            self.logger.warning("Couldn't post to channel due to timeout.")
-            return None
-        except errors.SlackClientError as e:
-            self.logger.exception(e)
+
+        await self.__postMessage(channel_id=channel_id, data=text, is_blocks=False)
 
     async def post_blocks_to_channel(self, channel_id: str, blocks: str) -> None:
         """
@@ -346,18 +353,25 @@ class Slacker:
         :param blocks: encoded string of blocks
         :return: Nothing
         """
+
+        await self.__postMessage(channel_id=channel_id, data=blocks, is_blocks=True)
+
+    async def get_user_info(self, user_id: str) -> Optional[dict]:
+        """
+        Receive information about the user
+
+        :param user_id: ID of the user
+        :return: dict with user's info from https://api.slack.com/methods/users.info
+        """
+
         try:
-            if blocks:
-                await self.retry_policy.execute(
-                    lambda: self.bot_web_client.chat_postMessage(
-                        channel=channel_id,
-                        blocks=blocks,
-                        as_user="false",
-                        link_names="true",
-                    )
-                )
-        except (RetryAfterError, asyncio.TimeoutError):
-            self.logger.warning("Couldn't post to channel due to timeout.")
+            answer = await self.retry_policy.execute(lambda: self.bot_web_client.users_info(user=user_id))
+            return answer['user']
+        except (asyncio.TimeoutError, RetryAfterError):
+            self.logger.warning("Couldn't receive user's info.")
             return None
         except errors.SlackClientError as e:
             self.logger.exception(e)
+            return None
+
+
