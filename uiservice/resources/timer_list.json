@@ -1,0 +1,43 @@
+[
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "Choose timer to delete or create new one:"
+    }
+  },
+  {% for x in timers %}
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Timer {{ x.timer_name }}, time delta: {{ x.delta.__str__() }}, next start: {{ x.next_start.strftime('%y-%m-%d %H:%M') }}"
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Delete"
+      },
+      "value": "{{ x.timer_name }}",
+      "action_id": "timer_delete",
+      "style": "danger"
+    }
+  },
+  {% endfor %}
+  {
+    "type": "actions",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Create new"
+        },
+        "value": "timer_new",
+        "action_id": "timer_new",
+        "style": "primary"
+      }
+    ]
+  }
+]

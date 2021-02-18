@@ -1,13 +1,13 @@
 import time
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import List
+from typing import List, Union
 
 import requests as r
 
 import config
 from common.models import Message
-from extras import try_parse_int, log_erroneous_answer
+from extras import try_parse_int, get_user_channels_and_presets
 import container
 
 
@@ -44,14 +44,8 @@ async def send_initial_message(user_id: str, channel_id: str) -> None:
     # get current date
     today = datetime.today().strftime("%Y-%m-%d")
 
-    # get presets available for the user
-    answer = r.get(
-        f"http://{config.DB_URL}/category/",
-        params={'user_id': user_id, 'include_global': "true"},
-        timeout=10
-    )
-    if answer.status_code != 200:
-        log_erroneous_answer(answer)
+    sources = await get_user_channels_and_presets(user_id)
+    if sources is None:
         await container.slacker.post_to_channel(
             channel_id=channel_id,
             text="Couldn't receive presets for the user. "
@@ -59,18 +53,12 @@ async def send_initial_message(user_id: str, channel_id: str) -> None:
         )
         return
 
-    presets_list = answer.json()
-    sources = [('all', 'all')]
-    sources.extend((y := x.get("name", "<ERROR>"), y.lower()) for x in presets_list)
-
-    # extend them with current existing channels
-    channels = await container.slacker.get_channels_list()
-    sources.extend((y, f"<#{x}>") for x, y in channels)
+    sources = [('all', 'all')] + sources
 
     # create answer for top command from the template
-    template = container.jinja_env.get_template("top.json.j2")
-    result = template.render(today=today, sources=sources).replace("\n", "")
-    await container.slacker.post_blocks_to_channel(channel_id=channel_id, blocks=result)
+    template = container.jinja_env.get_template("top.json")
+    result = template.render(today=today, sources=sources)
+    await container.slacker.post_to_channel(channel_id=channel_id, blocks=result, ephemeral=True, user_id=user_id)
 
 
 async def top_interaction_eligibility(data: dict):
@@ -78,54 +66,75 @@ async def top_interaction_eligibility(data: dict):
                                                                                         "") == "top_submission"
 
 
-async def top_interaction(data: dict):
-    request_parameters = {}
+def top_parser(amount: dict, sorting_type: dict, preset: dict, user_id: str) -> Union[dict, str]:
+    answer = {}
 
-    user = data['user']['id']
-    channel = data['channel']['id']
-
-    # parse values
-    values = data['state']['values']
-
-    # parse amount
-    amount_str = values['top_amount_selector']['top_amount_selector']['selected_option']['value']
+    # amount parsing
+    amount_str = amount['selected_option']['value']
     amount = try_parse_int(amount_str)
     if amount is None:
-        await container.slacker.post_to_channel(channel_id=channel, text=f"Erroneous number: {amount_str}")
-        return
-
+        return f"Erroneous number: {amount_str}"
     if amount <= 0:
-        await container.slacker.post_to_channel(channel_id=channel, text=f"Number of messages should be positive, "
-                                                                         f"provided value: {amount}")
-        return
-    request_parameters['top_count'] = amount
+        return f"Number of messages should be positive, provided value: {amount}"
+    answer['top_count'] = amount
 
-    sorting_type = values['top_sorting_selector']['top_sorting_selector']['selected_option']['value']
+    # sorting_type parsing
+    sorting_type = sorting_type['selected_option']['value']
     if sorting_type not in {"reply_count", "thread_length", "reactions_rate"}:
-        await container.slacker.post_to_channel(channel_id=channel, text=f"Unknown sorting type: {sorting_type}")
-        return
-    request_parameters['sorting_type'] = sorting_type
+        return f"Unknown sorting type: {sorting_type}"
+    answer['sorting_type'] = sorting_type
 
-    preset: str = values['top_preset_selector']['top_preset_selector']['selected_option']['value']
-
+    # preset parsing
+    preset = preset['selected_option']['value']
     if preset == "all":
         pass
     elif preset.startswith("<#") and preset.endswith(">"):
-        request_parameters['channel_id'] = preset[2:-1]
+        answer['channel_id'] = preset[2:-1]
     else:
-        request_parameters['category_name'] = preset
-        request_parameters['user_id'] = user
+        answer['category_name'] = preset
+        answer['user_id'] = user_id
+
+    return answer
+
+
+async def top_interaction(data: dict):
+    user = data['user']['id']
+    channel = data['channel']['id']
+    values = data['state']['values']
+
+    # parse top parameters
+    request_parameters = top_parser(
+        amount=values['top_amount_selector']['top_amount_selector'],
+        sorting_type=values['top_sorting_selector']['top_sorting_selector'],
+        preset=values['top_preset_selector']['top_preset_selector'],
+        user_id=user
+    )
+
+    if isinstance(request_parameters, str):
+        # error returned
+        await container.slacker.post_to_channel(channel_id=channel, text=request_parameters)
+        return
 
     # find user's timezone
     user_info = await container.slacker.get_user_info(user_id=user)
     tz_offset = user_info.get('tz_offset', 0)
 
+    # parse time
     date_value = values['top_datetime_selector']['delta_datepicker']['selected_date']
     time_value = values['top_datetime_selector']['delta_timepicker']['selected_time']
     selected_datetime = datetime.strptime(f"{date_value} {time_value}", "%Y-%m-%d %H:%M")
     selected_datetime -= timedelta(seconds=tz_offset)
+    if selected_datetime > datetime.utcnow():
+        await container.slacker.post_to_channel(channel_id=channel, text="Please, select the date from the past. "
+                                                                         "We cannot process future messages. Yet. :)")
+        return
+
     request_parameters['after_ts'] = Decimal(time.mktime(selected_datetime.timetuple()))
 
+    await post_top_message(channel_id=channel, request_parameters=request_parameters)
+
+
+async def post_top_message(channel_id: str, request_parameters: dict):
     base_url = f"http://{config.DB_URL}/message/top"
     answer = r.get(base_url, params=request_parameters, timeout=10)
     if answer.status_code != 200:
@@ -141,4 +150,4 @@ async def top_interaction(data: dict):
     else:
         result = __pretty_top_format(y)
 
-    await container.slacker.post_to_channel(channel_id=channel, text=result)
+    await container.slacker.post_to_channel(channel_id=channel_id, text=result)

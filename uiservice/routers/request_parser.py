@@ -1,4 +1,4 @@
-from .top import send_initial_message
+from . import top, timer
 
 SYNTAX_RESPONSE = (
     "Oops! <@{}>, I didn't understood your request, could you check your command? "
@@ -19,10 +19,10 @@ async def process_message(message: dict) -> None:
     if text == "help":
         print("help")
     elif text == "top":
-        await send_initial_message(user_id, channel)
+        await top.send_initial_message(user_id, channel)
         return
     elif text == "timers":
-        print("timers")
+        await timer.send_initial_message(user_id, channel)
     elif text == "presets":
         print("presets")
 

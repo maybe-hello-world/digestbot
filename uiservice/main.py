@@ -1,23 +1,20 @@
 import json
 import os
-from typing import Any
 import urllib.parse
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Depends, Body, Form
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Depends, Body
 from jinja2 import Environment, PackageLoader
 
 import config
 from common.LoggerFactory import create_logger
 from common.Slacker import Slacker
-from routers import request_parser, top
+from routers import request_parser, top, timer
 import extras
 import container
 
 app = FastAPI()
 container.logger = create_logger("UI", level=config.LOG_LEVEL)
-
-
 
 
 @app.post("/events", dependencies=[Depends(extras.verify_origin)])
@@ -32,7 +29,9 @@ async def events(tasks: BackgroundTasks, data: dict = Body(...)):
         raise HTTPException(status_code=501, detail="Currently only callbacks of messages are processed.",
                             headers={'X-Slack-No-Retry': '1'})
 
-    data = data['event']
+    data = data.get('event', {})
+    if data.get("type", "") == "message" and data.get("subtype", "") in {"message_deleted", "message_changed"}:
+        return
 
     is_im = (data.get("channel_type", "") == "im")
     # check if it is in private channel
@@ -45,7 +44,7 @@ async def events(tasks: BackgroundTasks, data: dict = Body(...)):
         return
 
     # answer only on direct messages and mentions in chats
-    if container.slacker.user_id not in data['text'] and not is_im:
+    if container.slacker.user_id not in data.get('text', "") and not is_im:
         return
 
     # parse message and answer
@@ -62,10 +61,10 @@ async def interactivity(tasks: BackgroundTasks, payload: Request):
     if await top.top_interaction_eligibility(body):
         tasks.add_task(top.top_interaction, body)
         return
+    elif await timer.timer_interaction_eligibility(body):
+        tasks.add_task(timer.timer_interaction, body)
+        return
 
-
-    print(body)
-    # print((await request.body()).decode("utf-8"))
     return
 
 

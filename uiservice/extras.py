@@ -1,12 +1,13 @@
-from datetime import datetime, timezone
+import json
+from datetime import datetime, timezone, timedelta
 import hashlib
 import hmac
-from typing import Mapping, Optional
+from typing import Optional, List
 import requests as r
 
 from fastapi import HTTPException, Request
 
-from config import SIGNING_SECRET
+import config
 import container
 
 
@@ -26,7 +27,8 @@ async def verify_origin(request: Request) -> None:
         raise HTTPException(status_code=403, detail="X-Slack-Request-Timestamp is too old.")
 
     request_hash = f"{version}:{timestamp}:".encode("ascii") + body
-    request_hash = hmac.new(key=SIGNING_SECRET.encode('ascii'), msg=request_hash, digestmod=hashlib.sha256).hexdigest()
+    request_hash = hmac.new(key=config.SIGNING_SECRET.encode('ascii'), msg=request_hash,
+                            digestmod=hashlib.sha256).hexdigest()
     request_hash = f"{version}={request_hash}"
 
     if not hmac.compare_digest(request_hash, headers.get('X-Slack-Signature', '')):
@@ -41,8 +43,35 @@ def process_url_verification(data: dict) -> dict:
     return {"challenge": data.get("challenge", None)}
 
 
+def get_user_presets(user_id: str) -> Optional[List]:
+    # get presets available for the user
+    answer = r.get(
+        f"http://{config.DB_URL}/category/",
+        params={'user_id': user_id, 'include_global': "true"},
+        timeout=10
+    )
+    if answer.status_code != 200:
+        log_erroneous_answer(answer)
+        return
+
+    return answer.json()
+
+
+async def get_user_channels_and_presets(user_id: str) -> Optional[List]:
+    presets_list = get_user_presets(user_id)
+    if presets_list is None:
+        return None
+
+    sources = [(y := x.get("name", "<ERROR>"), y.lower()) for x in presets_list]
+
+    # extend them with current existing channels
+    channels = await container.slacker.get_channels_list()
+    sources.extend((y, f"<#{x}>") for x, y in channels)
+    return sources
+
+
 def log_erroneous_answer(answer: r.Response) -> None:
-    if answer.status_code >= 500:
+    if answer.status_code >= 422:
         container.logger.warning(answer.text)
 
 
@@ -51,3 +80,12 @@ def try_parse_int(value: str) -> Optional[int]:
         return int(value)
     except ValueError:
         return None
+
+
+class TimerEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+        if isinstance(o, timedelta):
+            return o.total_seconds()
+        return json.JSONEncoder.default(self, o)
