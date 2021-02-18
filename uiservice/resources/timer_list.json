@@ -11,7 +11,7 @@
     "type": "section",
     "text": {
       "type": "mrkdwn",
-      "text": "Timer {{ x.timer_name }}, time delta: {{ x.delta.__str__() }}, next start: {{ x.next_start.strftime('%y-%m-%d %H:%M') }}"
+      "text": "Timer {{ x.timer_name }}, time delta: {{ x.delta.__str__() }}, next start: {{ x.next_start.strftime('%y-%m-%d %H:%M') }} UTC"
     },
     "accessory": {
       "type": "button",
