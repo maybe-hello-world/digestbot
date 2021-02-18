@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from models import Timer
 from typing import List, Optional
 
@@ -21,6 +21,16 @@ async def remove_timer(username: str, timer_name: str):
 
 @router.post("/", response_model=Timer)
 async def insert_timer(timer: Timer):
+    if isinstance(timer.delta, float) and isinstance(timer.next_start, str):
+        timer = Timer(
+            channel_id=timer.channel_id,
+            username=timer.username,
+            timer_name=timer.timer_name,
+            delta=timedelta(seconds=timer.delta),
+            next_start= datetime.fromisoformat(timer.next_start),
+            top_command=timer.top_command
+        )
+
     result = await timer_dao.insert_timer(timer, TIMERS_LIMIT)
     if not result:
         raise HTTPException(

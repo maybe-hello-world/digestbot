@@ -17,9 +17,4 @@ class Message(Message, BaseModel):
 
 
 class Timer(Timer, BaseModel):
-    channel_id: str
-    username: str
-    timer_name: str
-    delta: timedelta
-    next_start: datetime
-    top_command: str
+    pass

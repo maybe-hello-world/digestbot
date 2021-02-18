@@ -23,6 +23,6 @@ async def shutdown():
 
 @app.exception_handler(PostgresError)
 async def asyncpg_exception_handler(request: Request, exc: PostgresError):
-    db_engine.logger.error(f"Error occurred during processing of the request: {request.body()}")
+    db_engine.logger.error(f"Error occurred during processing of the request: {request.url}")
     db_engine.logger.exception(exc)
     raise HTTPException(status_code=500, detail=str(exc))

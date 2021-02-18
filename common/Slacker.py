@@ -314,49 +314,40 @@ class Slacker:
 
         return messages
 
-    async def __postMessage(self, channel_id: str, data: str, is_blocks: bool) -> None:
-        t_par = "blocks" if is_blocks else "text"
-        params = {
+    async def post_to_channel(
+            self,
+            channel_id: str,
+            text: str = "",
+            blocks: Optional[str] = None,
+            ephemeral: bool = False,
+            user_id: str = ""
+    ) -> None:
+        if blocks:
+            params = {"blocks": blocks}
+        else:
+            params = {"text": text}
+
+        params.update({
             "channel": channel_id,
-            t_par: data,
             "as_user": "false",
             "link_names": "true",
             "unfurl_links": "true",
             "unfurl_media": "true"
-        }
+        })
+
+        if not ephemeral:
+            post = lambda: self.bot_web_client.chat_postMessage(**params)
+        else:
+            post = lambda: self.bot_web_client.chat_postEphemeral(**params, user=user_id)
 
         try:
-            if data:
-                await self.retry_policy.execute(
-                    lambda: self.bot_web_client.chat_postMessage(**params)
-                )
+            if text or blocks:
+                await self.retry_policy.execute(post)
         except (RetryAfterError, asyncio.TimeoutError):
             self.logger.warning("Couldn't post to channel due to timeout.")
             return None
         except errors.SlackClientError as e:
             self.logger.exception(e)
-
-    async def post_to_channel(self, channel_id: str, text: str) -> None:
-        """
-        Post given text to given chat
-
-        :param channel_id: Slack channel ID
-        :param text: text to be posted
-        :return: Nothing
-        """
-
-        await self.__postMessage(channel_id=channel_id, data=text, is_blocks=False)
-
-    async def post_blocks_to_channel(self, channel_id: str, blocks: str) -> None:
-        """
-        Post given text to given chat
-
-        :param channel_id: Slack channel ID
-        :param blocks: encoded string of blocks
-        :return: Nothing
-        """
-
-        await self.__postMessage(channel_id=channel_id, data=blocks, is_blocks=True)
 
     async def get_user_info(self, user_id: str) -> Optional[dict]:
         """
