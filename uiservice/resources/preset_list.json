@@ -1,0 +1,43 @@
+[
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "Choose preset to delete or create new one:"
+    }
+  },
+  {% for x in presets %}
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Preset: {{ x['name'] }}, channels: {{ x['text_channel_ids'] }}"
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Delete"
+      },
+      "value": "{{ x['name'] }}",
+      "action_id": "preset_delete",
+      "style": "danger"
+    }
+  },
+  {% endfor %}
+  {
+    "type": "actions",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Create new"
+        },
+        "value": "preset_new",
+        "action_id": "preset_new",
+        "style": "primary"
+      }
+    ]
+  }
+]

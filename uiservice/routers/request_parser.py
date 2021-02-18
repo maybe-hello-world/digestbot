@@ -1,4 +1,5 @@
-from . import top, timer
+import container
+from . import top, timer, preset
 
 SYNTAX_RESPONSE = (
     "Oops! <@{}>, I didn't understood your request, could you check your command? "
@@ -20,10 +21,9 @@ async def process_message(message: dict) -> None:
         print("help")
     elif text == "top":
         await top.send_initial_message(user_id, channel)
-        return
     elif text == "timers":
         await timer.send_initial_message(user_id, channel)
     elif text == "presets":
-        print("presets")
-
-    print(message)
+        await preset.send_initial_message(user_id, channel)
+    else:
+        await container.slacker.post_to_channel(channel_id=channel, text=SYNTAX_RESPONSE.format(user_id))

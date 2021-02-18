@@ -367,4 +367,19 @@ class Slacker:
             self.logger.exception(e)
             return None
 
-
+    async def open_view(self, trigger_id: str, view: dict):
+        """
+        Open modal window with given trigger_id and window description
+        :param trigger_id: trigger_id from recent interaction
+        :param view: modal window description (Slack Block Kit payload)
+        """
+        try:
+            answer = await self.retry_policy.execute(
+                lambda: self.bot_web_client.views_open(trigger_id=trigger_id, view=view))
+            return answer['user']
+        except (asyncio.TimeoutError, RetryAfterError):
+            self.logger.warning("Couldn't receive user's info.")
+            return None
+        except errors.SlackClientError as e:
+            self.logger.exception(e)
+            return None

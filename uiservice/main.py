@@ -3,13 +3,13 @@ import os
 import urllib.parse
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Depends, Body
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Depends, Body, Response
 from jinja2 import Environment, PackageLoader
 
 import config
 from common.LoggerFactory import create_logger
 from common.Slacker import Slacker
-from routers import request_parser, top, timer
+from routers import request_parser, top, timer, preset
 import extras
 import container
 
@@ -64,6 +64,9 @@ async def interactivity(tasks: BackgroundTasks, payload: Request):
     elif await timer.timer_interaction_eligibility(body):
         tasks.add_task(timer.timer_interaction, body)
         return
+    elif await preset.preset_interaction_eligibility(body):
+        tasks.add_task(preset.preset_interaction, body)
+        return Response(status_code=200)    # for modal views response should be ABSOLUTELY empty
 
     return
 
