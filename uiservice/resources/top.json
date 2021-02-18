@@ -178,6 +178,7 @@
         "type": "plain_text",
         "text": "Submit"
       },
+      "style": "primary",
       "value": "top_submission",
       "action_id": "top_submission"
     }
