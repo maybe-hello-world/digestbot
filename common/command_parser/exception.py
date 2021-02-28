@@ -1,2 +1,0 @@
-class TooManyArgumentsError(Exception):
-    pass

@@ -1,2 +1,0 @@
-class PolicyError(Exception):
-    pass

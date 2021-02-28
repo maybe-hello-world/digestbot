@@ -7,7 +7,7 @@ from logging import Logger
 
 import asyncio
 
-from .db.models import Message
+from .models import Message
 from .utils import reaction_ranking
 from .resilence_library.retryafter import RetryAfterSlack, RetryAfterError
 
