@@ -230,8 +230,8 @@ class Slacker:
             if "<!" in new_x:
                 new_x = (
                     new_x.replace("<!everyone>", "everyone")
-                        .replace("<!channel>", "channel")
-                        .replace("<!here>", "here")
+                         .replace("<!channel>", "channel")
+                         .replace("<!here>", "here")
                 )
                 x["text"] = new_x
 

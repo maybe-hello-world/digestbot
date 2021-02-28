@@ -7,6 +7,7 @@ from common.LoggerFactory import create_logger
 class DBEngine:
     def __init__(self):
         self.logger = create_logger("dbengine", config.LOG_LEVEL)
+        self.pool = None
 
     async def ainit(self):
         await DBEngine.check_or_create_database()
