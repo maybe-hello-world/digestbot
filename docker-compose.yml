@@ -1,14 +1,5 @@
 version: '3'
 services:
-  bot:
-    build: .
-    restart: always
-    depends_on:
-      - postgres
-      - crawler # TODO: remove, now just to avoid double tables creation
-    env_file:
-      - .env
-
   uiservice:
     build:
       context: .
@@ -29,6 +20,17 @@ services:
     restart: always
     depends_on:
       - dbservice
+    env_file:
+      - .env
+
+  timers:
+    build:
+      context: .
+      dockerfile: timers/Dockerfile
+    restart: always
+    depends_on:
+      - dbservice
+      - uiservice
     env_file:
       - .env
 
