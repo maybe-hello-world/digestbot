@@ -9,11 +9,13 @@ from jinja2 import Environment, PackageLoader
 import config
 from common.LoggerFactory import create_logger
 from common.Slacker import Slacker
-from routers import request_parser, top, timer, preset
+from routers import request_parser, top, timer, preset, internal
 import extras
 import container
 
 app = FastAPI()
+app.include_router(internal.router, prefix="/internal", tags=['internal'])
+
 container.logger = create_logger("UI", level=config.LOG_LEVEL)
 
 

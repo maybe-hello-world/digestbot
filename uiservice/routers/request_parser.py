@@ -1,5 +1,5 @@
 import container
-from . import top, timer, preset
+from . import top, timer, preset, helper
 
 SYNTAX_RESPONSE = (
     "Oops! <@{}>, I didn't understood your request, could you check your command? "
@@ -17,8 +17,8 @@ async def process_message(message: dict) -> None:
     text = message.get("text", "").lower().strip()
     user_id = message.get("user", "")
     channel = message.get("channel", "")
-    if text == "help":
-        print("help")
+    if text.startswith("help"):
+        await helper.process_message(channel, text)
     elif text == "top":
         await top.send_initial_message(user_id, channel)
     elif text == "timers":

@@ -66,7 +66,8 @@ async def get_user_channels_and_presets(user_id: str) -> Optional[List]:
 
     # extend them with current existing channels
     channels = await container.slacker.get_channels_list()
-    sources.extend((y, f"<#{x}>") for x, y in channels)
+    if channels:
+        sources.extend((y, f"<#{x}>") for x, y in channels)
     return sources
 
 
