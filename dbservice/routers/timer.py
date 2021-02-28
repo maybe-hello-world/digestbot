@@ -27,7 +27,7 @@ async def insert_timer(timer: Timer):
             username=timer.username,
             timer_name=timer.timer_name,
             delta=timedelta(seconds=timer.delta),
-            next_start= datetime.fromisoformat(timer.next_start),
+            next_start=datetime.fromisoformat(timer.next_start),
             top_command=timer.top_command
         )
 
@@ -77,4 +77,6 @@ async def get_nearest_timer(time_border: datetime):
 
 @router.get("/overdue", response_model=List[Timer])
 async def get_overdue_timers(time_border: datetime):
+    if isinstance(time_border, str):
+        time_border = datetime.fromisoformat(time_border)
     return await timer_dao.get_overdue_timers(time_border)

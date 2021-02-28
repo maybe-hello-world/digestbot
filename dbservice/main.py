@@ -1,3 +1,5 @@
+import asyncio
+
 from asyncpg.exceptions import PostgresError
 
 from fastapi import FastAPI, Request, HTTPException
@@ -13,6 +15,7 @@ app.include_router(message.router, prefix="/message", tags=['message'])
 
 @app.on_event("startup")
 async def startup():
+    await asyncio.sleep(1)
     await db_engine.ainit()
 
 
