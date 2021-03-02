@@ -2,27 +2,30 @@ import json
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timedelta
-from typing import Union
 
 import config
 import container
 import requests as r
+from result import Result, Ok, Err
+from sentry_sdk import capture_message
 
 from common.models import Timer
-from extras import get_user_channels_and_presets, log_erroneous_answer, TimerEncoder
+from extras import get_user_channels_and_presets, TimerEncoder
+from common.extras import try_request
 from routers.top import top_parser
 
 
 async def send_initial_message(user_id: str, channel_id: str) -> None:
     base_url = f"http://{config.DB_URL}/timer/"
-    try:
-        answer = r.get(base_url, params={"username": user_id}, timeout=10)
-    except r.Timeout:
+    answer = try_request(r.get, base_url, params={"username": user_id})
+
+    if answer.is_err():
         await container.slacker.post_to_channel(
             channel_id=channel_id,
             text="Received timeout during database interaction. Please, try later."
         )
         return
+    answer = answer.unwrap()
 
     timers = answer.json()
     timers = [Timer(
@@ -60,7 +63,7 @@ async def timer_interaction(data: dict):
 
 
 async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
-    def __parse_amount_unit(_amount: str, _unit: str) -> Union[int, str]:
+    def __parse_amount_unit(_amount: str, _unit: str) -> Result[int, str]:
         """Return seconds from parsed period"""
         multipliers = {
             "hour": 60 * 60,
@@ -70,10 +73,10 @@ async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
         _amount = int(_amount)
 
         if _unit not in multipliers:
-            container.logger.error(f"Received unknown unit type: {_unit}")
-            return "Internal error."
+            capture_message(f"Received unknown unit type: {_unit}")
+            return Err("Internal error.")
 
-        return _amount * multipliers[_unit]
+        return Ok(_amount * multipliers[_unit])
 
     values = data['state']['values']
 
@@ -85,28 +88,29 @@ async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
         user_id=user_id
     )
 
-    if isinstance(timer_parameters, str):
+    if timer_parameters.is_err():
         # error returned
-        await container.slacker.post_to_channel(channel_id=channel_id, text=timer_parameters)
+        await container.slacker.post_to_channel(channel_id=channel_id, text=timer_parameters.unwrap_err())
         return
+    timer_parameters = timer_parameters.unwrap()
 
     # parse message period
     amount = values['timer_message_period_picker']['timer_period_amount']['selected_option']['value']
     unit = values['timer_message_period_picker']['timer_period_unit']['selected_option']['value']
     result = __parse_amount_unit(amount, unit)
-    if isinstance(result, str):
-        await container.slacker.post_to_channel(channel_id=channel_id, text=result)
+    if result.is_err():
+        await container.slacker.post_to_channel(channel_id=channel_id, text=result.unwrap_err())
         return
-    timer_parameters['message_period_seconds'] = result
+    timer_parameters['message_period_seconds'] = result.unwrap()
 
     # parse timer period
     amount = values['timer_period_picker']['timer_period_amount']['selected_option']['value']
     unit = values['timer_period_picker']['timer_period_unit']['selected_option']['value']
     result = __parse_amount_unit(amount, unit)
-    if isinstance(result, str):
-        await container.slacker.post_to_channel(channel_id=channel_id, text=result)
+    if result.is_err():
+        await container.slacker.post_to_channel(channel_id=channel_id, text=result.unwrap_err())
         return
-    timer_delta = timedelta(seconds=result)
+    timer_delta = timedelta(seconds=result.unwrap())
 
     # find user's timezone
     user_info = await container.slacker.get_user_info(user_id=user_id)
@@ -134,10 +138,10 @@ async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
     )
 
     data = json.dumps(asdict(new_timer), cls=TimerEncoder)
-    answer = r.post(f"http://{config.DB_URL}/timer/", data=data, timeout=10)
-    if answer.status_code != 200:
-        log_erroneous_answer(answer)
-        await container.slacker.post_to_channel(channel_id=channel_id, text=answer.text)
+    answer = try_request(r.post, f"http://{config.DB_URL}/timer/", data=data)
+    if answer.is_err():
+        await container.slacker.post_to_channel(channel_id=channel_id,
+                                                text="Something went wrong during creatioin of the timer. Sorry. :(")
         return
 
     await container.slacker.post_to_channel(channel_id=channel_id, text=(
@@ -151,30 +155,36 @@ async def __process_timer_deletion(data: dict, channel_id: str, user_id: str):
     timer_name = data['actions'][0]['value']
     base_url = f"http://{config.DB_URL}/timer/"
 
-    if timer_name is None:
+    if not timer_name:
         await container.slacker.post_to_channel(channel_id=channel_id, text=(
             "Timer name to delete should be explicitly specified. "
             "Please specify timer name or type `help timers` to get additional information."
         ))
         return
 
-    answer = r.get(base_url + "exists", params={'timer_name': timer_name, 'username': user_id}, timeout=10)
-    if answer.status_code == 404:
+    answer = try_request(r.get, base_url + "exists", params={'timer_name': timer_name, 'username': user_id})
+
+    if answer.is_err():
+        await container.slacker.post_to_channel(channel_id=channel_id, text="Internal error occurred. Sorry :(")
+        return
+
+    if not answer.unwrap().json():
         await container.slacker.post_to_channel(channel_id=channel_id, text=(
             "Couldn't find timer with such name. "
             "If you are sure that it's a bug, please contact bot developer team. Thanks."
         ))
         return
 
-    answer = r.delete(base_url, params={'timer_name': timer_name, 'username': user_id}, timeout=10)
-    if answer.status_code == 200:
-        await container.slacker.post_to_channel(channel_id=channel_id, text=f"Timer {timer_name} successfully deleted.")
+    answer = try_request(r.delete, params={'timer_name': timer_name, 'username': user_id})
+    if answer.is_ok():
+        text = f"Timer {timer_name} successfully deleted."
     else:
-        container.logger.error(answer.text)
-        await container.slacker.post_to_channel(channel_id=channel_id, text=(
+        text = (
             f"Some error occurred. Timer {timer_name} possibly is not deleted. "
-            f"Please, check with `timers ls` and contact developers team. Thanks."
-        ))
+            f"Please, retry or contact developers team. Thanks."
+        )
+
+    await container.slacker.post_to_channel(channel_id=channel_id, text=text)
 
 
 async def __show_timer_creation(channel_id: str, user_id: str):

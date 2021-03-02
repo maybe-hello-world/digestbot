@@ -1,5 +1,4 @@
-import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 import hashlib
 import hmac
 from typing import Optional, List
@@ -9,6 +8,7 @@ from fastapi import HTTPException, Request
 
 import config
 import container
+from common.extras import try_request
 
 
 def check_message_callback(data: dict) -> bool:
@@ -45,16 +45,11 @@ def process_url_verification(data: dict) -> dict:
 
 def get_user_presets(user_id: str) -> Optional[List]:
     # get presets available for the user
-    answer = r.get(
+    return try_request(
+        r.get,
         f"http://{config.DB_URL}/category/",
-        params={'user_id': user_id, 'include_global': "true"},
-        timeout=10
-    )
-    if answer.status_code != 200:
-        log_erroneous_answer(answer)
-        return
-
-    return answer.json()
+        params={'user_id': user_id, 'include_global': "true"}
+    ).map(lambda x: x.json()).value
 
 
 async def get_user_channels_and_presets(user_id: str) -> Optional[List]:
@@ -69,24 +64,3 @@ async def get_user_channels_and_presets(user_id: str) -> Optional[List]:
     if channels:
         sources.extend((y, f"<#{x}>") for x, y in channels)
     return sources
-
-
-def log_erroneous_answer(answer: r.Response) -> None:
-    if answer.status_code >= 422:
-        container.logger.warning(answer.text)
-
-
-def try_parse_int(value: str) -> Optional[int]:
-    try:
-        return int(value)
-    except ValueError:
-        return None
-
-
-class TimerEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, datetime):
-            return o.isoformat()
-        if isinstance(o, timedelta):
-            return o.total_seconds()
-        return json.JSONEncoder.default(self, o)

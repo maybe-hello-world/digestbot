@@ -4,7 +4,8 @@ import config
 import requests as r
 
 import container
-from extras import log_erroneous_answer
+
+from common.extras import try_request
 
 PRESET_OVERRIDE_WARNING_MESSAGE = "Your preset name is the same as global preset. It will override global preset."
 PRESET_ALREADY_EXISTS = "Preset already exists. Please, delete existing preset or choose another name (wisely)."
@@ -13,14 +14,11 @@ NO_CHANNELS_PASSED_MESSAGE = "No channels selected."
 
 async def send_initial_message(user_id: str, channel_id: str) -> None:
     base_url = f"http://{config.DB_URL}/category/"
-    try:
-        answer = r.get(base_url, params={"user_id": user_id, "include_global": False}, timeout=10)
-    except r.Timeout:
-        await container.slacker.post_to_channel(
-            channel_id=channel_id,
-            text="Received timeout during database interaction. Please, try later."
-        )
+    answer = try_request(r.get, base_url, params={"user_id": user_id, "include_global": False})
+    if answer.is_err():
+        await container.slacker.post_to_channel(channel_id=channel_id, text=answer.unwrap_err())
         return
+    answer = answer.unwrap()
 
     presets = answer.json()
     for x in presets:
@@ -72,15 +70,14 @@ async def __process_preset_deletion(data: dict, channel_id: str, user_id: str):
         ))
         return
 
-    answer = r.delete(base_url, params={'name': preset_name, 'user_id': user_id}, timeout=10)
-    if answer.status_code == 200:
+    answer = try_request(r.delete, base_url, params={'name': preset_name, 'user_id': user_id})
+    if answer.is_ok():
         await container.slacker.post_to_channel(channel_id=channel_id,
                                                 text=f"Preset {preset_name} successfully deleted.")
     else:
-        container.logger.error(answer.text)
         await container.slacker.post_to_channel(channel_id=channel_id, text=(
             f"Some error occurred. Preset {preset_name} possibly is not deleted. "
-            f"Please, check with `presets` and contact developers team. Thanks."
+            f"Please, check with `presets` and contact developers team. Thanks.\n"
         ))
 
 
@@ -93,14 +90,14 @@ async def __process_preset_creation(data: dict, user_id: str):
     channels = data.get("channels_selector", {}).get("channels", {}).get("selected_channels", [])
 
     # check that preset_name does not exist and channels are not empty
-    try:
-        answer = r.get(base_url, params={"user_id": user_id, "include_global": False}, timeout=10)
-    except r.Timeout:
+    answer = try_request(r.get, base_url, params={"user_id": user_id, "include_global": False})
+    if answer.is_err():
         await container.slacker.post_to_channel(
             channel_id=user_id,
-            text="Received timeout during database interaction. Please, try later."
+            text="Received error during database interaction. Please, try later."
         )
         return
+    answer = answer.unwrap()
 
     if preset_name in {x.get("name", "") for x in answer.json()}:
         await container.slacker.post_to_channel(channel_id=user_id, text=PRESET_ALREADY_EXISTS)
@@ -111,25 +108,24 @@ async def __process_preset_creation(data: dict, user_id: str):
         return
 
     # check whether user will override global categories
-    try:
-        answer = r.get(base_url, params={"include_global": True}, timeout=10)
-    except r.Timeout:
+    answer = try_request(r.get, base_url, params={"include_global": True})
+    if answer.is_err():
         await container.slacker.post_to_channel(
             channel_id=user_id,
-            text="Received timeout during database interaction. Please, try later."
+            text="Received error during database interaction. Please, try later."
         )
         return
+    answer = answer.unwrap()
 
     user_answer = ""
     if preset_name in {x.name for x in answer.json()}:
         user_answer += PRESET_OVERRIDE_WARNING_MESSAGE
         user_answer += "\n"
 
-    answer = r.put(base_url, params={'user_id': user_id, 'name': preset_name}, data=json.dumps(channels), timeout=10)
-    if answer.status_code != 200:
-        log_erroneous_answer(answer)
-        user_answer += answer.text
-    else:
+    answer = try_request(r.put, base_url, params={'user_id': user_id, 'name': preset_name}, data=json.dumps(channels))
+    if answer.is_ok():
         user_answer += f"Successfully created preset {preset_name}."
+    else:
+        user_answer += f"Couldn't create preset {preset_name}, some error occurred. Sorry :("
 
     await container.slacker.post_to_channel(channel_id=user_id, text=user_answer)

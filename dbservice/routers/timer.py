@@ -42,15 +42,9 @@ async def insert_timer(timer: Timer):
     return timer
 
 
-@router.get("/exists")
+@router.get("/exists", response_model=bool)
 async def check_existence(username: str, timer_name: str):
-    result = await timer_dao.check_timer_existence(username=username, timer_name=timer_name)
-    if not result:
-        raise HTTPException(
-            status_code=404,
-            detail="Timer not found."
-        )
-    return
+    return await timer_dao.check_timer_existence(username=username, timer_name=timer_name)
 
 
 @router.get("/count", response_model=int)

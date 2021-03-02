@@ -1,13 +1,15 @@
 import time
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import List, Union
+from typing import List
 
 import requests as r
+from result import Result, Ok, Err
 
 import config
 from common.models import Message
-from extras import try_parse_int, get_user_channels_and_presets
+from common.extras import try_parse_int, try_request
+from extras import get_user_channels_and_presets
 import container
 
 
@@ -57,8 +59,8 @@ async def send_initial_message(user_id: str, channel_id: str) -> None:
 
     # create answer for top command from the template
     template = container.jinja_env.get_template("top.json")
-    result = template.render(today=today, sources=sources)
-    await container.slacker.post_to_channel(channel_id=channel_id, blocks=result, ephemeral=True, user_id=user_id)
+    render_result = template.render(today=today, sources=sources)
+    await container.slacker.post_to_channel(channel_id=channel_id, blocks=render_result, ephemeral=True, user_id=user_id)
 
 
 async def top_interaction_eligibility(data: dict):
@@ -66,22 +68,22 @@ async def top_interaction_eligibility(data: dict):
                                                                                         "") == "top_submission"
 
 
-def top_parser(amount: dict, sorting_type: dict, preset: dict, user_id: str) -> Union[dict, str]:
+def top_parser(amount: dict, sorting_type: dict, preset: dict, user_id: str) -> Result[dict, str]:
     answer = {}
 
     # amount parsing
     amount_str = amount['selected_option']['value']
     amount = try_parse_int(amount_str)
     if amount is None:
-        return f"Erroneous number: {amount_str}"
+        return Err(f"Erroneous number: {amount_str}")
     if amount <= 0:
-        return f"Number of messages should be positive, provided value: {amount}"
+        return Err(f"Number of messages should be positive, provided value: {amount}")
     answer['top_count'] = amount
 
     # sorting_type parsing
     sorting_type = sorting_type['selected_option']['value']
     if sorting_type not in {"reply_count", "thread_length", "reactions_rate"}:
-        return f"Unknown sorting type: {sorting_type}"
+        return Err(f"Unknown sorting type: {sorting_type}")
     answer['sorting_type'] = sorting_type
 
     # preset parsing
@@ -94,7 +96,7 @@ def top_parser(amount: dict, sorting_type: dict, preset: dict, user_id: str) -> 
         answer['category_name'] = preset
         answer['user_id'] = user_id
 
-    return answer
+    return Ok(answer)
 
 
 async def top_interaction(data: dict):
@@ -110,10 +112,11 @@ async def top_interaction(data: dict):
         user_id=user
     )
 
-    if isinstance(request_parameters, str):
+    if request_parameters.is_err():
         # error returned
-        await container.slacker.post_to_channel(channel_id=channel, text=request_parameters)
+        await container.slacker.post_to_channel(channel_id=channel, text=request_parameters.unwrap_err())
         return
+    request_parameters = request_parameters.unwrap()
 
     # find user's timezone
     user_info = await container.slacker.get_user_info(user_id=user)
@@ -136,18 +139,19 @@ async def top_interaction(data: dict):
 
 async def post_top_message(channel_id: str, request_parameters: dict):
     base_url = f"http://{config.DB_URL}/message/top"
-    answer = r.get(base_url, params=request_parameters, timeout=10)
-    if answer.status_code != 200:
-        result = (
+    answer = try_request(r.get, base_url, params=request_parameters)
+
+    if answer.is_err():
+        answer = (
             "Sorry, some error occurred during message handling. "
             "Please, contact bot developers. Thanks."
         )
-    elif not (y := answer.json()):
-        result = (
+    elif not (y := answer.unwrap().json()):
+        answer = (
             "No messages to print. Either category/channel/messages not found "
             "or something went wrong."
         )
     else:
-        result = __pretty_top_format(y)
+        answer = __pretty_top_format(y)
 
-    await container.slacker.post_to_channel(channel_id=channel_id, text=result)
+    await container.slacker.post_to_channel(channel_id=channel_id, text=answer)
