@@ -11,7 +11,7 @@ from common.models import Timer
 
 from config import OVERDUE_MINUTES, LOG_LEVEL
 from common.LoggerFactory import create_logger
-from common.extras import TimerEncoder
+from common.extras import TimerEncoder, try_request
 
 
 async def update_timers_once(
@@ -26,19 +26,8 @@ async def update_timers_once(
     # get timers older than n_minutes
     time_border = (datetime.utcnow() - timedelta(minutes=OVERDUE_MINUTES)).isoformat()
 
-    try:
-        overdue_timers = r.get(db_base_url + "overdue", params={"time_border": time_border}, timeout=10)
-        if overdue_timers.status_code == 200:
-            overdue_timers = overdue_timers.json()
-        else:
-            logger.error(overdue_timers.text)
-            overdue_timers = None
-    except Exception as e:
-        overdue_timers = None
-        logger.exception(e)
-
-    if not overdue_timers:
-        return
+    overdue_timers = (try_request(r.get, db_base_url + "overdue", params={"time_border": time_border})
+                      .map_or([], lambda x: x.json()))
 
     # update each timer and notify the timer creator
     now = datetime.utcnow()
@@ -60,25 +49,13 @@ async def update_timers_once(
         )
 
         # update timer in DB and notify the user
-        try:
-            answer = r.patch(db_base_url + "next_start", data=json.dumps(asdict(new_timer), cls=TimerEncoder),
-                             timeout=10)
-            if answer.status_code != 200:
-                logger.error(answer.text)
+        try_request(r.patch, db_base_url + "next_start", data=json.dumps(asdict(new_timer), cls=TimerEncoder))
 
-            text = f"""Due to bot being offline or other reasons timer {new_timer.timer_name} 
-                           of user <@{new_timer.username}> missed it's tick. 
-                           Timer's new next start is: {new_timer.next_start.strftime('%Y-%m-%d %H:%M:%S')}."""
-
-            answer = r.post(
-                ui_base_url + "message",
-                data=json.dumps({"channel_id": new_timer.channel_id, "text": text}),
-                timeout=10
-            )
-            if answer.status_code != 200:
-                logger.error(answer.text)
-        except Exception as e:
-            logger.exception(e)
+        text = f"""Due to bot being offline or other reasons timer {new_timer.timer_name} 
+        of user <@{new_timer.username}> missed it's tick. 
+        Timer's new next start is: {new_timer.next_start.strftime('%Y-%m-%d %H:%M:%S')}."""
+        try_request(r.post, ui_base_url + "message",
+                    data=json.dumps({"channel_id": new_timer.channel_id, "text": text}))
 
     logger.debug(f"{len(overdue_timers)} overdue timers updated.")
 
@@ -98,19 +75,11 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
         time_border = (datetime.utcnow() - timedelta(minutes=OVERDUE_MINUTES)).isoformat()
 
         # get nearest timer to execute
-        try:
-            nearest_timer = r.get(db_base_url + "nearest", params={"time_border": time_border}, timeout=10)
-            if nearest_timer.status_code != 200:
-                nearest_timer = None
-            else:
-                nearest_timer = nearest_timer.json()
-        except Exception as e:
-            nearest_timer = None
-            logger.exception(e)
-
-        if nearest_timer is None:
+        answer = try_request(r.get, db_base_url + "nearest", params={"time_border": time_border}).map(lambda x: x.json())
+        if answer.is_err() or answer.value is None:
             await asyncio.sleep(300)
             continue
+        nearest_timer = answer.value
 
         # sleep until that time if time - current_time > 0
         run_time = nearest_timer.next_start.strptime('%Y-%m-%d %H:%M:%S')
@@ -133,19 +102,8 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
         request_parameters['next_time'] = next_time
 
         # post top request
-        try:
-            answer = r.post(
-                ui_base_url + "top",
-                data={
-                    "channel_id": nearest_timer.channel_id,
-                    "request_parameters": request_parameters
-                },
-                timeout=10
-            )
-            if answer.status_code != 200:
-                raise Exception(answer.text)
-        except Exception as e:
-            logger.exception(e)
+        try_request(r.post, ui_base_url + "top",
+                    data={"channel_id": nearest_timer.channel_id, "request_parameters": request_parameters})
 
         new_timer = Timer(
             channel_id=nearest_timer.channel_id,
@@ -156,15 +114,7 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
             top_command=nearest_timer.top_command,
         )
 
-        try:
-            answer = r.patch(db_base_url + "next_start", data=json.dumps(new_timer, cls=TimerEncoder), timeout=10)
-            if answer != 200:
-                raise Exception(answer.text)
-        except TimeoutError:
-            logger.warning("Timeout")
-        except Exception as e:
-            logger.exception(e)
-            break
+        try_request(r.patch, db_base_url + "next_start", data=json.dumps(new_timer, cls=TimerEncoder))
 
 
 if __name__ == '__main__':
