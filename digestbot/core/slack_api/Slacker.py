@@ -91,7 +91,7 @@ class Slacker:
 
         try:
             channels = await self.retry_policy.execute(
-                lambda: self.bot_web_client.channels_list(
+                lambda: self.bot_web_client.conversations_list(
                     exclude_archive=exclude_archive, types=types
                 )
             )
