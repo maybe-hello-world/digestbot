@@ -1,9 +1,9 @@
 import json
 from datetime import datetime, timedelta
+from logging import Logger
 from typing import Optional, Callable
 import result
 import requests as r
-from sentry_sdk import capture_exception
 
 
 def try_parse_int(value: str) -> Optional[int]:
@@ -22,7 +22,7 @@ class TimerEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def try_request(request: Callable, *args, **kwargs) -> result.Result[r.Response, str]:
+def try_request(logger: Logger, request: Callable, *args, **kwargs) -> result.Result[r.Response, str]:
     try:
         answer: r.Response = request(*args, **kwargs, timeout=10)
         if answer.status_code != 200:
@@ -30,5 +30,5 @@ def try_request(request: Callable, *args, **kwargs) -> result.Result[r.Response,
 
         return result.Ok(answer)
     except (r.exceptions.Timeout, ValueError) as e:
-        capture_exception(e)
+        logger.exception(e)
         return result.Err(str(e))

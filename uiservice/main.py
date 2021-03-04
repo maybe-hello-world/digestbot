@@ -4,6 +4,13 @@ import urllib.parse
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Depends, Body, Response
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from jinja2 import Environment, PackageLoader
 
 import config
@@ -71,6 +78,18 @@ async def interactivity(tasks: BackgroundTasks, payload: Request):
         return Response(status_code=200)    # for modal views response should be ABSOLUTELY empty
 
     return
+
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request, exc):
+    container.logger.exception(exc)
+    return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    container.logger.exception(exc)
+    return await request_validation_exception_handler(request, exc)
 
 
 @app.on_event("startup")

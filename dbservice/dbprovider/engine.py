@@ -10,8 +10,6 @@ class DBEngine:
         self.pool = None
 
     async def ainit(self):
-        await DBEngine.check_or_create_database()
-
         self.pool = await asyncpg.create_pool(
             user=config.DB_USER,
             password=config.DB_PASS,

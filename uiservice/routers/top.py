@@ -139,7 +139,7 @@ async def top_interaction(data: dict):
 
 async def post_top_message(channel_id: str, request_parameters: dict):
     base_url = f"http://{config.DB_URL}/message/top"
-    answer = try_request(r.get, base_url, params=request_parameters)
+    answer = try_request(container.logger, r.get, base_url, params=request_parameters)
 
     if answer.is_err():
         answer = (

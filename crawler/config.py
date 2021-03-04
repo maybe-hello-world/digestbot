@@ -5,6 +5,7 @@ Parse configuration variables from env vars and raise Exceptions if needed
 import os
 import logging
 from common.LoggerFactory import create_logger as _create_logger
+from common.config import *
 
 _logger = _create_logger(__name__, logging.WARNING)
 
@@ -37,22 +38,6 @@ except ValueError:
         f"Could not parse message delta interval: f{MESSAGE_DELTA_DAYS}, default value 1 is used."
     )
     MESSAGE_DELTA_DAYS = 1
-
-# Log level
-__available_log_levels = {
-    "debug": logging.DEBUG,
-    "info": logging.INFO,
-    "warn": logging.WARNING,
-    "warning": logging.WARNING,
-    "error": logging.ERROR,
-}
-LOG_LEVEL = os.getenv("LOG_LEVEL", "info").lower()
-if LOG_LEVEL not in __available_log_levels:
-    _logger.warning(
-        f"Could not parse log level: f{LOG_LEVEL}, default value 'info' is used."
-    )
-    LOG_LEVEL = "info"
-LOG_LEVEL = __available_log_levels[LOG_LEVEL]
 
 # Database service URL
 DB_URL = os.getenv("DB_URL", "dbservice:80")

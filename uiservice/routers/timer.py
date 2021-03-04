@@ -10,14 +10,14 @@ from result import Result, Ok, Err
 from sentry_sdk import capture_message
 
 from common.models import Timer
-from extras import get_user_channels_and_presets, TimerEncoder
-from common.extras import try_request
+from extras import get_user_channels_and_presets
+from common.extras import try_request, TimerEncoder
 from routers.top import top_parser
 
 
 async def send_initial_message(user_id: str, channel_id: str) -> None:
     base_url = f"http://{config.DB_URL}/timer/"
-    answer = try_request(r.get, base_url, params={"username": user_id})
+    answer = try_request(container.logger, r.get, base_url, params={"username": user_id})
 
     if answer.is_err():
         await container.slacker.post_to_channel(
@@ -138,7 +138,7 @@ async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
     )
 
     data = json.dumps(asdict(new_timer), cls=TimerEncoder)
-    answer = try_request(r.post, f"http://{config.DB_URL}/timer/", data=data)
+    answer = try_request(container.logger, r.post, f"http://{config.DB_URL}/timer/", data=data)
     if answer.is_err():
         await container.slacker.post_to_channel(channel_id=channel_id,
                                                 text="Something went wrong during creatioin of the timer. Sorry. :(")
@@ -162,7 +162,7 @@ async def __process_timer_deletion(data: dict, channel_id: str, user_id: str):
         ))
         return
 
-    answer = try_request(r.get, base_url + "exists", params={'timer_name': timer_name, 'username': user_id})
+    answer = try_request(container.logger, r.get, base_url + "exists", params={'timer_name': timer_name, 'username': user_id})
 
     if answer.is_err():
         await container.slacker.post_to_channel(channel_id=channel_id, text="Internal error occurred. Sorry :(")
@@ -175,7 +175,7 @@ async def __process_timer_deletion(data: dict, channel_id: str, user_id: str):
         ))
         return
 
-    answer = try_request(r.delete, params={'timer_name': timer_name, 'username': user_id})
+    answer = try_request(container.logger, r.delete, params={'timer_name': timer_name, 'username': user_id})
     if answer.is_ok():
         text = f"Timer {timer_name} successfully deleted."
     else:

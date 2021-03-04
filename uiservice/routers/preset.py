@@ -14,7 +14,7 @@ NO_CHANNELS_PASSED_MESSAGE = "No channels selected."
 
 async def send_initial_message(user_id: str, channel_id: str) -> None:
     base_url = f"http://{config.DB_URL}/category/"
-    answer = try_request(r.get, base_url, params={"user_id": user_id, "include_global": False})
+    answer = try_request(container.logger, r.get, base_url, params={"user_id": user_id, "include_global": False})
     if answer.is_err():
         await container.slacker.post_to_channel(channel_id=channel_id, text=answer.unwrap_err())
         return
@@ -70,7 +70,7 @@ async def __process_preset_deletion(data: dict, channel_id: str, user_id: str):
         ))
         return
 
-    answer = try_request(r.delete, base_url, params={'name': preset_name, 'user_id': user_id})
+    answer = try_request(container.logger, r.delete, base_url, params={'name': preset_name, 'user_id': user_id})
     if answer.is_ok():
         await container.slacker.post_to_channel(channel_id=channel_id,
                                                 text=f"Preset {preset_name} successfully deleted.")
@@ -90,7 +90,7 @@ async def __process_preset_creation(data: dict, user_id: str):
     channels = data.get("channels_selector", {}).get("channels", {}).get("selected_channels", [])
 
     # check that preset_name does not exist and channels are not empty
-    answer = try_request(r.get, base_url, params={"user_id": user_id, "include_global": False})
+    answer = try_request(container.logger, r.get, base_url, params={"user_id": user_id, "include_global": False})
     if answer.is_err():
         await container.slacker.post_to_channel(
             channel_id=user_id,
@@ -108,7 +108,7 @@ async def __process_preset_creation(data: dict, user_id: str):
         return
 
     # check whether user will override global categories
-    answer = try_request(r.get, base_url, params={"include_global": True})
+    answer = try_request(container.logger, r.get, base_url, params={"include_global": True})
     if answer.is_err():
         await container.slacker.post_to_channel(
             channel_id=user_id,
@@ -122,7 +122,7 @@ async def __process_preset_creation(data: dict, user_id: str):
         user_answer += PRESET_OVERRIDE_WARNING_MESSAGE
         user_answer += "\n"
 
-    answer = try_request(r.put, base_url, params={'user_id': user_id, 'name': preset_name}, data=json.dumps(channels))
+    answer = try_request(container.logger, r.put, base_url, params={'user_id': user_id, 'name': preset_name}, data=json.dumps(channels))
     if answer.is_ok():
         user_answer += f"Successfully created preset {preset_name}."
     else:

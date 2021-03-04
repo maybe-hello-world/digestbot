@@ -46,6 +46,7 @@ def process_url_verification(data: dict) -> dict:
 def get_user_presets(user_id: str) -> Optional[List]:
     # get presets available for the user
     return try_request(
+        container.logger,
         r.get,
         f"http://{config.DB_URL}/category/",
         params={'user_id': user_id, 'include_global': "true"}

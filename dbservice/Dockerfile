@@ -8,4 +8,5 @@ RUN pip install -r /tmp/requirements.txt
 
 COPY ./common /app/common
 COPY ./dbservice /app/app
+COPY ./dbservice/gunicorn.conf.py /gunicorn_conf.py
 ENV PYTHONPATH /app:/app/app:$PYTHONPATH
