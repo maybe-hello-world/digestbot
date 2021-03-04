@@ -1,0 +1,97 @@
+{
+  "title": {
+    "type": "plain_text",
+    "text": "Q&A"
+  },
+  "callback_id": "qna_submission",
+  "submit": {
+    "type": "plain_text",
+    "text": "Submit"
+  },
+  "blocks": [
+    {
+      "type": "section",
+      "text": {
+        "type": "plain_text",
+        "text": "The service is provided by ODS Q&A Team"
+      }
+    },
+    {
+      "type": "input",
+      "block_id": "qna_query",
+      "element": {
+        "type": "plain_text_input",
+        "action_id": "query",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "Who Framed Roger Rabbit?"
+        }
+      },
+      "label": {
+        "type": "plain_text",
+        "text": "Enter your query"
+      }
+    },
+    {
+      "type": "section",
+      "block_id": "model",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Select a model to use: "
+      },
+      "accessory": {
+        "type": "static_select",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "Select an item"
+        },
+        "initial_option": {
+          "text": {
+            "type": "plain_text",
+            "text": "default"
+          },
+          "value": "default"
+        },
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "default"
+            },
+            "value": "default"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "bert"
+            },
+            "value": "bert"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "sbert"
+            },
+            "value": "sbert"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "bpe"
+            },
+            "value": "bpe"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "classic"
+            },
+            "value": "classic"
+          }
+        ],
+        "action_id": "model_selection"
+      }
+    }
+  ],
+  "type": "modal"
+}

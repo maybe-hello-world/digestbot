@@ -1,10 +1,10 @@
 import container
-from . import top, timer, preset, helper
+from . import top, timer, preset, helper, qna
 
-SYNTAX_RESPONSE = (
-    "Oops! <@{}>, I didn't understood your request, could you check your command? "
-    "Or ask for `help` if you don't know what to do. Thanks."
-)
+
+async def request_picker_eligibility(data: dict):
+    return data.get("type", "") == "block_actions" and data.get("actions", [{}])[0].get("block_id",
+                                                                                        "") == "command_picker"
 
 
 async def process_message(message: dict) -> None:
@@ -17,6 +17,7 @@ async def process_message(message: dict) -> None:
     text = message.get("text", "").lower().strip()
     user_id = message.get("user", "")
     channel = message.get("channel", "")
+
     if text.startswith("help"):
         await helper.process_message(channel, text)
     elif text == "top":
@@ -25,5 +26,9 @@ async def process_message(message: dict) -> None:
         await timer.send_initial_message(user_id, channel)
     elif text == "presets":
         await preset.send_initial_message(user_id, channel)
+    elif text == "qna":
+        await qna.send_initial_message(user_id, channel, message.get('trigger_id', ""))
     else:
-        await container.slacker.post_to_channel(channel_id=channel, text=SYNTAX_RESPONSE.format(user_id))
+        template = container.jinja_env.get_template("syntax_response.json")
+        result = template.render()
+        await container.slacker.post_to_channel(channel_id=channel, blocks=result, ephemeral=True, user_id=user_id)

@@ -16,7 +16,7 @@ from jinja2 import Environment, PackageLoader
 import config
 from common.LoggerFactory import create_logger
 from common.Slacker import Slacker
-from routers import request_parser, top, timer, preset, internal
+from routers import request_parser, top, timer, preset, internal, qna
 import extras
 import container
 
@@ -67,7 +67,17 @@ async def interactivity(tasks: BackgroundTasks, payload: Request):
     body = body[8:]  # remove 'payload='
     body = json.loads(urllib.parse.unquote(body))
 
-    if await top.top_interaction_eligibility(body):
+    if await request_parser.request_picker_eligibility(body):
+        command_text = body.get('actions', [{}])[0].get('value')
+
+        tasks.add_task(request_parser.process_message, {
+            'text': command_text,
+            'user': body.get('user', {}).get('id', ''),
+            'channel': body.get('channel', {}).get('id', ''),
+            'trigger_id': body.get('trigger_id', '')
+        })
+        return
+    elif await top.top_interaction_eligibility(body):
         tasks.add_task(top.top_interaction, body)
         return
     elif await timer.timer_interaction_eligibility(body):
@@ -76,6 +86,9 @@ async def interactivity(tasks: BackgroundTasks, payload: Request):
     elif await preset.preset_interaction_eligibility(body):
         tasks.add_task(preset.preset_interaction, body)
         return Response(status_code=200)    # for modal views response should be ABSOLUTELY empty
+    elif await qna.qna_interaction_eligibility(body):
+        tasks.add_task(qna.qna_interaction, body)
+        return Response(status_code=200)
 
     return
 

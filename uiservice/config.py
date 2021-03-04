@@ -27,3 +27,6 @@ BOT_NAME = os.getenv("BOT_NAME", "digestbot")
 
 # Database service URL
 DB_URL = os.getenv("DB_URL", "dbservice:80")
+
+# ODS.ai Q&A system
+QNA_REQUEST_URL = os.getenv("QNA_REQUEST_URL", "")

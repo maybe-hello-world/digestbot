@@ -1,0 +1,51 @@
+[
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": "Oops! I didn't understood your request, could you check your command? Also you can just choose from the commands below or type `help`."
+    }
+  },
+  {
+    "type": "actions",
+    "block_id": "command_picker",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Top"
+        },
+        "style": "primary",
+        "value": "top"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Timers"
+        },
+        "style": "primary",
+        "value": "timers"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Presets"
+        },
+        "style": "primary",
+        "value": "presets"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Q&A"
+        },
+        "style": "primary",
+        "value": "qna"
+      }
+    ]
+  }
+]
