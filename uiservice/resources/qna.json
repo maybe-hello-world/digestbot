@@ -91,6 +91,13 @@
         ],
         "action_id": "model_selection"
       }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "plain_text",
+        "text": "Attention: due to Slack security system, results will be sent to you via Direct Messages in Slackbot. Right now we cannot do anything with it :("
+      }
     }
   ],
   "type": "modal"

@@ -49,6 +49,6 @@ async def qna_interaction(data: dict):
     else:
         container.logger.error("Received incorrect payload from ODS.ai Q&A application.\n\n\n" + str(answer.text))
         answer = 'Received incorrect payload from ODS.ai Q&A application. Our team is already working on it.'
-    await container.slacker.post_to_channel(channel_id=user_id, blocks=answer)
+    await container.slacker.post_to_channel(channel_id=user_id, text=answer)
 
 
