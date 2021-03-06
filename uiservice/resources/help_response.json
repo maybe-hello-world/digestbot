@@ -1,0 +1,51 @@
+[
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Hi! I'm a bot who can send you a top messages from given channels.\nYou can ask for different top sampling, order by different methods (like the rating or amount of replies in the topic), set up timers and your own presets. \nYou can ask for help for any command by typing `help command_name` or just clicking buttons below. \nAvailable commands: \n```top\npresets\ntimers\nqna``` \nIf you want to submit an issue, bug or just ask how are we, you can look for #tools_digestbot channel in ODS.ai Slack workspace."
+    }
+  },
+  {
+    "type": "actions",
+    "block_id": "command_picker",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Help top"
+        },
+        "style": "primary",
+        "value": "help top"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Help timers"
+        },
+        "style": "primary",
+        "value": "help timers"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Help presets"
+        },
+        "style": "primary",
+        "value": "help presets"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Help QnA"
+        },
+        "style": "primary",
+        "value": "help qna"
+      }
+    ]
+  }
+]
