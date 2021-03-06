@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import asdict
 from datetime import datetime, timedelta
 import json
 from logging import Logger
@@ -24,7 +25,7 @@ async def crawl_messages_once(
             prev_date = datetime.now() - timedelta(days=config.MESSAGE_DELTA_DAYS)
             messages = await slacker.get_channel_messages(ch_id, prev_date)
             if messages:
-                try_request(logger, r.put, base_url + "message", data=json.dumps(messages))
+                try_request(logger, r.put, base_url + "message", data=json.dumps([asdict(x) for x in messages]))
 
         logger.info(
             f"Messages from {len(ch_info)} channels parsed and sent to the database."
