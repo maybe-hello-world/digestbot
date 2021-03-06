@@ -75,9 +75,9 @@ async def get_user_channels_and_presets(user_id: str) -> Optional[List]:
 def check_qna_answer(answer: Any) -> Result[List[QnAAnswer], str]:
     try:
         if not (isinstance(answer, list)):
-            raise ValidationError("Base type is not list.")
+            raise ValueError("Base type is not list.")
         return Result.Ok([QnAAnswer.parse_obj(x) for x in answer])
-    except ValidationError as e:
+    except (ValidationError, ValueError) as e:
         container.logger.exception(e)
         return Result.Err(str(e))
 
