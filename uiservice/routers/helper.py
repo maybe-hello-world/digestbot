@@ -43,7 +43,7 @@ def qna_help() -> str:
     return (
         "Q&A ODS.ai team provides an API for intellectual search over ODS.ai Slack workspace messages. \n"
         "Via this bot you can use this API and benefit from modern NLP approaches working just for you ^^. \n"
-        "You can contact the Q&A ODS.ai team via "
+        "You can contact the Q&A ODS.ai team via @submaps in Slack."
     )
 
 
