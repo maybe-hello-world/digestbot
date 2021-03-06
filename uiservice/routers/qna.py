@@ -67,9 +67,8 @@ async def qna_interaction(data: dict):
 
     # for each message get either preview or message text and then construct a final message
     blocks = await transform_to_permalinks_or_text(answer)
-    blocks.insert(0, f'{{"type": "section","text": {{"type": "plain_text","text": "Your query: {query}"}}}}')
-    blocks = ',{"type": "divider"},'.join(blocks)
-    blocks = "[" + blocks + "]"
+    template = container.jinja_env.get_template("qna_answer.json")
+    blocks = template.render(query=query, answers=blocks)
 
     await container.slacker.post_to_channel(channel_id=user_id, blocks=blocks)
 
