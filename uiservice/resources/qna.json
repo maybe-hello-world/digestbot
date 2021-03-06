@@ -84,9 +84,9 @@
           {
             "text": {
               "type": "plain_text",
-              "text": "classic"
+              "text": "elastic"
             },
-            "value": "classic"
+            "value": "elastic"
           }
         ],
         "action_id": "model_selection"
