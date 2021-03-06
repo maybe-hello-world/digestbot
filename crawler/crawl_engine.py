@@ -41,7 +41,8 @@ async def crawl_messages_once(
     empty_links_messages = [Message(**x) for x in answer.json()]
     if empty_links_messages:
         messages = await slacker.update_permalinks(messages=empty_links_messages)
-        answer = try_request(logger, r.patch, base_url + "message/links", data=json.dumps(messages, cls=TimerEncoder))
+        answer = try_request(logger, r.patch, base_url + "message/links",
+                             data=json.dumps([asdict(x) for x in messages], cls=TimerEncoder))
         if answer.is_ok():
             logger.debug(f"Updated permalinks for {len(messages)} messages.")
 
