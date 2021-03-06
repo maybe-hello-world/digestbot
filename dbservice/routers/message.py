@@ -13,12 +13,12 @@ router = APIRouter()
 
 @router.post("/")
 async def insert_messages(messages: List[Message]):
-    return await message_dao.create_messages(messages)
+    return await message_dao.create_messages([Message(**x.dict()) for x in messages])
 
 
 @router.put("/")
 async def upsert_messages(messages: List[Message]):
-    return await message_dao.upsert_messages(messages)
+    return await message_dao.upsert_messages([Message(**x.dict()) for x in messages])
 
 
 @router.get("/linkless", response_model=List[Message])
@@ -28,7 +28,7 @@ async def get_linkless_messages():
 
 @router.patch("/links")
 async def update_message_links(messages: List[Message]):
-    return await message_dao.update_message_links(messages)
+    return await message_dao.update_message_links([Message(**x.dict()) for x in messages])
 
 
 @router.get("/top", response_model=List[Message])

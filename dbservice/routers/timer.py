@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from models import Timer
 from typing import List, Optional
 
@@ -21,17 +21,7 @@ async def remove_timer(username: str, timer_name: str):
 
 @router.post("/", response_model=Timer)
 async def insert_timer(timer: Timer):
-    if isinstance(timer.delta, float) and isinstance(timer.next_start, str):
-        timer = Timer(
-            channel_id=timer.channel_id,
-            username=timer.username,
-            timer_name=timer.timer_name,
-            delta=timedelta(seconds=timer.delta),
-            next_start=datetime.fromisoformat(timer.next_start),
-            top_command=timer.top_command
-        )
-
-    result = await timer_dao.insert_timer(timer, TIMERS_LIMIT)
+    result = await timer_dao.insert_timer(Timer.from_fastapi_dict(timer.dict()), TIMERS_LIMIT)
     if not result:
         raise HTTPException(
             status_code=400,
@@ -54,7 +44,7 @@ async def count_timers(username: str):
 
 @router.patch("/next_start", response_model=Timer)
 async def update_timer_next_start(timer: Timer):
-    result = await timer_dao.update_timer_next_start(timer)
+    result = await timer_dao.update_timer_next_start(Timer.from_fastapi_dict(timer.dict()))
     if not result:
         timer_dao.engine.logger.error(f"Timer not found. Timer: {timer}")
         raise HTTPException(
@@ -66,11 +56,9 @@ async def update_timer_next_start(timer: Timer):
 
 @router.get("/nearest", response_model=Optional[Timer])
 async def get_nearest_timer(time_border: datetime):
-    return await timer_dao.get_nearest_timer(time_border)
+    return await timer_dao.get_nearest_timer(datetime.fromisoformat(str(time_border)))
 
 
 @router.get("/overdue", response_model=List[Timer])
 async def get_overdue_timers(time_border: datetime):
-    if isinstance(time_border, str):
-        time_border = datetime.fromisoformat(time_border)
-    return await timer_dao.get_overdue_timers(time_border)
+    return await timer_dao.get_overdue_timers(datetime.fromisoformat(str(time_border)))

@@ -1,3 +1,5 @@
+from datetime import timedelta, datetime
+
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -19,4 +21,8 @@ class Message(Message, BaseModel):
 
 # noinspection PyRedeclaration
 class Timer(Timer, BaseModel):
-    pass
+    @classmethod
+    def from_fastapi_dict(cls, timer_dict: dict) -> Timer:
+        timer_dict['delta'] = timedelta(seconds=timer_dict['delta'])
+        timer_dict['next_start'] = datetime.fromisoformat(timer_dict['next_start'])
+        return cls(**timer_dict)
