@@ -17,7 +17,7 @@ class TopData(BaseModel):
     request_parameters: dict
 
 
-@router.post("message")
+@router.post("/message")
 async def post_message(data: MessagePostData):
     """
     Post message to slack channel
@@ -27,7 +27,7 @@ async def post_message(data: MessagePostData):
         await container.slacker.post_to_channel(channel_id=data.channel_id, text=data.text)
 
 
-@router.post("top")
+@router.post("/top")
 async def process_top(data: TopData):
     if data.channel_id and data.request_parameters:
         await post_top_message(channel_id=data.channel_id, request_parameters=data.request_parameters)
