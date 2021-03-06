@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from decimal import Decimal
 from logging import Logger
 from typing import Optional, Callable
 import result
@@ -19,6 +20,8 @@ class TimerEncoder(json.JSONEncoder):
             return o.isoformat()
         if isinstance(o, timedelta):
             return o.total_seconds()
+        if isinstance(o, Decimal):
+            return str(o)
         return json.JSONEncoder.default(self, o)
 
 

@@ -5,7 +5,7 @@ import json
 from logging import Logger
 import requests as r
 
-from common.extras import try_request
+from common.extras import try_request, TimerEncoder
 from common.models import Message
 from common import Slacker
 import crawler.config as config
@@ -25,7 +25,8 @@ async def crawl_messages_once(
             prev_date = datetime.now() - timedelta(days=config.MESSAGE_DELTA_DAYS)
             messages = await slacker.get_channel_messages(ch_id, prev_date)
             if messages:
-                try_request(logger, r.put, base_url + "message", data=json.dumps([asdict(x) for x in messages]))
+                try_request(logger, r.put, base_url + "message",
+                            data=json.dumps([asdict(x) for x in messages], cls=TimerEncoder))
 
         logger.info(
             f"Messages from {len(ch_info)} channels parsed and sent to the database."
