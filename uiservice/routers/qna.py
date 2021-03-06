@@ -2,7 +2,7 @@ import requests as r
 
 import config
 import container
-from extras import try_request
+from extras import try_request, check_qna_answer, transform_to_permalinks_or_text
 
 
 async def send_initial_message(user_id: str, channel_id: str, trigger_id: str):
@@ -29,7 +29,7 @@ async def qna_interaction(data: dict):
     query = data.get('qna_query', {}).get('query', {}).get('value', '')
     model = data.get('model', {}).get('model_selection', {}).get('selected_option', {}).get('value', '')
 
-    params = {'q': query}
+    params = {'query': query}
     if model != "default":
         params['model'] = model
 
@@ -44,11 +44,17 @@ async def qna_interaction(data: dict):
     answer = answer.unwrap().json()
 
     # check that returned result is a list of strings
-    if isinstance(answer, list) and all(isinstance(x, str) for x in answer):
-        answer = '\n\n\n'.join(answer)
-    else:
-        container.logger.error("Received incorrect payload from ODS.ai Q&A application.\n" + str(answer.text))
-        answer = 'Received incorrect payload from ODS.ai Q&A application. Our team is already working on it.'
-    await container.slacker.post_to_channel(channel_id=user_id, text=answer)
+    answer = check_qna_answer(answer)
+    if answer.is_err():
+        await container.slacker.post_to_channel(
+            channel_id=user_id,
+            text="Received incorrect payload from ODS.ai Q&A application. Our team is already working on it."
+        )
+        return
+    answer = answer.unwrap()
 
+    # for each message get either preview or message text and then construct a final message
+    blocks = transform_to_permalinks_or_text(answer)
+    blocks = ',{"type": "divider"},'.join(blocks)
 
+    await container.slacker.post_to_channel(channel_id=user_id, blocks=blocks)

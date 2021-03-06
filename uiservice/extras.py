@@ -1,14 +1,18 @@
 from datetime import datetime, timezone
 import hashlib
 import hmac
-from typing import Optional, List
+from decimal import Decimal, InvalidOperation
+from typing import Optional, List, Any
 import requests as r
 
 from fastapi import HTTPException, Request
+from pydantic import ValidationError
+from result import Result
 
 import config
 import container
 from common.extras import try_request
+from json_types import QnAAnswer
 
 
 def check_message_callback(data: dict) -> bool:
@@ -65,3 +69,39 @@ async def get_user_channels_and_presets(user_id: str) -> Optional[List]:
     if channels:
         sources.extend((y, f"<#{x}>") for x, y in channels)
     return sources
+
+
+def check_qna_answer(answer: Any) -> Result[List[QnAAnswer], str]:
+    try:
+        if not (isinstance(answer, list)):
+            raise ValidationError("Base type is not list.")
+        return Result.Ok([QnAAnswer.parse_obj(x) for x in answer])
+    except ValidationError as e:
+        container.logger.exception(e)
+        return Result.Err(str(e))
+
+
+def transform_to_permalinks_or_text(data: List[QnAAnswer]) -> List[str]:
+    """
+    For each message try to find permalink and return either permalink (ok) or message text (error)
+    """
+    transformed_data = []
+    for answer in data:
+        try:
+            message_ts = Decimal(answer.timestamp)
+            result = container.slacker.get_permalink(channel_id=answer.channel_id, message_ts=message_ts)
+            if result is None:
+                raise ValueError(f"Couldn't receive permalink for a message.")
+        except (InvalidOperation, ValueError):
+            result = answer.text
+        transformed_data.append(
+            '''
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "''' + f'{result}' + '''"
+              }
+            }
+            ''')
+    return transformed_data
