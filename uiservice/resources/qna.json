@@ -94,6 +94,42 @@
     },
     {
       "type": "section",
+      "block_id": "uid_agreement",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Do you want to report your user_id to ODS Q&A team for Q&A improvement and anonymized statistics?"
+      },
+      "accessory": {
+        "type": "radio_buttons",
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "Yes, I have nothing to hide (this time)"
+            },
+            "value": "user_id_yes"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "No, not this time"
+            },
+            "value": "user_id_no"
+          }
+        ],
+        "initial_option": {
+          "text": {
+            "type": "plain_text",
+            "text": "No, not this time",
+            "emoji": true
+          },
+          "value": "user_id_no"
+        },
+        "action_id": "uid_switch"
+      }
+    },
+    {
+      "type": "section",
       "text": {
         "type": "plain_text",
         "text": "Attention: due to Slack security system, results will be sent to you via Direct Messages in Slackbot. Right now we cannot do anything with it :("

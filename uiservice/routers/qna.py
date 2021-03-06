@@ -1,4 +1,5 @@
 import requests as r
+from fastapi import Response, BackgroundTasks
 
 import config
 import container
@@ -29,9 +30,19 @@ async def qna_interaction(data: dict):
     query = data.get('qna_query', {}).get('query', {}).get('value', '')
     model = data.get('model', {}).get('model_selection', {}).get('selected_option', {}).get('value', '')
 
+    user_id_agreement = (
+        data
+            .get('uid_agreement', {})
+            .get('uid_switch', {})
+            .get('selected_option', {})
+            .get('value', 'user_id_no')
+    )
+
     params = {'query': query}
     if model != "default":
         params['model'] = model
+    if user_id_agreement == "user_id_yes":
+        params['user_id'] = user_id
 
     answer = try_request(container.logger, r.get, config.QNA_REQUEST_URL, params=params)
     if answer.is_err():
@@ -42,6 +53,7 @@ async def qna_interaction(data: dict):
         return
 
     answer = answer.unwrap().json()
+    container.logger.debug(f"ODS Q&A answer: {answer}")
 
     # check that returned result is a list of strings
     answer = check_qna_answer(answer)
@@ -54,7 +66,20 @@ async def qna_interaction(data: dict):
     answer = answer.unwrap()
 
     # for each message get either preview or message text and then construct a final message
-    blocks = transform_to_permalinks_or_text(answer)
+    blocks = await transform_to_permalinks_or_text(answer)
+    blocks.insert(0, f'{{"type": "section","text": {{"type": "plain_text","text": "Your query: {query}"}}}}')
     blocks = ',{"type": "divider"},'.join(blocks)
+    blocks = "[" + blocks + "]"
 
     await container.slacker.post_to_channel(channel_id=user_id, blocks=blocks)
+
+
+async def validate_qna_modal(tasks: BackgroundTasks, body: dict) -> Response:
+    if body.get('qna_query', {}).get('query', {}).get('value', None) == '':
+        return Response(
+            status_code=400,
+            content={"response_action": "errors", "errors": {"qna_query": "Empty input is not allowed."}}
+        )
+
+    tasks.add_task(qna_interaction, body)
+    return Response(status_code=200)

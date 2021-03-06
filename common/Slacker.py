@@ -347,6 +347,7 @@ class Slacker:
             self.logger.warning("Couldn't post to channel due to timeout.")
             return None
         except errors.SlackClientError as e:
+            self.logger.error("Request params: " + str(params))
             self.logger.exception(e)
 
     async def get_user_info(self, user_id: str) -> Optional[dict]:

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone
 import hashlib
 import hmac
@@ -81,27 +82,32 @@ def check_qna_answer(answer: Any) -> Result[List[QnAAnswer], str]:
         return Result.Err(str(e))
 
 
-def transform_to_permalinks_or_text(data: List[QnAAnswer]) -> List[str]:
+async def transform_to_permalinks_or_text(data: List[QnAAnswer]) -> List[str]:
     """
     For each message try to find permalink and return either permalink (ok) or message text (error)
     """
+    template = '''
+            {{
+              "type": "section",
+              "text": {{
+                "type": "mrkdwn",
+                "text": "{0}"
+              }}
+            }}
+            '''
+
+    # to silence errors 'channel_not_found' in test workspace
+    if os.getenv("DEBUG", "False") == "True":
+        return [template.format(x.text) for x in data]
+
     transformed_data = []
     for answer in data:
         try:
             message_ts = Decimal(answer.timestamp)
-            result = container.slacker.get_permalink(channel_id=answer.channel_id, message_ts=message_ts)
+            result = await container.slacker.get_permalink(channel_id=answer.channel_id, message_ts=message_ts)
             if result is None:
                 raise ValueError(f"Couldn't receive permalink for a message.")
         except (InvalidOperation, ValueError):
             result = answer.text
-        transformed_data.append(
-            '''
-            {
-              "type": "section",
-              "text": {
-                "type": "mrkdwn",
-                "text": "''' + f'{result}' + '''"
-              }
-            }
-            ''')
+        transformed_data.append(template.format(result))
     return transformed_data

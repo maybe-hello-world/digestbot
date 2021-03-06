@@ -87,9 +87,7 @@ async def interactivity(tasks: BackgroundTasks, payload: Request):
         tasks.add_task(preset.preset_interaction, body)
         return Response(status_code=200)    # for modal views response should be ABSOLUTELY empty
     elif await qna.qna_interaction_eligibility(body):
-        tasks.add_task(qna.qna_interaction, body)
-        return Response(status_code=200)
-
+        return await qna.validate_qna_modal(tasks, body)
     return
 
 
