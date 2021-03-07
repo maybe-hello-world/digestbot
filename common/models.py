@@ -6,7 +6,7 @@ from datetime import timedelta, datetime
 
 
 @dataclass(frozen=True)
-class Category:
+class Preset:
     id: int
     username: Optional[str]
     name: str

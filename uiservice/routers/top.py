@@ -93,7 +93,7 @@ def top_parser(amount: dict, sorting_type: dict, preset: dict, user_id: str) -> 
     elif preset.startswith("<#") and preset.endswith(">"):
         answer['channel_id'] = preset[2:-1]
     else:
-        answer['category_name'] = preset
+        answer['preset_name'] = preset
         answer['user_id'] = user_id
 
     return Ok(answer)
@@ -148,7 +148,7 @@ async def post_top_message(channel_id: str, request_parameters: dict):
         )
     elif not (y := answer.unwrap().json()):
         answer = (
-            "No messages to print. Either category/channel/messages not found "
+            "No messages to print. Either preset/channel/messages not found "
             "or something went wrong."
         )
     else:

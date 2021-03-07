@@ -3,11 +3,11 @@ from datetime import timedelta, datetime
 from pydantic import BaseModel, Field
 from typing import Optional
 
-from common.models import Category, Message, Timer
+from common.models import Preset, Message, Timer
 
 
 # noinspection PyRedeclaration
-class Category(Category, BaseModel):
+class Preset(Preset, BaseModel):
     username: Optional[str] = None
 
 

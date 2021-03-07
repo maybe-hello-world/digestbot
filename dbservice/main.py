@@ -1,15 +1,13 @@
-import asyncio
-
 from asyncpg.exceptions import PostgresError
 
 from fastapi import FastAPI, Request, HTTPException
 
 from dbprovider.engine import db_engine
-from routers import timer, category, message
+from routers import timer, preset, message
 
 app = FastAPI()
 app.include_router(timer.router, prefix="/timer", tags=['timer'])
-app.include_router(category.router, prefix="/category", tags=['category'])
+app.include_router(preset.router, prefix="/preset", tags=['preset'])
 app.include_router(message.router, prefix="/message", tags=['message'])
 
 

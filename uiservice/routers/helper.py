@@ -17,7 +17,7 @@ def presets_help() -> str:
         "There are two types of presets: global and local:\n"
         "* global - predefined presets (by bot authors, contributions are welcome :) )\n"
         "* local - presets that you can create\n\n"
-        "With help of presets you can union channels in categories that may interest you and then specify preset "
+        "With help of presets you can union channels in presets that may interest you and then specify preset "
         "instead of subset of channels for simplicity."
     )
 

@@ -35,15 +35,15 @@ async def update_message_links(messages: List[Message]):
 async def get_top_messages(
         after_ts: Decimal,
         channel_id: Optional[str] = None,
-        category_name: Optional[str] = None,
+        preset_name: Optional[str] = None,
         user_id: Optional[str] = None,
         sorting_type: SortingType = SortingType.REPLIES,
         top_count: int = Query(default=10, ge=1),
 ):
-    if channel_id is None and category_name is None and user_id is None:
+    if channel_id is None and preset_name is None and user_id is None:
         return await message_dao.get_top_messages(after_ts=after_ts, sorting_type=sorting_type, top_count=top_count)
 
-    if channel_id is not None and category_name is None and user_id is None:
+    if channel_id is not None and preset_name is None and user_id is None:
         return await message_dao.get_top_messages_by_channel_id(
             channel_id=channel_id,
             after_ts=after_ts,
@@ -51,9 +51,9 @@ async def get_top_messages(
             top_count=top_count
         )
 
-    if channel_id is None and category_name is not None:
-        return await message_dao.get_top_messages_by_category_name(
-            category_name=category_name,
+    if channel_id is None and preset_name is not None:
+        return await message_dao.get_top_messages_by_preset_name(
+            preset_name=preset_name,
             after_ts=after_ts,
             sorting_type=sorting_type,
             top_count=top_count,

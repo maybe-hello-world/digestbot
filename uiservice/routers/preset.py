@@ -13,7 +13,7 @@ NO_CHANNELS_PASSED_MESSAGE = "No channels selected."
 
 
 async def send_initial_message(user_id: str, channel_id: str) -> None:
-    base_url = f"http://{config.DB_URL}/category/"
+    base_url = f"http://{config.DB_URL}/preset/"
     answer = try_request(container.logger, r.get, base_url, params={"user_id": user_id, "include_global": False})
     if answer.is_err():
         await container.slacker.post_to_channel(channel_id=channel_id, text=answer.unwrap_err())
@@ -61,7 +61,7 @@ async def __show_preset_creation(data: dict):
 
 async def __process_preset_deletion(data: dict, channel_id: str, user_id: str):
     preset_name = data.get("actions", [{}])[0].get("value", "")
-    base_url = f"http://{config.DB_URL}/category/"
+    base_url = f"http://{config.DB_URL}/preset/"
 
     if preset_name is None:
         await container.slacker.post_to_channel(channel_id=channel_id, text=(
@@ -82,7 +82,7 @@ async def __process_preset_deletion(data: dict, channel_id: str, user_id: str):
 
 
 async def __process_preset_creation(data: dict, user_id: str):
-    base_url = f"http://{config.DB_URL}/category/"
+    base_url = f"http://{config.DB_URL}/preset/"
 
     # get preset name and channels
     data = data.get("view", {}).get("state", {}).get("values", {})
@@ -107,7 +107,7 @@ async def __process_preset_creation(data: dict, user_id: str):
         await container.slacker.post_to_channel(channel_id=user_id, text=NO_CHANNELS_PASSED_MESSAGE)
         return
 
-    # check whether user will override global categories
+    # check whether user will override global presets
     answer = try_request(container.logger, r.get, base_url, params={"include_global": True})
     if answer.is_err():
         await container.slacker.post_to_channel(

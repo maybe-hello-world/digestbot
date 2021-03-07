@@ -48,15 +48,15 @@ class DBEngine:
                     PRIMARY KEY(username, timer_name)
                 );
             """,
-            """CREATE TABLE IF NOT EXISTS Category (
+            """CREATE TABLE IF NOT EXISTS Preset (
                     id BIGSERIAL NOT NULL PRIMARY KEY, 
-                    username TEXT,  -- username is null if category created by developers
+                    username TEXT,  -- username is null if preset is created by developers
                     name TEXT NOT NULL,
                     channel_ids TEXT[],
                     UNIQUE (username, name)
                 );
     
-                CREATE INDEX IF NOT EXISTS category_name_idx ON category (name);
+                CREATE INDEX IF NOT EXISTS preset_name_idx ON preset (name);
             """,
             """CREATE TABLE IF NOT EXISTS Message (
                     username TEXT NOT NULL,

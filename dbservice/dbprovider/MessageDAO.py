@@ -107,32 +107,32 @@ class MessageDAO:
         messages = await self.engine.make_fetch_rows(request, channel_id)
         return self.__request_messages_to_message_class(messages)
 
-    async def get_top_messages_by_category_name(
+    async def get_top_messages_by_preset_name(
             self,
-            category_name: str,
+            preset_name: str,
             after_ts: Decimal,
             sorting_type: SortingType = SortingType.REPLIES,
             top_count: int = 10,
             user_id: Optional[str] = None
     ) -> List[Message]:
         request = f"""
-            WITH categories AS (
+            WITH presets AS (
                 SELECT *
-                FROM category
+                FROM preset
                 WHERE name = $1
                   AND (username = $2 OR username IS NULL)
                 ORDER BY username NULLS LAST
                 LIMIT 1
             )
             SELECT message.* FROM message
-                JOIN categories category
-                ON message.channel_id=ANY(category.channel_ids)
+                JOIN presets preset
+                ON message.channel_id=ANY(preset.channel_ids)
                 WHERE message.timestamp >= {after_ts}
                 ORDER BY {sorting_type.value} DESC
                 LIMIT {top_count};
         """
         
-        messages = await self.engine.make_fetch_rows(request, category_name, user_id)
+        messages = await self.engine.make_fetch_rows(request, preset_name, user_id)
         return self.__request_messages_to_message_class(messages)
 
 

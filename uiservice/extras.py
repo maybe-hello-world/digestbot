@@ -53,7 +53,7 @@ def get_user_presets(user_id: str) -> Optional[List]:
     return try_request(
         container.logger,
         r.get,
-        f"http://{config.DB_URL}/category/",
+        f"http://{config.DB_URL}/preset/",
         params={'user_id': user_id, 'include_global': "true"}
     ).map(lambda x: x.json()).value
 
