@@ -18,9 +18,6 @@ class DBEngine:
             port=config.DB_PORT
         )
 
-        async with self.pool.acquire() as connection:
-            await DBEngine.check_or_create_tables(connection)
-
     @staticmethod
     async def check_or_create_database():
         sys_conn = await asyncpg.connect(
