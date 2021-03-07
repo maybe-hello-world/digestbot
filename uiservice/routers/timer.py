@@ -14,16 +14,36 @@ from extras import get_user_channels_and_presets
 from common.extras import try_request, TimerEncoder
 from routers.top import top_parser
 
+DATABASE_INTERACTION_ERROR = "Received error during database interaction. Please, try later."
+TIMER_START_ERROR_FUTURE = "Timer should start in the future, not in the past."
+TIMER_CREATED = (
+    "Timer {0} successfully created. "
+    "Next start time: {1} UTC"
+)
+TIMER_CREATION_FAILED = "Something went wrong during creation of the timer. Sorry. :("
+TIMER_NAME_NOT_SPECIFIED = (
+    "Timer name to delete should be explicitly specified. "
+    "Please specify timer name or type `help timers` to get additional information."
+)
+INTERNAL_ERROR = "Internal error occurred. Sorry :("
+TIMER_NOT_FOUND = (
+    "Couldn't find timer with such name. "
+    "If you are sure that it's a bug, please contact bot developer team. Thanks."
+)
+TIMER_DELETED = "Timer {0} successfully deleted."
+TIMER_NOT_DELETED = (
+    "Some error occurred. Timer {0} possibly is not deleted. "
+    "Please, retry or contact developers team. Thanks."
+)
+PRESETS_NOT_RECEIVED = "Couldn't receive presets for the user. Please, contact bot developers about this situation."
+
 
 async def send_initial_message(user_id: str, channel_id: str) -> None:
     base_url = f"http://{config.DB_URL}/timer/"
     answer = try_request(container.logger, r.get, base_url, params={"username": user_id})
 
     if answer.is_err():
-        await container.slacker.post_to_channel(
-            channel_id=channel_id,
-            text="Received timeout during database interaction. Please, try later."
-        )
+        await container.slacker.post_to_channel(channel_id=channel_id, text=DATABASE_INTERACTION_ERROR)
         return
     answer = answer.unwrap()
 
@@ -122,10 +142,7 @@ async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
     selected_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
     selected_datetime -= timedelta(seconds=tz_offset)
     if selected_datetime < datetime.utcnow():
-        await container.slacker.post_to_channel(
-            channel_id=channel_id,
-            text="Timer should start in the future, not in the past."
-        )
+        await container.slacker.post_to_channel(channel_id=channel_id, text=TIMER_START_ERROR_FUTURE)
         return
 
     new_timer = Timer(
@@ -140,14 +157,13 @@ async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
     data = json.dumps(asdict(new_timer), cls=TimerEncoder)
     answer = try_request(container.logger, r.post, f"http://{config.DB_URL}/timer/", data=data)
     if answer.is_err():
-        await container.slacker.post_to_channel(channel_id=channel_id,
-                                                text="Something went wrong during creatioin of the timer. Sorry. :(")
+        await container.slacker.post_to_channel(channel_id=channel_id, text=TIMER_CREATION_FAILED)
         return
 
-    await container.slacker.post_to_channel(channel_id=channel_id, text=(
-        f"Timer {new_timer.timer_name} successfully created. "
-        f"Next start time: {new_timer.next_start.strftime('%Y-%m-%d %H:%M:%S')} UTC"
-    ))
+    await container.slacker.post_to_channel(
+        channel_id=channel_id,
+        text=TIMER_CREATED.format(new_timer.timer_name, new_timer.next_start.isoformat())
+    )
     return
 
 
@@ -156,45 +172,33 @@ async def __process_timer_deletion(data: dict, channel_id: str, user_id: str):
     base_url = f"http://{config.DB_URL}/timer/"
 
     if not timer_name:
-        await container.slacker.post_to_channel(channel_id=channel_id, text=(
-            "Timer name to delete should be explicitly specified. "
-            "Please specify timer name or type `help timers` to get additional information."
-        ))
+        await container.slacker.post_to_channel(channel_id=channel_id, text=TIMER_NAME_NOT_SPECIFIED)
         return
 
-    answer = try_request(container.logger, r.get, base_url + "exists", params={'timer_name': timer_name, 'username': user_id})
+    answer = try_request(container.logger, r.get, base_url + "exists",
+                         params={'timer_name': timer_name, 'username': user_id})
 
     if answer.is_err():
-        await container.slacker.post_to_channel(channel_id=channel_id, text="Internal error occurred. Sorry :(")
+        await container.slacker.post_to_channel(channel_id=channel_id, text=INTERNAL_ERROR)
         return
 
     if not answer.unwrap().json():
-        await container.slacker.post_to_channel(channel_id=channel_id, text=(
-            "Couldn't find timer with such name. "
-            "If you are sure that it's a bug, please contact bot developer team. Thanks."
-        ))
+        await container.slacker.post_to_channel(channel_id=channel_id, text=TIMER_NOT_FOUND)
         return
 
     answer = try_request(container.logger, r.delete, params={'timer_name': timer_name, 'username': user_id})
     if answer.is_ok():
-        text = f"Timer {timer_name} successfully deleted."
+        text = TIMER_DELETED
     else:
-        text = (
-            f"Some error occurred. Timer {timer_name} possibly is not deleted. "
-            f"Please, retry or contact developers team. Thanks."
-        )
+        text = TIMER_NOT_DELETED
 
-    await container.slacker.post_to_channel(channel_id=channel_id, text=text)
+    await container.slacker.post_to_channel(channel_id=channel_id, text=text.format(timer_name))
 
 
 async def __show_timer_creation(channel_id: str, user_id: str):
     sources = await get_user_channels_and_presets(user_id)
     if sources is None:
-        await container.slacker.post_to_channel(
-            channel_id=channel_id,
-            text="Couldn't receive presets for the user. "
-                 "Please, contact bot developers about this situation."
-        )
+        await container.slacker.post_to_channel(channel_id=channel_id, text=PRESETS_NOT_RECEIVED)
         return
 
     sources = [('all', 'all')] + sources

@@ -5,6 +5,9 @@ import config
 import container
 from extras import try_request, check_qna_answer, transform_to_permalinks_or_text
 
+QNA_ERROR = "Received error during interaction with Q&A app. Please, try later or contact with ODS.ai Q&A team."
+QNA_INCORRECT_PAYLOAD = "Received incorrect payload from ODS.ai Q&A application. Our team is already working on it."
+
 
 async def send_initial_message(user_id: str, channel_id: str, trigger_id: str):
     if not trigger_id:
@@ -46,10 +49,7 @@ async def qna_interaction(data: dict):
 
     answer = try_request(container.logger, r.get, config.QNA_REQUEST_URL, params=params)
     if answer.is_err():
-        await container.slacker.post_to_channel(
-            channel_id=user_id,
-            text="Received error during interaction with Q&A app. Please, try later or contact with ODS.ai Q&A team."
-        )
+        await container.slacker.post_to_channel(channel_id=user_id, text=QNA_ERROR)
         return
 
     answer = answer.unwrap().json()
@@ -58,10 +58,7 @@ async def qna_interaction(data: dict):
     # check that returned result is a list of strings
     answer = check_qna_answer(answer)
     if answer.is_err():
-        await container.slacker.post_to_channel(
-            channel_id=user_id,
-            text="Received incorrect payload from ODS.ai Q&A application. Our team is already working on it."
-        )
+        await container.slacker.post_to_channel(channel_id=user_id, text=QNA_INCORRECT_PAYLOAD)
         return
     answer = answer.unwrap()
 

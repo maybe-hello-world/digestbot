@@ -12,6 +12,17 @@ from common.extras import try_parse_int, try_request
 from extras import get_user_channels_and_presets
 import container
 
+PRESETS_NOT_RECEIVED = "Couldn't receive presets for the user. Please, contact bot developers about this situation."
+TOP_FUTURE_ERROR = "Please, select the date from the past. We cannot process future messages. Yet. :)"
+MESSAGE_HANDLING_ERROR = (
+    "Sorry, some error occurred during message handling. "
+    "Please, contact bot developers. Thanks."
+)
+NO_MESSAGES_TO_PRINT = (
+    "No messages to print. Either preset/channel/messages not found "
+    "or something went wrong."
+)
+
 
 def __pretty_top_format(messages: List[Message]) -> str:
     """
@@ -48,11 +59,7 @@ async def send_initial_message(user_id: str, channel_id: str) -> None:
 
     sources = await get_user_channels_and_presets(user_id)
     if sources is None:
-        await container.slacker.post_to_channel(
-            channel_id=channel_id,
-            text="Couldn't receive presets for the user. "
-                 "Please, contact bot developers about this situation."
-        )
+        await container.slacker.post_to_channel(channel_id=channel_id, text=PRESETS_NOT_RECEIVED)
         return
 
     sources = [('all', 'all')] + sources
@@ -60,7 +67,8 @@ async def send_initial_message(user_id: str, channel_id: str) -> None:
     # create answer for top command from the template
     template = container.jinja_env.get_template("top.json")
     render_result = template.render(today=today, sources=sources)
-    await container.slacker.post_to_channel(channel_id=channel_id, blocks=render_result, ephemeral=True, user_id=user_id)
+    await container.slacker.post_to_channel(channel_id=channel_id, blocks=render_result, ephemeral=True,
+                                            user_id=user_id)
 
 
 async def top_interaction_eligibility(data: dict):
@@ -128,8 +136,7 @@ async def top_interaction(data: dict):
     selected_datetime = datetime.strptime(f"{date_value} {time_value}", "%Y-%m-%d %H:%M")
     selected_datetime -= timedelta(seconds=tz_offset)
     if selected_datetime > datetime.utcnow():
-        await container.slacker.post_to_channel(channel_id=channel, text="Please, select the date from the past. "
-                                                                         "We cannot process future messages. Yet. :)")
+        await container.slacker.post_to_channel(channel_id=channel, text=TOP_FUTURE_ERROR)
         return
 
     request_parameters['after_ts'] = Decimal(time.mktime(selected_datetime.timetuple()))
@@ -142,15 +149,9 @@ async def post_top_message(channel_id: str, request_parameters: dict):
     answer = try_request(container.logger, r.get, base_url, params=request_parameters)
 
     if answer.is_err():
-        answer = (
-            "Sorry, some error occurred during message handling. "
-            "Please, contact bot developers. Thanks."
-        )
+        answer = MESSAGE_HANDLING_ERROR
     elif not (y := answer.unwrap().json()):
-        answer = (
-            "No messages to print. Either preset/channel/messages not found "
-            "or something went wrong."
-        )
+        answer = NO_MESSAGES_TO_PRINT
     else:
         answer = __pretty_top_format(y)
 

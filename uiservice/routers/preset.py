@@ -10,6 +10,18 @@ from common.extras import try_request
 PRESET_OVERRIDE_WARNING_MESSAGE = "Your preset name is the same as global preset. It will override global preset."
 PRESET_ALREADY_EXISTS = "Preset already exists. Please, delete existing preset or choose another name (wisely)."
 NO_CHANNELS_PASSED_MESSAGE = "No channels selected."
+PRESET_NOT_SPECIFIED = (
+    "Preset name to delete should be explicitly specified. "
+    "Please specify preset name or type `help presets` to get additional information."
+)
+PRESET_DELETED = "Preset {0} successfully deleted."
+PRESET_DELETION_FAILED = (
+            "Some error occurred. Preset {0} possibly is not deleted. "
+            "Please, check with `presets` and contact developers team. Thanks.\n"
+        )
+DATABASE_INTERACTION_ERROR = "Received error during database interaction. Please, try later."
+PRESET_CREATED = "Successfully created preset {0}."
+PRESET_NOT_CREATED = "Couldn't create preset {0}, some error occurred. Sorry :("
 
 
 async def send_initial_message(user_id: str, channel_id: str) -> None:
@@ -64,21 +76,15 @@ async def __process_preset_deletion(data: dict, channel_id: str, user_id: str):
     base_url = f"http://{config.DB_URL}/preset/"
 
     if preset_name is None:
-        await container.slacker.post_to_channel(channel_id=channel_id, text=(
-            "Preset name to delete should be explicitly specified. "
-            "Please specify preset name or type `help presets` to get additional information."
-        ))
+        await container.slacker.post_to_channel(channel_id=channel_id, text=PRESET_NOT_SPECIFIED)
         return
 
     answer = try_request(container.logger, r.delete, base_url, params={'name': preset_name, 'user_id': user_id})
     if answer.is_ok():
-        await container.slacker.post_to_channel(channel_id=channel_id,
-                                                text=f"Preset {preset_name} successfully deleted.")
+        text = PRESET_DELETED.format(preset_name)
     else:
-        await container.slacker.post_to_channel(channel_id=channel_id, text=(
-            f"Some error occurred. Preset {preset_name} possibly is not deleted. "
-            f"Please, check with `presets` and contact developers team. Thanks.\n"
-        ))
+        text = PRESET_DELETION_FAILED.format(preset_name)
+    await container.slacker.post_to_channel(channel_id=channel_id, text=text)
 
 
 async def __process_preset_creation(data: dict, user_id: str):
@@ -92,10 +98,7 @@ async def __process_preset_creation(data: dict, user_id: str):
     # check that preset_name does not exist and channels are not empty
     answer = try_request(container.logger, r.get, base_url, params={"user_id": user_id, "include_global": False})
     if answer.is_err():
-        await container.slacker.post_to_channel(
-            channel_id=user_id,
-            text="Received error during database interaction. Please, try later."
-        )
+        await container.slacker.post_to_channel(channel_id=user_id, text=DATABASE_INTERACTION_ERROR)
         return
     answer = answer.unwrap()
 
@@ -110,10 +113,7 @@ async def __process_preset_creation(data: dict, user_id: str):
     # check whether user will override global presets
     answer = try_request(container.logger, r.get, base_url, params={"include_global": True})
     if answer.is_err():
-        await container.slacker.post_to_channel(
-            channel_id=user_id,
-            text="Received error during database interaction. Please, try later."
-        )
+        await container.slacker.post_to_channel(channel_id=user_id, text=DATABASE_INTERACTION_ERROR)
         return
     answer = answer.unwrap()
 
@@ -122,10 +122,11 @@ async def __process_preset_creation(data: dict, user_id: str):
         user_answer += PRESET_OVERRIDE_WARNING_MESSAGE
         user_answer += "\n"
 
-    answer = try_request(container.logger, r.put, base_url, params={'user_id': user_id, 'name': preset_name}, data=json.dumps(channels))
+    answer = try_request(container.logger, r.put, base_url, params={'user_id': user_id, 'name': preset_name},
+                         data=json.dumps(channels))
     if answer.is_ok():
-        user_answer += f"Successfully created preset {preset_name}."
+        user_answer += PRESET_CREATED.format(preset_name)
     else:
-        user_answer += f"Couldn't create preset {preset_name}, some error occurred. Sorry :("
+        user_answer += PRESET_NOT_CREATED.format(preset_name)
 
     await container.slacker.post_to_channel(channel_id=user_id, text=user_answer)
