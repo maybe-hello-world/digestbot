@@ -45,6 +45,8 @@ def on_starting(server):
     loop = get_event_loop()
     time.sleep(1)
     loop.run_until_complete(db_engine.check_or_create_database())
+    loop.run_until_complete(db_engine.ainit())
+    loop.run_until_complete(db_engine.check_or_create_tables())
 
 
 # Gunicorn config variables

@@ -35,8 +35,7 @@ class DBEngine:
 
         await sys_conn.close()
 
-    @staticmethod
-    async def check_or_create_tables(connection):
+    async def check_or_create_tables(self):
         tables = [
             """CREATE TABLE IF NOT EXISTS Timer (
                     channel_id TEXT NOT NULL,
@@ -74,7 +73,9 @@ class DBEngine:
         ]
 
         big_query = "\n".join(tables)
-        await connection.execute(big_query)
+
+        async with self.pool.acquire() as connection:
+            await connection.execute(big_query)
 
     async def make_execute(self, request_string: str, *args):
         """
