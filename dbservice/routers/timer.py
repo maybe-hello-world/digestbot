@@ -3,7 +3,7 @@ from models import Timer
 from typing import List, Optional
 
 from config import TIMERS_LIMIT
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from dbprovider.TimerDAO import timer_dao
 
 router = APIRouter()
@@ -25,7 +25,7 @@ async def remove_timer(username: str, timer_name: str):
 
 
 @router.post("/", response_model=Timer)
-async def insert_timer(timer: Timer):
+async def insert_timer(timer: Timer = Body(...)):
     result = await timer_dao.insert_timer(Timer.from_fastapi_dict(timer.dict()), TIMERS_LIMIT)
     if not result:
         raise HTTPException(status_code=400, detail=MAX_TIMER_REACHED)
@@ -44,7 +44,7 @@ async def count_timers(username: str):
 
 
 @router.patch("/next_start", response_model=Timer)
-async def update_timer_next_start(timer: Timer):
+async def update_timer_next_start(timer: Timer = Body(...)):
     result = await timer_dao.update_timer_next_start(Timer.from_fastapi_dict(timer.dict()))
     if not result:
         timer_dao.engine.logger.error(f"Timer not found. Timer: {timer}")

@@ -1,6 +1,5 @@
 import json
 import uuid
-from dataclasses import asdict
 from datetime import datetime, timedelta
 
 import config
@@ -154,7 +153,7 @@ async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
         top_command=json.dumps(timer_parameters)
     )
 
-    data = json.dumps(asdict(new_timer), cls=TimerEncoder)
+    data = json.dumps(new_timer.dict(), cls=TimerEncoder)
     answer = try_request(container.logger, r.post, f"http://{config.DB_URL}/timer/", data=data)
     if answer.is_err():
         await container.slacker.post_to_channel(channel_id=channel_id, text=TIMER_CREATION_FAILED)

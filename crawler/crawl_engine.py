@@ -1,5 +1,4 @@
 import asyncio
-from dataclasses import asdict
 from datetime import datetime, timedelta
 import json
 from logging import Logger
@@ -33,7 +32,7 @@ async def crawl_messages_once(
             messages = await slacker.get_channel_messages(ch_id, prev_date)
             if messages:
                 try_request(logger, r.put, base_url + "message",
-                            data=json.dumps([asdict(x) for x in messages], cls=TimerEncoder))
+                            data=json.dumps([x.dict() for x in messages], cls=TimerEncoder))
 
         logger.info(
             f"Messages from {len(ch_info)} channels parsed and sent to the database."
@@ -50,7 +49,7 @@ async def crawl_messages_once(
         linkless_counter.inc(amount=len(empty_links_messages))
         messages = await slacker.update_permalinks(messages=empty_links_messages)
         answer = try_request(logger, r.patch, base_url + "message/links",
-                             data=json.dumps([asdict(x) for x in messages], cls=TimerEncoder))
+                             data=json.dumps([x.dict() for x in messages], cls=TimerEncoder))
         if answer.is_ok():
             logger.debug(f"Updated permalinks for {len(messages)} messages.")
 

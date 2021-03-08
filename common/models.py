@@ -1,33 +1,29 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 from typing import List, Optional
-from decimal import Decimal
 
 from datetime import timedelta, datetime
 
 
-@dataclass(frozen=True)
-class Preset:
+class Preset(BaseModel):
     id: int
-    username: Optional[str]
     name: str
     channel_ids: List[str]
+    username: Optional[str]
 
 
-@dataclass(frozen=True)
-class Message:
+class Message(BaseModel):
     username: str
     text: str
-    timestamp: Decimal
+    timestamp: str
+    channel_id: str
     reply_count: int
     reply_users_count: int
     thread_length: int
-    channel_id: str
     link: Optional[str]
     reactions_rate: float = 0.0
 
 
-@dataclass(frozen=True)
-class Timer:
+class Timer(BaseModel):
     channel_id: str
     username: str
     timer_name: str

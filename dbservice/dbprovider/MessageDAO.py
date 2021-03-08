@@ -16,7 +16,7 @@ class MessageDAO:
             (
                 message.username,
                 message.text,
-                message.timestamp,
+                Decimal(message.timestamp),
                 message.reply_count,
                 message.reply_users_count,
                 message.reactions_rate,
@@ -32,7 +32,7 @@ class MessageDAO:
 
     @staticmethod
     def __make_link_update_values_from_messages_array(messages: List[Message]) -> List[tuple]:
-        return [(x.link, x.timestamp, x.channel_id) for x in messages]
+        return [(x.link, Decimal(x.timestamp), x.channel_id) for x in messages]
 
     async def create_messages(self, messages: List[Message]) -> None:
         request = f"""
@@ -73,7 +73,7 @@ class MessageDAO:
 
     async def get_top_messages(
             self,
-            after_ts: Decimal,
+            after_ts: str,
             sorting_type: SortingType = SortingType.REPLIES,
             top_count: int = 10
     ) -> List[Message]:
@@ -90,7 +90,7 @@ class MessageDAO:
     async def get_top_messages_by_channel_id(
             self,
             channel_id: str,
-            after_ts: Decimal,
+            after_ts: str,
             sorting_type: SortingType = SortingType.REPLIES,
             top_count: int = 10,
     ) -> List[Message]:
@@ -110,7 +110,7 @@ class MessageDAO:
     async def get_top_messages_by_preset_name(
             self,
             preset_name: str,
-            after_ts: Decimal,
+            after_ts: str,
             sorting_type: SortingType = SortingType.REPLIES,
             top_count: int = 10,
             user_id: Optional[str] = None

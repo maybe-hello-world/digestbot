@@ -1,6 +1,5 @@
 import time
 from datetime import datetime, timedelta
-from decimal import Decimal
 from typing import List
 
 import requests as r
@@ -138,7 +137,7 @@ async def top_interaction(data: dict):
         await container.slacker.post_to_channel(channel_id=channel, text=TOP_FUTURE_ERROR)
         return
 
-    request_parameters['after_ts'] = Decimal(time.mktime(selected_datetime.timetuple()))
+    request_parameters['after_ts'] = str(time.mktime(selected_datetime.timetuple()))
 
     await post_top_message(channel_id=channel, request_parameters=request_parameters)
 

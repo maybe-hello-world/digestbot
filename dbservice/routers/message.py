@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from common.Enums import SortingType
 from models import Message
 from typing import List, Optional
@@ -13,12 +11,12 @@ router = APIRouter()
 
 @router.post("/")
 async def insert_messages(messages: List[Message]):
-    return await message_dao.create_messages([Message(**x.dict()) for x in messages])
+    return await message_dao.create_messages(messages)
 
 
 @router.put("/")
 async def upsert_messages(messages: List[Message]):
-    return await message_dao.upsert_messages([Message(**x.dict()) for x in messages])
+    return await message_dao.upsert_messages(messages)
 
 
 @router.get("/linkless", response_model=List[Message])
@@ -28,12 +26,12 @@ async def get_linkless_messages():
 
 @router.patch("/links")
 async def update_message_links(messages: List[Message]):
-    return await message_dao.update_message_links([Message(**x.dict()) for x in messages])
+    return await message_dao.update_message_links(messages)
 
 
 @router.get("/top", response_model=List[Message])
 async def get_top_messages(
-        after_ts: Decimal,
+        after_ts: str,
         channel_id: Optional[str] = None,
         preset_name: Optional[str] = None,
         user_id: Optional[str] = None,

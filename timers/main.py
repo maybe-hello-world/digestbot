@@ -1,9 +1,7 @@
 import asyncio
 import json
-from dataclasses import asdict
 from datetime import datetime, timedelta
 import time
-from decimal import Decimal
 from logging import Logger
 import requests as r
 
@@ -49,7 +47,7 @@ async def update_timers_once(
         )
 
         # update timer in DB and notify the user
-        try_request(logger, r.patch, db_base_url + "next_start", data=json.dumps(asdict(new_timer), cls=TimerEncoder))
+        try_request(logger, r.patch, db_base_url + "next_start", data=json.dumps(new_timer.dict(), cls=TimerEncoder))
 
         text = f"""Due to bot being offline or other reasons timer {new_timer.timer_name} 
         of user <@{new_timer.username}> missed it's tick. 
@@ -96,7 +94,7 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
         # run top command and return result to the user
         request_parameters = json.loads(nearest_timer['top_command'])
         message_period = timedelta(seconds=request_parameters['message_period_seconds'])
-        after_ts = Decimal(time.mktime((datetime.utcnow() - message_period).timetuple()))
+        after_ts = str(time.mktime((datetime.utcnow() - message_period).timetuple()))
         request_parameters['after_ts'] = after_ts
 
         next_time = datetime.strptime(nearest_timer['next_start'], '%Y-%m-%dT%H:%M:%S') + timedelta(seconds=nearest_timer['delta'])

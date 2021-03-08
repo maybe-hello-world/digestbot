@@ -1,3 +1,6 @@
+from asyncio import get_event_loop
+
+import uvicorn
 from asyncpg.exceptions import PostgresError
 
 from fastapi import FastAPI, Request, HTTPException
@@ -26,3 +29,10 @@ async def asyncpg_exception_handler(request: Request, exc: PostgresError):
     db_engine.logger.error(f"Error occurred during processing of the request: {request.url}")
     db_engine.logger.exception(exc)
     raise HTTPException(status_code=500, detail=str(exc))
+
+if __name__ == '__main__':
+    loop = get_event_loop()
+    loop.run_until_complete(db_engine.check_or_create_database())
+    loop.run_until_complete(db_engine.ainit())
+    loop.run_until_complete(db_engine.check_or_create_tables())
+    uvicorn.run(app, host="0.0.0.0", port=8000)

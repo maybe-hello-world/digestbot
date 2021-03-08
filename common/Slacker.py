@@ -2,7 +2,6 @@ import time
 from typing import List, Tuple, Optional, NoReturn
 from datetime import datetime, timedelta
 from functools import reduce
-from decimal import Decimal
 from logging import Logger
 
 import asyncio
@@ -240,7 +239,7 @@ class Slacker:
             Message(
                 username=x.get("user", "") or x.get("username", ""),
                 text=x["text"],
-                timestamp=Decimal(x["ts"]),
+                timestamp=x["ts"],
                 reply_count=x.get("reply_count", 0),
                 reply_users_count=x.get("reply_users_count", 0),
                 reactions_rate=x.get("reaction_rate", 0),
@@ -254,7 +253,7 @@ class Slacker:
         return messages
 
     async def get_permalink(
-            self, channel_id: str, message_ts: Decimal
+            self, channel_id: str, message_ts: str
     ) -> Optional[str]:
         """
         Get permalink for given message in given channel
@@ -267,7 +266,7 @@ class Slacker:
         try:
             answer = await self.retry_policy.execute(
                 lambda: self.bot_web_client.chat_getPermalink(
-                    channel=channel_id, message_ts=str(message_ts)
+                    channel=channel_id, message_ts=message_ts
                 )
             )
         except (asyncio.TimeoutError, RetryAfterError):
