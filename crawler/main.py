@@ -1,6 +1,5 @@
 import asyncio
 import config
-from prometheus_client import start_http_server
 
 from common.LoggerFactory import create_logger
 from common.Slacker import Slacker
@@ -9,8 +8,6 @@ from crawler.crawl_engine import crawl_messages
 
 if __name__ == '__main__':
     logger = create_logger("crawler", config.LOG_LEVEL)
-
-    start_http_server(80)
 
     loop = asyncio.get_event_loop()
 
