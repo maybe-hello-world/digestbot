@@ -9,6 +9,9 @@ from common.Slacker import Slacker
 from common.extras import try_request, TimerEncoder
 from common.models import Message
 import crawler.config as config
+from influxdb_client import Point
+
+from config import INFLUX_API_WRITE
 
 
 async def crawl_messages_once(slacker: Slacker, logger: Logger) -> None:
@@ -29,6 +32,7 @@ async def crawl_messages_once(slacker: Slacker, logger: Logger) -> None:
         logger.info(
             f"Messages from {len(ch_info)} channels parsed and sent to the database."
         )
+    channels_point = Point("workspace").field("channels", len(ch_info)).time(datetime.utcnow())
 
     # update messages without permalinks
     answer = try_request(logger, r.get, base_url + "message/linkless")
@@ -43,6 +47,8 @@ async def crawl_messages_once(slacker: Slacker, logger: Logger) -> None:
                              data=json.dumps([x.dict() for x in messages], cls=TimerEncoder))
         if answer.is_ok():
             logger.debug(f"Updated permalinks for {len(messages)} messages.")
+    linkless_messages_point = Point("workspace").field("linkless_messages", len(empty_links_messages)).time(datetime.utcnow())
+    INFLUX_API_WRITE([linkless_messages_point, channels_point])
 
 
 async def crawl_messages(slacker: Slacker, logger: Logger):
