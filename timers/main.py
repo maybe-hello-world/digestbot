@@ -113,7 +113,7 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
             top_command=nearest_timer['top_command'],
         )
 
-        try_request(logger, r.patch, db_base_url + "next_start", data=json.dumps(new_timer, cls=TimerEncoder))
+        try_request(logger, r.patch, db_base_url + "next_start", data=json.dumps(new_timer.dict(), cls=TimerEncoder))
 
 
 if __name__ == '__main__':

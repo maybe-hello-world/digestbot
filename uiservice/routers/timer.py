@@ -48,12 +48,12 @@ async def send_initial_message(user_id: str, channel_id: str) -> None:
 
     timers = answer.json()
     timers = [Timer(
-        x['channel_id'],
-        x['username'],
-        x['timer_name'],
-        timedelta(seconds=x['delta']),
-        datetime.fromisoformat(x['next_start']),
-        x['top_command']
+        channel_id=x['channel_id'],
+        username=x['username'],
+        timer_name=x['timer_name'],
+        delta=timedelta(seconds=x['delta']),
+        next_start=datetime.fromisoformat(x['next_start']),
+        top_command=x['top_command']
     ) for x in timers]
 
     template = container.jinja_env.get_template("timer_list.json")

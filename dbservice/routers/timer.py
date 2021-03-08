@@ -26,7 +26,7 @@ async def remove_timer(username: str, timer_name: str):
 
 @router.post("/", response_model=Timer)
 async def insert_timer(timer: Timer = Body(...)):
-    result = await timer_dao.insert_timer(Timer.from_fastapi_dict(timer.dict()), TIMERS_LIMIT)
+    result = await timer_dao.insert_timer(timer, TIMERS_LIMIT)
     if not result:
         raise HTTPException(status_code=400, detail=MAX_TIMER_REACHED)
 
@@ -45,7 +45,7 @@ async def count_timers(username: str):
 
 @router.patch("/next_start", response_model=Timer)
 async def update_timer_next_start(timer: Timer = Body(...)):
-    result = await timer_dao.update_timer_next_start(Timer.from_fastapi_dict(timer.dict()))
+    result = await timer_dao.update_timer_next_start(timer)
     if not result:
         timer_dao.engine.logger.error(f"Timer not found. Timer: {timer}")
         raise HTTPException(status_code=404, detail="Timer not found")
