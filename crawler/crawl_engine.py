@@ -5,14 +5,21 @@ import json
 from logging import Logger
 import requests as r
 
+from prometheus_client import Counter
+
 from common.extras import try_request, TimerEncoder
 from common.models import Message
 from common import Slacker
 import crawler.config as config
 
+linkless_counter = Counter(
+    "linkless_messages",
+    "Amount of requests for link for messages (good approximation of new messages in Slack processed)"
+)
+
 
 async def crawl_messages_once(
-    slacker: Slacker, logger: Logger
+        slacker: Slacker, logger: Logger
 ) -> None:
     base_url = f"http://{config.DB_URL}/"
 
@@ -40,6 +47,7 @@ async def crawl_messages_once(
 
     empty_links_messages = [Message(**x) for x in answer.json()]
     if empty_links_messages:
+        linkless_counter.inc(amount=len(empty_links_messages))
         messages = await slacker.update_permalinks(messages=empty_links_messages)
         answer = try_request(logger, r.patch, base_url + "message/links",
                              data=json.dumps([asdict(x) for x in messages], cls=TimerEncoder))

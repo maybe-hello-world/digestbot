@@ -1,1 +1,2 @@
 asyncpg==0.21.0
+prometheusrock==0.1.3
