@@ -7,7 +7,6 @@ import requests as r
 from result import Result, Ok, Err
 
 import config
-from common.models import Message
 from common.extras import try_parse_int, try_request
 from extras import get_user_channels_and_presets
 import container
@@ -24,7 +23,7 @@ NO_MESSAGES_TO_PRINT = (
 )
 
 
-def __pretty_top_format(messages: List[Message]) -> str:
+def __pretty_top_format(messages: List[dict]) -> str:
     """
     Create pretty formatted output of top slack messages.
 
@@ -40,13 +39,13 @@ def __pretty_top_format(messages: List[Message]) -> str:
     messages = (
         template.format(
             i,
-            x.username,
-            x.channel_id,
-            x.text[:200],
-            x.reply_count,
-            x.reply_users_count,
-            round(x.reactions_rate, 2),
-            x.link,
+            x['username'],
+            x['channel_id'],
+            x['text'][:200],
+            x['reply_count'],
+            x['reply_users_count'],
+            round(x['reactions_rate'], 2),
+            x['link'],
         )
         for i, x in enumerate(messages, start=1)
     )
@@ -153,6 +152,7 @@ async def post_top_message(channel_id: str, request_parameters: dict):
     elif not (y := answer.unwrap().json()):
         answer = NO_MESSAGES_TO_PRINT
     else:
+
         answer = __pretty_top_format(y)
 
     await container.slacker.post_to_channel(channel_id=channel_id, text=answer)
