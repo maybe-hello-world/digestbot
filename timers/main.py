@@ -73,7 +73,8 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
         time_border = (datetime.utcnow() - timedelta(minutes=OVERDUE_MINUTES)).isoformat()
 
         # get nearest timer to execute
-        answer = try_request(logger, r.get, db_base_url + "nearest", params={"time_border": time_border}).map(lambda x: x.json())
+        answer = try_request(logger, r.get, db_base_url + "nearest", params={"time_border": time_border}).map(
+            lambda x: x.json())
         if answer.is_err() or answer.value is None:
             await asyncio.sleep(300)
             continue
@@ -97,12 +98,16 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
         after_ts = str(time.mktime((datetime.utcnow() - message_period).timetuple()))
         request_parameters['after_ts'] = after_ts
 
-        next_time = datetime.strptime(nearest_timer['next_start'], '%Y-%m-%dT%H:%M:%S') + timedelta(seconds=nearest_timer['delta'])
+        next_time = datetime.strptime(nearest_timer['next_start'], '%Y-%m-%dT%H:%M:%S') + \
+                    timedelta(seconds=nearest_timer['delta'])
         request_parameters['next_time'] = next_time
 
         # post top request
-        try_request(logger, r.post, ui_base_url + "top",
-                    data={"channel_id": nearest_timer['channel_id'], "request_parameters": request_parameters})
+        try_request(
+            logger, r.post, ui_base_url + "top",
+            data=json.dumps({"channel_id": nearest_timer['channel_id'], "request_parameters": request_parameters},
+                            cls=TimerEncoder)
+        )
 
         new_timer = Timer(
             channel_id=nearest_timer['channel_id'],

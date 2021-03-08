@@ -77,8 +77,6 @@ async def timer_interaction(data: dict):
         await __process_timer_creation(data, channel_id, user_id)
     elif action_id == "timer_delete":
         await __process_timer_deletion(data, channel_id, user_id)
-    else:
-        container.logger.warning(f"Unknown timer interaction message: {data}")
 
 
 async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
@@ -185,7 +183,7 @@ async def __process_timer_deletion(data: dict, channel_id: str, user_id: str):
         await container.slacker.post_to_channel(channel_id=channel_id, text=TIMER_NOT_FOUND)
         return
 
-    answer = try_request(container.logger, r.delete, params={'timer_name': timer_name, 'username': user_id})
+    answer = try_request(container.logger, r.delete, base_url, params={'timer_name': timer_name, 'username': user_id})
     if answer.is_ok():
         text = TIMER_DELETED
     else:

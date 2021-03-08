@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from pydantic import BaseModel
 
 import container
@@ -28,6 +28,5 @@ async def post_message(data: MessagePostData):
 
 
 @router.post("/top")
-async def process_top(data: TopData):
-    if data.channel_id and data.request_parameters:
-        await post_top_message(channel_id=data.channel_id, request_parameters=data.request_parameters)
+async def process_top(data: TopData = Body(...)):
+    await post_top_message(channel_id=data.channel_id, request_parameters=data.request_parameters)
