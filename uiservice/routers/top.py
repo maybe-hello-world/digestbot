@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Generator, Any
 
 import requests as r
 from result import Result, Ok, Err
@@ -22,13 +22,7 @@ NO_MESSAGES_TO_PRINT = (
 )
 
 
-def __pretty_top_format(messages: List[dict]) -> str:
-    """
-    Create pretty formatted output of top slack messages.
-
-    :param messages: list of slack messages from DB
-    :return: string to be send to the channel
-    """
+def __pretty_top_format(messages: List[dict]) -> Generator[str, Any, None]:
     template = (
         "{}. <@{}> | <#{}>\n"
         "{}...\n"
@@ -48,7 +42,7 @@ def __pretty_top_format(messages: List[dict]) -> str:
         )
         for i, x in enumerate(messages, start=1)
     )
-    return "\n\n\n".join(messages)
+    return messages
 
 
 async def send_initial_message(user_id: str, channel_id: str) -> None:
@@ -147,11 +141,11 @@ async def post_top_message(channel_id: str, request_parameters: dict):
     answer = try_request(container.logger, r.get, base_url, params=request_parameters)
 
     if answer.is_err():
-        answer = MESSAGE_HANDLING_ERROR
+        answer = [MESSAGE_HANDLING_ERROR]
     elif not (y := answer.unwrap().json()):
-        answer = NO_MESSAGES_TO_PRINT
+        answer = [NO_MESSAGES_TO_PRINT]
     else:
-
         answer = __pretty_top_format(y)
 
-    await container.slacker.post_to_channel(channel_id=channel_id, text=answer)
+    for message in answer:
+        await container.slacker.post_to_channel(channel_id=channel_id, text=message)
