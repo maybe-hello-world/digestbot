@@ -8,6 +8,11 @@ from dbprovider.TimerDAO import timer_dao
 
 router = APIRouter()
 
+MAX_TIMER_REACHED = (
+    "Maximum number of timers for this user achieved. "
+    "Please, consider removing one of your existing timers to be allowed to add another one."
+)
+
 
 @router.get("/", response_model=List[Timer])
 async def list_timers(username: str):
@@ -23,11 +28,7 @@ async def remove_timer(username: str, timer_name: str):
 async def insert_timer(timer: Timer):
     result = await timer_dao.insert_timer(Timer.from_fastapi_dict(timer.dict()), TIMERS_LIMIT)
     if not result:
-        raise HTTPException(
-            status_code=400,
-            detail="Maximum number of timers for this user achieved. "
-                   "Please, consider removing one of your existing timers to be allowed to add another one."
-        )
+        raise HTTPException(status_code=400, detail=MAX_TIMER_REACHED)
 
     return timer
 
@@ -47,10 +48,7 @@ async def update_timer_next_start(timer: Timer):
     result = await timer_dao.update_timer_next_start(Timer.from_fastapi_dict(timer.dict()))
     if not result:
         timer_dao.engine.logger.error(f"Timer not found. Timer: {timer}")
-        raise HTTPException(
-            status_code=404,
-            detail="Timer not found"
-        )
+        raise HTTPException(status_code=404, detail="Timer not found")
     return timer
 
 
