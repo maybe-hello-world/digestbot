@@ -2,6 +2,8 @@ import logging
 import os
 
 import sentry_sdk
+from influxdb_client import InfluxDBClient
+from influxdb_client.client.write_api import SYNCHRONOUS
 from sentry_sdk.integrations.logging import LoggingIntegration
 from common.LoggerFactory import create_logger as _create_logger
 
@@ -14,6 +16,22 @@ if SENTRY_URL:
         event_level=logging.WARNING  # Send errors as events
     )
     sentry_sdk.init(dsn=SENTRY_URL, integrations=[sentry_logging])
+
+
+# InfluxDB
+def __init_influx():
+    token = os.getenv("INFLUX_TOKEN", "")
+    config = os.getenv("INFLUX_CONFIG", "")
+    if token and config:
+        org, bucket, url = config.split("#")
+        client = InfluxDBClient(url=url, token=token)
+        write_api = client.write_api(write_options=SYNCHRONOUS)
+        return lambda record: write_api.write(bucket, org, record)
+    else:
+        return lambda *x, **y: True
+
+
+INFLUX_API_WRITE = __init_influx()
 
 __logger = _create_logger(__name__, logging.WARNING)
 
@@ -31,5 +49,3 @@ if LOG_LEVEL not in __available_log_levels:
     )
     LOG_LEVEL = "info"
 LOG_LEVEL = __available_log_levels[LOG_LEVEL]
-
-
