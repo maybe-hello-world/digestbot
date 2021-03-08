@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import List, Generator, Any
 
 import requests as r
+from influxdb_client import Point
 from result import Result, Ok, Err
 
 import config
@@ -145,7 +146,9 @@ async def post_top_message(channel_id: str, request_parameters: dict):
     elif not (y := answer.unwrap().json()):
         answer = [NO_MESSAGES_TO_PRINT]
     else:
+        config.INFLUX_API_WRITE(Point("digestbot").field("top_answers_returned", len(y)).time(datetime.utcnow()))
         answer = __pretty_top_format(y)
 
+    config.INFLUX_API_WRITE(Point("digestbot").field("top_requests", 1).time(datetime.utcnow()))
     for message in answer:
         await container.slacker.post_to_channel(channel_id=channel_id, text=message)

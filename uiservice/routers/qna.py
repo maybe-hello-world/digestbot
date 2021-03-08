@@ -1,8 +1,12 @@
+from datetime import datetime
+
 import requests as r
 from fastapi import Response, BackgroundTasks
+from influxdb_client import Point
 
 import config
 import container
+from config import INFLUX_API_WRITE
 from extras import try_request, check_qna_answer, transform_to_permalinks_or_text
 
 QNA_ERROR = "Received error during interaction with Q&A app. Please, try later or contact with ODS.ai Q&A team."
@@ -61,6 +65,9 @@ async def qna_interaction(data: dict):
         await container.slacker.post_to_channel(channel_id=user_id, text=QNA_INCORRECT_PAYLOAD)
         return
     answer = answer.unwrap()
+
+    # collect metric
+    INFLUX_API_WRITE(Point("digestbot").field("qna_request", 1).time(datetime.utcnow()))
 
     # for each message get either preview or message text and then construct a final message
     blocks = await transform_to_permalinks_or_text(answer)

@@ -23,7 +23,7 @@ def __init_influx():
     token = os.getenv("INFLUX_TOKEN", "")
     config = os.getenv("INFLUX_CONFIG", "")
     if token and config:
-        org, bucket, url = config.split("#")
+        org, bucket, url = config.split("%")
         client = InfluxDBClient(url=url, token=token)
         write_api = client.write_api(write_options=SYNCHRONOUS)
         return lambda record: write_api.write(bucket, org, record)

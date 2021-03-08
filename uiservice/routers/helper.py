@@ -1,4 +1,8 @@
+from datetime import datetime
+from influxdb_client import Point
+
 import container
+from config import INFLUX_API_WRITE
 
 
 def general_help() -> str:
@@ -63,3 +67,4 @@ async def process_message(channel_id: str, text: str):
         help_answer = {"text": qna_help()}
 
     await container.slacker.post_to_channel(channel_id=channel_id, **help_answer)
+    INFLUX_API_WRITE(Point("digestbot").field("help_requested", 1).time(datetime.utcnow()))

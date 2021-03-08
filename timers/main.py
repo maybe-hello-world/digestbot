@@ -4,12 +4,14 @@ from datetime import datetime, timedelta
 import time
 from logging import Logger
 import requests as r
+from influxdb_client import Point
 
 from common.models import Timer
 
 from config import OVERDUE_MINUTES, LOG_LEVEL
 from common.LoggerFactory import create_logger
 from common.extras import TimerEncoder, try_request
+from config import INFLUX_API_WRITE
 
 
 async def update_timers_once(
@@ -26,6 +28,7 @@ async def update_timers_once(
 
     overdue_timers = (try_request(logger, r.get, db_base_url + "overdue", params={"time_border": time_border})
                       .map_or([], lambda x: x.json()))
+    INFLUX_API_WRITE(Point("digestbot").field("overdue_timers", len(overdue_timers)).time(datetime.utcnow()))
 
     # update each timer and notify the timer creator
     now = datetime.utcnow()
@@ -119,6 +122,7 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
         )
 
         try_request(logger, r.patch, db_base_url + "next_start", data=json.dumps(new_timer.dict(), cls=TimerEncoder))
+        INFLUX_API_WRITE(Point("digestbot").field("timers_processed", 1).time(datetime.utcnow()))
 
 
 if __name__ == '__main__':

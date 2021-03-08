@@ -2,6 +2,8 @@ import json
 import uuid
 from datetime import datetime, timedelta
 
+from influxdb_client import Point
+
 import config
 import container
 import requests as r
@@ -9,6 +11,7 @@ from result import Result, Ok, Err
 from sentry_sdk import capture_message
 
 from common.models import Timer
+from config import INFLUX_API_WRITE
 from extras import get_user_channels_and_presets
 from common.extras import try_request, TimerEncoder
 from routers.top import top_parser
@@ -157,6 +160,7 @@ async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
         await container.slacker.post_to_channel(channel_id=channel_id, text=TIMER_CREATION_FAILED)
         return
 
+    INFLUX_API_WRITE(Point("digestbot").field("timer_created", 1).time(datetime.utcnow()))
     await container.slacker.post_to_channel(
         channel_id=channel_id,
         text=TIMER_CREATED.format(new_timer.timer_name, new_timer.next_start.isoformat())

@@ -1,4 +1,7 @@
 import json
+from datetime import datetime
+
+from influxdb_client import Point
 
 import config
 import requests as r
@@ -6,6 +9,7 @@ import requests as r
 import container
 
 from common.extras import try_request
+from config import INFLUX_API_WRITE
 
 PRESET_OVERRIDE_WARNING_MESSAGE = "Your preset name is the same as global preset. It will override global preset."
 PRESET_ALREADY_EXISTS = "Preset already exists. Please, delete existing preset or choose another name (wisely)."
@@ -126,6 +130,7 @@ async def __process_preset_creation(data: dict, user_id: str):
                          data=json.dumps(channels))
     if answer.is_ok():
         user_answer += PRESET_CREATED.format(preset_name)
+        INFLUX_API_WRITE(Point("digestbot").field("preset_created", 1).time(datetime.utcnow()))
     else:
         user_answer += PRESET_NOT_CREATED.format(preset_name)
 

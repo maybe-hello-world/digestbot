@@ -1,4 +1,9 @@
+from datetime import datetime
+
+from influxdb_client import Point
+
 import container
+from config import INFLUX_API_WRITE
 from . import top, timer, preset, helper, qna
 
 
@@ -17,6 +22,8 @@ async def process_message(message: dict) -> None:
     text = message.get("text", "").lower().strip()
     user_id = message.get("user", "")
     channel = message.get("channel", "")
+
+    INFLUX_API_WRITE(Point("digestbot").field("overall_requests", 1).time(datetime.utcnow()))
 
     if text.startswith("help"):
         await helper.process_message(channel, text)
