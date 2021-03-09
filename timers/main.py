@@ -63,9 +63,8 @@ async def update_timers_once(
 
 async def update_timers(logger: Logger, ui_service: str, db_service: str):
     while True:
-        await asyncio.sleep(OVERDUE_MINUTES * 60)
-
         await update_timers_once(logger=logger, ui_service=ui_service, db_service=db_service)
+        await asyncio.sleep(OVERDUE_MINUTES * 60)
 
 
 async def process_timers(logger: Logger, ui_service: str, db_service: str):

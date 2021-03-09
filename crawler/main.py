@@ -53,13 +53,13 @@ async def crawl_messages_once(slacker: Slacker, logger: Logger) -> None:
 
 async def crawl_messages(slacker: Slacker, logger: Logger):
     while True:
-        # wait for next time
-        await asyncio.sleep(config.CRAWL_INTERVAL)
-
         try:
             await crawl_messages_once(slacker=slacker, logger=logger)
         except Exception as e:
             logger.exception(e)
+
+        # wait for next time
+        await asyncio.sleep(config.CRAWL_INTERVAL)
 
 
 if __name__ == '__main__':
