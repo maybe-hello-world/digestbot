@@ -1,5 +1,5 @@
 import time
-from typing import List, Tuple, Optional, NoReturn
+from typing import List, Tuple, Optional
 from datetime import datetime, timedelta
 from functools import reduce
 from logging import Logger
@@ -25,7 +25,6 @@ class Slacker:
 
         self.bot_web_client = slack.WebClient(token=bot_token, run_async=True)
         self.user_web_client = slack.WebClient(token=user_token, run_async=True)
-        self.rtm_client = slack.RTMClient(token=bot_token, run_async=True)
 
         if async_init:
             return
@@ -54,34 +53,6 @@ class Slacker:
             self.user_id = ans["user_id"]
 
         self.logger.info("Slack API connection successfully established.")
-
-    async def start_listening(self) -> NoReturn:
-        """
-        Start to listen to messages. ATTENTION: this function never ends.
-        """
-        self.logger.info("RTM listener started")
-        await self.rtm_client.start()
-
-    async def is_direct_channel(self, channel_id: str) -> Optional[bool]:
-        """
-        Check whether given channel is direct messages channel or public
-
-        :param channel_id: Slack channel ID
-        :return: True if direct messages, False if not, None if have no connections or other problems
-        """
-        try:
-            ch_info = await self.retry_policy.execute(
-                lambda: self.bot_web_client.conversations_info(channel=channel_id)
-            )
-        except (RetryAfterError, asyncio.TimeoutError):
-            self.logger.warning("Timeout during is_direct_channel request")
-            return None
-        except errors.SlackClientError as e:
-            self.logger.exception(e)
-            return None
-
-        is_im = ch_info.get("channel", dict()).get("is_im", False)
-        return is_im
 
     async def get_channels_list(
             self, exclude_archive: bool = True, public_only: bool = True
