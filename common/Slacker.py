@@ -246,9 +246,11 @@ class Slacker:
         except errors.SlackApiError as e:
             if e.response.get("error", "") == "message_not_found":
                 return "Sorry, message was deleted :("
+            if e.response.get("error", "") == "channel_not_found":
+                return "Sorry, channel was deleted :("
             self.logger.exception(e)
             return None
-        except errors.SlackClientError as e:
+        except Exception as e:
             self.logger.exception(e)
             return None
 
