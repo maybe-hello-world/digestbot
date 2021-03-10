@@ -6,6 +6,8 @@ from logging import Logger
 
 import asyncio
 
+from result import Result
+
 from .models import Message
 from .utils import reaction_ranking
 from .resilence_library.retryafter import RetryAfterSlack, RetryAfterError
@@ -200,8 +202,8 @@ class Slacker:
             if "<!" in new_x:
                 new_x = (
                     new_x.replace("<!everyone>", "everyone")
-                         .replace("<!channel>", "channel")
-                         .replace("<!here>", "here")
+                        .replace("<!channel>", "channel")
+                        .replace("<!here>", "here")
                 )
                 x["text"] = new_x
 
@@ -225,7 +227,7 @@ class Slacker:
 
     async def get_permalink(
             self, channel_id: str, message_ts: str
-    ) -> Optional[str]:
+    ) -> Result[str, str]:
         """
         Get permalink for given message in given channel
 
@@ -240,22 +242,21 @@ class Slacker:
                     channel=channel_id, message_ts=message_ts
                 )
             )
+
+            link = answer.get("permalink", "")
+            return Result.Ok(link)
         except (asyncio.TimeoutError, RetryAfterError):
             self.logger.debug("Too much permalinks requested, will try next time.")
-            return None
         except errors.SlackApiError as e:
             if e.response.get("error", "") == "message_not_found":
-                return "Sorry, message was deleted :("
+                return Result.Err("Sorry, the message was deleted :(")
             if e.response.get("error", "") == "channel_not_found":
-                return "Sorry, channel was deleted :("
+                return Result.Err("Sorry, the channel was deleted :(")
             self.logger.exception(e)
-            return None
         except Exception as e:
             self.logger.exception(e)
-            return None
 
-        link = answer["permalink"]
-        return link
+        return Result.Err("")
 
     async def update_permalinks(self, messages: List[Message]) -> List[Message]:
         """
@@ -279,7 +280,7 @@ class Slacker:
                 thread_length=mess.thread_length,
                 channel_id=mess.channel_id,
                 reactions_rate=mess.reactions_rate,
-                link=link,
+                link=link.value,
             )
             for mess, link in zip(messages, links)
         ]

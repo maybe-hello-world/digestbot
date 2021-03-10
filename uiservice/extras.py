@@ -2,7 +2,6 @@ import os
 from datetime import datetime, timezone
 import hashlib
 import hmac
-from decimal import InvalidOperation
 from typing import Optional, List, Any
 import requests as r
 
@@ -93,11 +92,6 @@ async def transform_to_permalinks_or_text(data: List[QnAAnswer]) -> List[str]:
 
     transformed_data = []
     for answer in data:
-        try:
-            result = await container.slacker.get_permalink(channel_id=answer.channel_id, message_ts=answer.timestamp)
-            if result is None:
-                raise ValueError(f"Couldn't receive permalink for a message.")
-        except (InvalidOperation, ValueError):
-            result = answer.text
-        transformed_data.append(result)
+        result = await container.slacker.get_permalink(channel_id=answer.channel_id, message_ts=answer.timestamp)
+        transformed_data.append(result.unwrap_or(answer.text))
     return transformed_data
