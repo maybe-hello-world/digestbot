@@ -4,6 +4,8 @@ import urllib.parse
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, BackgroundTasks, Depends, Body, Response
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from fastapi.exception_handlers import (
     http_exception_handler,
     request_validation_exception_handler,
@@ -89,6 +91,22 @@ async def interactivity(tasks: BackgroundTasks, payload: Request):
     elif await qna.qna_interaction_eligibility(body):
         return await qna.validate_qna_modal(tasks, body)
     return
+
+
+@app.post("/options", dependencies=[Depends(extras.verify_origin)])
+async def options(payload: Request):
+    body = (await payload.body()).decode("utf-8")
+    body = body[8:]  # remove 'payload='
+    body = json.loads(urllib.parse.unquote(body))
+
+    if not(body.get("type", "") == "block_suggestion" and body.get("block_id", "") == "top_preset_selector"):
+        container.logger.error(f"Unknown options data: {body}")
+        return Response(status_code=200)
+
+    user_id = body.get("user", {}).get("id", "")
+    value = body.get("value", "")
+    result = await top.send_options(user_id=user_id, value=value)
+    return JSONResponse(status_code=200, content=jsonable_encoder(result))
 
 
 @app.exception_handler(StarletteHTTPException)

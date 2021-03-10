@@ -50,18 +50,27 @@ async def send_initial_message(user_id: str, channel_id: str) -> None:
     # get current date
     today = datetime.today().strftime("%Y-%m-%d")
 
-    sources = await get_user_channels_and_presets(user_id)
-    if sources is None:
-        await container.slacker.post_to_channel(channel_id=channel_id, text=PRESETS_NOT_RECEIVED)
-        return
-
-    sources = [('all', 'all')] + sources
-
     # create answer for top command from the template
     template = container.jinja_env.get_template("top.json")
-    render_result = template.render(today=today, sources=sources)
+    render_result = template.render(today=today)
     await container.slacker.post_to_channel(channel_id=channel_id, blocks=render_result, ephemeral=True,
                                             user_id=user_id)
+
+
+async def send_options(user_id: str, value: str) -> dict:
+    sources = await get_user_channels_and_presets(user_id)
+    if sources is None:
+        return {"options": [{"text": {"type": "plain_text", "text": "Internal digestbot problems :("}, "value": "all"}]}
+
+    # only channels and presets where 'value' presented if value is not empty string
+    if value:
+        sources = [(x, y) for x, y in sources if value in x]
+    sources = [('all', 'all')] + sources
+    if len(sources) > 99:
+        sources = sources[:99]  # Slack constraints
+
+    result = {"options": [{"text": {"type": "plain_text", "text": x}, "value": y} for x, y in sources]}
+    return result
 
 
 async def top_interaction_eligibility(data: dict):

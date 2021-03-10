@@ -86,7 +86,7 @@
         "type": "datepicker",
         "action_id": "delta_datepicker",
         "initial_date": "{{ today }}"
-    }
+      }
     ]
   },
   {
@@ -144,44 +144,34 @@
     },
     "accessory": {
       "action_id": "top_preset_selector",
-      "type": "static_select",
+      "type": "external_select",
+      "min_query_length": 1,
+      "placeholder": {
+        "type": "plain_text",
+        "text": "Select an item"
+      },
       "initial_option": {
         "text": {
           "type": "plain_text",
           "text": "all"
         },
         "value": "all"
-      },
-      "placeholder": {
-        "type": "plain_text",
-        "text": "Select an item"
-      },
-      "options": [
-        {% for text, value in sources %}
-        {
-          "text": {
-            "type": "plain_text",
-            "text": "{{ text }}"
-          },
-          "value": "{{ value }}"
-        },
-        {% endfor %}
-      ]
+      }
     }
   },
   {
-  "type": "actions",
-  "elements": [
-    {
-      "type": "button",
-      "text": {
-        "type": "plain_text",
-        "text": "Submit"
-      },
-      "style": "primary",
-      "value": "top_submission",
-      "action_id": "top_submission"
-    }
-  ]
-}
+    "type": "actions",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Submit"
+        },
+        "style": "primary",
+        "value": "top_submission",
+        "action_id": "top_submission"
+      }
+    ]
+  }
 ]
