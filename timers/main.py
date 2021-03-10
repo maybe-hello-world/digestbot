@@ -33,7 +33,7 @@ async def update_timers_once(
     # update each timer and notify the timer creator
     now = datetime.utcnow()
     for timer in overdue_timers:
-        new_start = datetime.strptime(timer['next_start'], '%Y-%m-%dT%H:%M:%S')
+        new_start = datetime.fromisoformat(timer['next_start'])
         delta = timedelta(seconds=timer['delta'])
 
         # update time with deltas
@@ -84,7 +84,7 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
 
         # sleep until that time if time - current_time > 0
 
-        run_time = datetime.strptime(nearest_timer['next_start'], '%Y-%m-%dT%H:%M:%S')
+        run_time = datetime.fromisoformat(nearest_timer['next_start'])
         now = datetime.utcnow()
         run_delta = run_time - now
         run_delta = run_delta.total_seconds()
@@ -100,8 +100,7 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
         after_ts = str(time.mktime((datetime.utcnow() - message_period).timetuple()))
         request_parameters['after_ts'] = after_ts
 
-        next_time = datetime.strptime(nearest_timer['next_start'], '%Y-%m-%dT%H:%M:%S') + \
-                    timedelta(seconds=nearest_timer['delta'])
+        next_time = datetime.fromisoformat(nearest_timer['next_start']) + timedelta(seconds=nearest_timer['delta'])
         request_parameters['next_time'] = next_time
 
         # post top request
