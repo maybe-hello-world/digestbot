@@ -299,7 +299,6 @@ class Slacker:
 
         params.update({
             "channel": channel_id,
-            "as_user": "false",
             "link_names": "true",
             "unfurl_links": "true",
             "unfurl_media": "true"
