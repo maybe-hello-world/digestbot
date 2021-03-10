@@ -145,7 +145,7 @@
     "accessory": {
       "action_id": "top_preset_selector",
       "type": "external_select",
-      "min_query_length": 1,
+      "min_query_length": 0,
       "placeholder": {
         "type": "plain_text",
         "text": "Select an item"
