@@ -11,6 +11,9 @@ before_script:
     - echo "SLACK_USER_TOKEN=$SLACK_USER_TOKEN" >> .env
     - echo "SIGNING_SECRET=$SIGNING_SECRET" >> .env
 
+install:
+    - pip install -r common/requirements.txt
+
 # start containers -> sleep 10 secs -> get restart count of running containers -> sum restart count and check == 0
 script:
     - python -m unittest
