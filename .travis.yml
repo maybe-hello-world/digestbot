@@ -5,6 +5,11 @@ python:
 services:
     - docker
 
+before_script:
+    - echo "DB_PASS=$DB_PASS" > .env
+    - echo "SLACK_BOT_TOKEN=$SLACK_BOT_TOKEN" >> .env
+    - echo "SLACK_USER_TOKEN=$SLACK_USER_TOKEN" >> .env
+
 # start containers -> sleep 10 secs -> get restart count of running containers -> sum restart count and check == 0
 script:
     # - python -m unittest discover -s tests  # not working yet
