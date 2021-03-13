@@ -2,11 +2,11 @@ import unittest
 from unittest.mock import MagicMock
 from slack.errors import SlackApiError
 import asyncio
-from digestbot.resilence_library.retryafter import RetryAfterSlack, RetryAfterError
+from common.resilence_library.retryafter import RetryAfterSlack, RetryAfterError
 
 
 class RetryAfterTest(unittest.TestCase):
-    class Responce:
+    class Response:
         status_code = 429
         headers = {"Retry-After": "1"}
 
@@ -20,7 +20,7 @@ class RetryAfterTest(unittest.TestCase):
 
     def test_retryafterslack_policy(self):
         mock = MagicMock(
-            side_effect=SlackApiError(message="x", response=self.Responce())
+            side_effect=SlackApiError(message="x", response=self.Response())
         )
         policy = RetryAfterSlack(3)
 
