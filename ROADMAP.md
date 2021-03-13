@@ -6,3 +6,5 @@ This is a living doc that will evolve as priorities grow and shift. Please feel 
 ## What we are working on:
 * Ignore-list: we are planning to add ignore list to exclude different bimorphs
 from results ^^
+* ODS.ai QnA integration: add fastpath for search (from last user message)
+* Tests: more and more and more and more (at least anything ><)
