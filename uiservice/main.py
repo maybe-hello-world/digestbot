@@ -99,7 +99,8 @@ async def options(payload: Request):
     body = body[8:]  # remove 'payload='
     body = json.loads(urllib.parse.unquote(body))
 
-    if not(body.get("type", "") == "block_suggestion" and body.get("block_id", "") == "top_preset_selector"):
+    if not(body.get("type", "") == "block_suggestion" and
+           body.get("block_id", "") in {"top_preset_selector", "timer_preset_selector"}):
         container.logger.error(f"Unknown options data: {body}")
         return Response(status_code=200)
 

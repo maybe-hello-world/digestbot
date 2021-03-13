@@ -423,29 +423,19 @@
     },
     "accessory": {
       "action_id": "timer_preset_selector",
-      "type": "static_select",
+      "type": "external_select",
+      "min_query_length": 0,
       "placeholder": {
         "type": "plain_text",
         "text": "Select an item"
       },
       "initial_option": {
-          "text": {
-            "type": "plain_text",
-            "text": "all"
-          },
-          "value": "all"
+        "text": {
+          "type": "plain_text",
+          "text": "all"
         },
-      "options": [
-        {% for text, value in sources %}
-        {
-          "text": {
-            "type": "plain_text",
-            "text": "{{ text }}"
-          },
-          "value": "{{ value }}"
-        },
-        {% endfor %}
-      ]
+        "value": "all"
+      }
     }
   },
   {
