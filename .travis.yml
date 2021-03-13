@@ -12,7 +12,7 @@ before_script:
     - echo "SIGNING_SECRET=$SIGNING_SECRET" >> .env
 
 install:
-    - pip install -r common/requirements.txt
+    - pip install slackclient
 
 # start containers -> sleep 10 secs -> get restart count of running containers -> sum restart count and check == 0
 script:
