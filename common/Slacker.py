@@ -154,11 +154,11 @@ class Slacker:
     def __remove_dangerous_substrings(x: str) -> str:
         return (x
                 .replace("<!everyone>", "everyone")
-                .replace("<@everyone>", "everyone")
+                .replace("@everyone", "everyone")
                 .replace("<!channel>", "channel")
-                .replace("<@channel>", "channel")
+                .replace("@channel", "channel")
                 .replace("<!here>", "here")
-                .replace("<@here>", "here")
+                .replace("@here", "here")
                 )
 
     async def get_channel_messages(
