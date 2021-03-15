@@ -18,7 +18,7 @@ async def crawl_messages_once(slacker: Slacker, logger: Logger) -> None:
     base_url = f"http://{config.DB_URL}/"
 
     # get messages and insert them into database
-    ch_info = await slacker.get_channels_list()
+    ch_info = await slacker.get_channels_list() or []
     if ch_info:
         for ch_id, ch_name in ch_info:
             logger.debug(f"Channel: {ch_name}")
