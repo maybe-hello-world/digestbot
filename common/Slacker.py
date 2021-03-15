@@ -150,6 +150,17 @@ class Slacker:
 
         return messages
 
+    @staticmethod
+    def __remove_dangerous_substrings(x: str) -> str:
+        return (x
+                .replace("<!everyone>", "everyone")
+                .replace("<@everyone>", "everyone")
+                .replace("<!channel>", "channel")
+                .replace("<@channel>", "channel")
+                .replace("<!here>", "here")
+                .replace("<@here>", "here")
+                )
+
     async def get_channel_messages(
             self,
             channel_id: str,
@@ -197,21 +208,11 @@ class Slacker:
         messages = await self._count_thread_lengths(channel_id, messages)
         messages = self._count_reaction_rate(messages)
 
-        for x in messages:
-            new_x = x.get("text", " ")
-            if "<!" in new_x:
-                new_x = (
-                    new_x.replace("<!everyone>", "everyone")
-                        .replace("<!channel>", "channel")
-                        .replace("<!here>", "here")
-                )
-                x["text"] = new_x
-
         # return only needed statistics
         messages = [
             Message(
                 username=x.get("user", "") or x.get("username", ""),
-                text=x["text"],
+                text=self.__remove_dangerous_substrings(x.get("text", " ")),
                 timestamp=x["ts"],
                 reply_count=x.get("reply_count", 0),
                 reply_users_count=x.get("reply_users_count", 0),
@@ -296,8 +297,10 @@ class Slacker:
             user_id: str = ""
     ) -> None:
         if blocks:
+            blocks = self.__remove_dangerous_substrings(blocks)
             params = {"blocks": blocks}
         else:
+            text = self.__remove_dangerous_substrings(text)
             params = {"text": text}
 
         params.update({
