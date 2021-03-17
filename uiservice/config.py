@@ -30,3 +30,4 @@ DB_URL = os.getenv("DB_URL", "dbservice:80")
 
 # ODS.ai Q&A system
 QNA_REQUEST_URL = os.getenv("QNA_REQUEST_URL", "")
+QNA_PRESENTED: bool = QNA_REQUEST_URL.strip() != ""

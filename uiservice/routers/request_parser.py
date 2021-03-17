@@ -3,7 +3,7 @@ from datetime import datetime
 from influxdb_client import Point
 
 import container
-from config import INFLUX_API_WRITE
+from config import INFLUX_API_WRITE, QNA_PRESENTED
 from . import top, timer, preset, helper, qna
 
 
@@ -33,9 +33,9 @@ async def process_message(message: dict) -> None:
         await timer.send_initial_message(user_id, channel)
     elif text == "presets":
         await preset.send_initial_message(user_id, channel)
-    elif text == "qna":
+    elif text == "qna" and QNA_PRESENTED:    # only if QnA provided
         await qna.send_initial_message(user_id, channel, message.get('trigger_id', ""))
     else:
         template = container.jinja_env.get_template("syntax_response.json")
-        result = template.render()
+        result = template.render(qna_presented=QNA_PRESENTED)
         await container.slacker.post_to_channel(channel_id=channel, blocks=result, ephemeral=True, user_id=user_id)

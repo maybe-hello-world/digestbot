@@ -36,8 +36,9 @@
         },
         "style": "primary",
         "value": "presets"
-      },
-      {
+      }
+      {% if qna_presented %}
+    ,{
         "type": "button",
         "text": {
           "type": "plain_text",
@@ -46,6 +47,7 @@
         "style": "primary",
         "value": "qna"
       }
+      {% endif %}
     ]
   }
 ]

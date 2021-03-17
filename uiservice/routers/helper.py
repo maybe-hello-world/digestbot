@@ -2,12 +2,12 @@ from datetime import datetime
 from influxdb_client import Point
 
 import container
-from config import INFLUX_API_WRITE
+from config import INFLUX_API_WRITE, QNA_PRESENTED
 
 
 def general_help() -> str:
     template = container.jinja_env.get_template("help_response.json")
-    return template.render()
+    return template.render(qna_presented=QNA_PRESENTED)
 
 
 def unrecognized_help() -> str:
@@ -63,7 +63,7 @@ async def process_message(channel_id: str, text: str):
         help_answer = {"text": top_help()}
     elif text == "help timers":
         help_answer = {"text": timers_help()}
-    elif text == "help qna":
+    elif text == "help qna" and QNA_PRESENTED:   # only if QNA provided
         help_answer = {"text": qna_help()}
 
     await container.slacker.post_to_channel(channel_id=channel_id, **help_answer)
