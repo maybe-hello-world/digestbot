@@ -26,7 +26,7 @@ def try_request(logger: Logger, request: Callable, *args, **kwargs) -> result.Re
     try:
         answer: r.Response = request(*args, **kwargs, timeout=10)
         if answer.status_code != 200:
-            raise ValueError(answer.text)
+            raise ValueError(str([args, kwargs, answer.text]))
 
         return result.Ok(answer)
     except (r.exceptions.Timeout, ValueError) as e:
