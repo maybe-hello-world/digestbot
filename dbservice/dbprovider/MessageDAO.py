@@ -81,12 +81,12 @@ class MessageDAO:
         request = f"""
             SELECT * FROM message
             WHERE timestamp >= $1 AND username NOT IN 
-                (SELECT ignore_username FROM IgnoreList WHERE author_username = $4)
-            ORDER BY $2 DESC
-            LIMIT $3;
+                (SELECT ignore_username FROM IgnoreList WHERE author_username = $3)
+            ORDER BY {sorting_type.value} DESC
+            LIMIT $2;
         """
 
-        messages = await self.engine.make_fetch_rows(request, after_ts, sorting_type.value, top_count, user_id)
+        messages = await self.engine.make_fetch_rows(request, after_ts, top_count, user_id)
         return self.__request_messages_to_message_class(messages)
 
     async def get_top_messages_by_channel_id(
@@ -104,13 +104,13 @@ class MessageDAO:
             AND
                 timestamp >= $2
             AND
-                username NOT IN (SELECT ignore_username FROM IgnoreList WHERE author_username = $5)
-            ORDER BY $3 DESC
-            LIMIT $4;
+                username NOT IN (SELECT ignore_username FROM IgnoreList WHERE author_username = $4)
+            ORDER BY {sorting_type.value} DESC
+            LIMIT $3;
         """
 
         messages = await self.engine.make_fetch_rows(
-            request, channel_id, after_ts, sorting_type.value, top_count, user_id
+            request, channel_id, after_ts, top_count, user_id
         )
         return self.__request_messages_to_message_class(messages)
 
@@ -136,12 +136,12 @@ class MessageDAO:
                 ON message.channel_id=ANY(preset.channel_ids)
                 WHERE message.timestamp >= $3 AND message.username NOT IN
                     (SELECT ignore_username FROM IgnoreList WHERE author_username = $2)
-                ORDER BY $4 DESC
-                LIMIT $5;
+                ORDER BY {sorting_type.value} DESC
+                LIMIT $4;
         """
 
         messages = await self.engine.make_fetch_rows(
-            request, preset_name, user_id, after_ts, sorting_type.value, top_count
+            request, preset_name, user_id, after_ts, top_count
         )
         return self.__request_messages_to_message_class(messages)
 
