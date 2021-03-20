@@ -36,9 +36,18 @@
         },
         "style": "primary",
         "value": "presets"
-      }
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Ignore lists"
+        },
+        "style": "primary",
+        "value": "ignore"
+      },
       {% if qna_presented %}
-    ,{
+      {
         "type": "button",
         "text": {
           "type": "plain_text",

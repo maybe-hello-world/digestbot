@@ -96,6 +96,8 @@ def top_parser(amount: dict, sorting_type: dict, preset: dict, user_id: str) -> 
         return Err(f"Unknown sorting type: {sorting_type}")
     answer['sorting_type'] = sorting_type
 
+    answer['user_id'] = user_id
+
     # preset parsing
     preset = preset['selected_option']['value']
     if preset == "all":
@@ -104,7 +106,6 @@ def top_parser(amount: dict, sorting_type: dict, preset: dict, user_id: str) -> 
         answer['channel_id'] = preset[2:-1]
     else:
         answer['preset_name'] = preset
-        answer['user_id'] = user_id
 
     return Ok(answer)
 

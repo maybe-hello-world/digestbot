@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List, Any, Optional
+from typing import List, Any
 
 from common.Enums import SortingType
 from models import Message
@@ -74,46 +74,53 @@ class MessageDAO:
     async def get_top_messages(
             self,
             after_ts: str,
+            user_id: str,
             sorting_type: SortingType = SortingType.REPLIES,
             top_count: int = 10
     ) -> List[Message]:
         request = f"""
             SELECT * FROM message
-            WHERE timestamp >= {after_ts}
-            ORDER BY {sorting_type.value} DESC
-            LIMIT {top_count};
+            WHERE timestamp >= $1 AND username NOT IN 
+                (SELECT ignore_username FROM IgnoreList WHERE author_username = $4)
+            ORDER BY $2 DESC
+            LIMIT $3;
         """
 
-        messages = await self.engine.make_fetch_rows(request)
+        messages = await self.engine.make_fetch_rows(request, after_ts, sorting_type.value, top_count, user_id)
         return self.__request_messages_to_message_class(messages)
 
     async def get_top_messages_by_channel_id(
             self,
             channel_id: str,
             after_ts: str,
+            user_id: str,
             sorting_type: SortingType = SortingType.REPLIES,
             top_count: int = 10,
     ) -> List[Message]:
         request = f"""
             SELECT * FROM message
             WHERE
-                channel_id=($1)
+                channel_id=$1
             AND
-                timestamp >= {after_ts}
-            ORDER BY {sorting_type.value} DESC
-            LIMIT {top_count};
+                timestamp >= $2
+            AND
+                username NOT IN (SELECT ignore_username FROM IgnoreList WHERE author_username = $5)
+            ORDER BY $3 DESC
+            LIMIT $4;
         """
 
-        messages = await self.engine.make_fetch_rows(request, channel_id)
+        messages = await self.engine.make_fetch_rows(
+            request, channel_id, after_ts, sorting_type.value, top_count, user_id
+        )
         return self.__request_messages_to_message_class(messages)
 
     async def get_top_messages_by_preset_name(
             self,
             preset_name: str,
             after_ts: str,
+            user_id: str,
             sorting_type: SortingType = SortingType.REPLIES,
             top_count: int = 10,
-            user_id: Optional[str] = None
     ) -> List[Message]:
         request = f"""
             WITH presets AS (
@@ -127,12 +134,15 @@ class MessageDAO:
             SELECT message.* FROM message
                 JOIN presets preset
                 ON message.channel_id=ANY(preset.channel_ids)
-                WHERE message.timestamp >= {after_ts}
-                ORDER BY {sorting_type.value} DESC
-                LIMIT {top_count};
+                WHERE message.timestamp >= $3 AND message.username NOT IN
+                    (SELECT ignore_username FROM IgnoreList WHERE author_username = $2)
+                ORDER BY $4 DESC
+                LIMIT $5;
         """
-        
-        messages = await self.engine.make_fetch_rows(request, preset_name, user_id)
+
+        messages = await self.engine.make_fetch_rows(
+            request, preset_name, user_id, after_ts, sorting_type.value, top_count
+        )
         return self.__request_messages_to_message_class(messages)
 
 

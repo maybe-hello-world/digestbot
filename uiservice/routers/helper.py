@@ -51,6 +51,14 @@ def qna_help() -> str:
     )
 
 
+def ignore_help() -> str:
+    return (
+        "Ignore list allows you to ignore messages from certain users. "
+        "You can add any user from the slack to the list and bot during `top` command processing will not return "
+        "you messages from this user."
+    )
+
+
 async def process_message(channel_id: str, text: str):
     help_answer = {"text": unrecognized_help()}
     text = text.strip().replace("+", " ")
@@ -63,6 +71,8 @@ async def process_message(channel_id: str, text: str):
         help_answer = {"text": top_help()}
     elif text == "help timers":
         help_answer = {"text": timers_help()}
+    elif text == "help ignore":
+        help_answer = {"text": ignore_help()}
     elif text == "help qna" and QNA_PRESENTED:   # only if QNA provided
         help_answer = {"text": qna_help()}
 

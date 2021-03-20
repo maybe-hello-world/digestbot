@@ -41,3 +41,12 @@ except ValueError:
         f"Could not parse presets limit value: {PRESETS_LIMIT}, default value 20 is used."
     )
     PRESETS_LIMIT = 20
+
+IGNORE_LIMIT = os.getenv("IGNORE_LIMIT", "100")
+try:
+    IGNORE_LIMIT = int(IGNORE_LIMIT)
+except ValueError:
+    _logger.warning(
+        f"Could not parse ignore limit value: {IGNORE_LIMIT}, default value 100 is used."
+    )
+    IGNORE_LIMIT = 100

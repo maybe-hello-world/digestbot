@@ -69,6 +69,14 @@ class DBEngine:
                     link TEXT NULL,
                     PRIMARY KEY(channel_id, timestamp)
                 );
+            """,
+            """CREATE TABLE IF NOT EXISTS IgnoreList ( 
+                    author_username TEXT NOT NULL,
+                    ignore_username TEXT NOT NULL,
+                    UNIQUE (author_username, ignore_username)
+                );
+    
+                CREATE INDEX IF NOT EXISTS author_name_idx ON IgnoreList (author_username);
             """
         ]
 
@@ -102,6 +110,17 @@ class DBEngine:
 
         async with self.pool.acquire() as connection:
             return await connection.fetch(request_string, *args)
+
+    async def make_fetchval(self, request_string: str, *args):
+        """
+        Fetch first value from first row returned
+        :param request_string: request string
+        :param args: args for SQL request
+        :return: Value from 1st column of 1st row returned
+        """
+
+        async with self.pool.acquire() as connection:
+            return await connection.fetchval(request_string, *args)
 
     async def close(self):
         """

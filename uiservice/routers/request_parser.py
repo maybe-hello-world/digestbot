@@ -4,7 +4,7 @@ from influxdb_client import Point
 
 import container
 from config import INFLUX_API_WRITE, QNA_PRESENTED
-from . import top, timer, preset, helper, qna
+from . import top, timer, preset, helper, qna, ignore
 
 
 async def request_picker_eligibility(data: dict):
@@ -33,6 +33,8 @@ async def process_message(message: dict) -> None:
         await timer.send_initial_message(user_id, channel)
     elif text == "presets":
         await preset.send_initial_message(user_id, channel)
+    elif text == "ignore":
+        await ignore.send_initial_message(user_id, channel)
     elif text == "qna" and QNA_PRESENTED:    # only if QnA provided
         await qna.send_initial_message(user_id, channel, message.get('trigger_id', ""))
     else:

@@ -102,6 +102,7 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
 
         next_time = datetime.fromisoformat(nearest_timer['next_start']) + timedelta(seconds=nearest_timer['delta'])
         request_parameters['next_time'] = next_time
+        request_parameters['user_id'] = nearest_timer['username']
 
         # post top request
         try_request(

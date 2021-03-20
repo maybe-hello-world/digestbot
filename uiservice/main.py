@@ -18,7 +18,7 @@ from jinja2 import Environment, PackageLoader
 import config
 from common.LoggerFactory import create_logger
 from common.Slacker import Slacker
-from routers import request_parser, top, timer, preset, internal, qna
+from routers import request_parser, top, timer, preset, internal, qna, ignore
 import extras
 import container
 
@@ -88,6 +88,9 @@ async def interactivity(tasks: BackgroundTasks, payload: Request):
     elif await preset.preset_interaction_eligibility(body):
         tasks.add_task(preset.preset_interaction, body)
         return Response(status_code=200)    # for modal views response should be ABSOLUTELY empty
+    elif await ignore.ignore_interaction_eligibility(body):
+        tasks.add_task(ignore.ignore_interaction, body)
+        return
     elif await qna.qna_interaction_eligibility(body):
         return await qna.validate_qna_modal(tasks, body)
     return
