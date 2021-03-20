@@ -52,6 +52,9 @@ async def crawl_messages_once(slacker: Slacker, logger: Logger) -> None:
 
 
 async def crawl_messages(slacker: Slacker, logger: Logger):
+    logger.info("Wait for 15 seconds to allow DB services to start...")
+    await asyncio.sleep(15)
+    logger.info("Starting crawling...")
     while True:
         try:
             await crawl_messages_once(slacker=slacker, logger=logger)

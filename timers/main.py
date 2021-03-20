@@ -133,5 +133,7 @@ if __name__ == '__main__':
     process_timers_task = loop.create_task(process_timers(_logger, UI_SERVICE, DB_SERVICE))
     update_timers_task = loop.create_task(update_timers(_logger, UI_SERVICE, DB_SERVICE))
 
+    _logger.info("Wait for 15 seconds to allow DB services to start...")
+    time.sleep(15)
     _logger.info("Starting timer processor...")
     loop.run_until_complete(asyncio.gather(process_timers_task, update_timers_task))
