@@ -6,6 +6,7 @@ COPY ./common /app/common
 
 COPY dbservice/requirements.txt /tmp/requirements.txt
 RUN pip install -r /tmp/requirements.txt --no-cache-dir
+COPY ./dbservice/prestart.sh /app/prestart.sh
 COPY ./dbservice /app/app
 COPY ./dbservice/gunicorn.conf.py /gunicorn_conf.py
 
