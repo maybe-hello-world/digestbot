@@ -74,7 +74,7 @@ class Slacker:
         try:
             channels = await self.retry_policy.execute(
                 lambda: self.bot_web_client.conversations_list(
-                    exclude_archive=exclude_archive, types=types
+                    exclude_archive=exclude_archive, types=types, limit=999
                 )
             )
         except (RetryAfterError, asyncio.TimeoutError):
