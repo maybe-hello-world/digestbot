@@ -22,6 +22,11 @@ async def get_ignore_list(author_id: str):
     return [x['ignore_username'] for x in await ignore_dao.get_ignore_list(author_id)]
 
 
+@router.get("/count", response_model=int)
+async def get_total_ignored():
+    return await ignore_dao.get_total_ignored()
+
+
 @router.put("/")
 async def add_ignore_entry(author_id: str, ignore_id: str):
     current_amount = await ignore_dao.get_ignore_list_length(author_id)

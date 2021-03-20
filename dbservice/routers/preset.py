@@ -46,3 +46,8 @@ async def delete_preset(user_id: str, name: str):
         raise HTTPException(status_code=404, detail=PRESET_NOT_FOUND.format(name))
 
     return result
+
+
+@router.get("/count", response_model=int)
+async def preset_count():
+    return await preset_dao.get_custom_preset_count()

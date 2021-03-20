@@ -61,9 +61,17 @@ async def update_timers_once(
     logger.debug(f"{len(overdue_timers)} overdue timers updated.")
 
 
+async def report_statistics(logger: Logger, db_service: str):
+    db_base_url = f"http://{db_service}/timer/count"
+    timers_total = try_request(logger, r.get, db_base_url).map(lambda x: x.json())
+    if timers_total.is_ok():
+        INFLUX_API_WRITE(Point("digestbot").field("timers_total", timers_total.unwrap()).time(datetime.utcnow()))
+
+
 async def update_timers(logger: Logger, ui_service: str, db_service: str):
     while True:
         await update_timers_once(logger=logger, ui_service=ui_service, db_service=db_service)
+        await report_statistics(logger=logger, db_service=db_service)
         await asyncio.sleep(OVERDUE_MINUTES * 60)
 
 

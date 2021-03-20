@@ -67,6 +67,10 @@ async def preset_interaction(data: dict):
     else:
         container.logger.warning(f"Unknown preset interaction message: {data}")
 
+    preset_count = try_request(container.logger, r.get, f"http://{config.DB_URL}/preset/count").map(lambda x: x.json())
+    if preset_count.is_ok():
+        INFLUX_API_WRITE(Point("digestbot").field("presets_total", preset_count.unwrap()).time(datetime.utcnow()))
+
 
 async def __show_preset_creation(data: dict):
     trigger_id = data.get("trigger_id", "")

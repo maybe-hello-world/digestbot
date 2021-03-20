@@ -39,7 +39,7 @@ async def check_existence(username: str, timer_name: str):
 
 
 @router.get("/count", response_model=int)
-async def count_timers(username: str):
+async def count_timers(username: Optional[str] = None):
     return await timer_dao.count_timers(username)
 
 

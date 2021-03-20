@@ -1,9 +1,12 @@
+from datetime import datetime
+from influxdb_client import Point
 import requests as r
 
 import config
 import container
 
 from common.extras import try_request
+from config import INFLUX_API_WRITE
 
 
 async def send_initial_message(user_id: str, channel_id: str) -> None:
@@ -49,3 +52,7 @@ async def ignore_interaction(data: dict):
     )
     answer = answer.map(lambda *x: message.format(ignore_user)).value
     await container.slacker.post_to_channel(channel_id=channel_id, text=answer)
+
+    ignored_count = try_request(container.logger, r.get, f"http://{config.DB_URL}/ignore/count").map(lambda x: x.json())
+    if ignored_count.is_ok():
+        INFLUX_API_WRITE(Point("digestbot").field("ignored_total", ignored_count.unwrap()).time(datetime.utcnow()))

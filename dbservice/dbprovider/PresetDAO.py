@@ -65,5 +65,9 @@ class PresetDAO:
         result = self.__request_presets_to_preset_class(result)
         return result[0] if result else None
 
+    async def get_custom_preset_count(self) -> int:
+        query = "SELECT COUNT(*) FROM Preset WHERE username IS NOT NULL"
+        return await self.engine.make_fetchval(query)
+
 
 preset_dao = PresetDAO(db_engine)

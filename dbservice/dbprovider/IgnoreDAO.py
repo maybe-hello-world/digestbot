@@ -15,6 +15,10 @@ class IgnoreDAO:
         request = "SELECT COUNT(*) FROM IgnoreList WHERE author_username = $1"
         return await self.engine.make_fetchval(request, author_id)
 
+    async def get_total_ignored(self) -> int:
+        request = "SELECT COUNT(*) FROM IgnoreList"
+        return await self.engine.make_fetchval(request)
+
     async def insert_into_ignore_list(self, author_id: str, ignore_id: str) -> bool:
         request = "INSERT INTO IgnoreList (author_username, ignore_username) VALUES ($1, $2) ON CONFLICT DO NOTHING"
         result = await self.engine.make_execute(request, author_id, ignore_id)

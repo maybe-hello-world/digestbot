@@ -20,14 +20,13 @@ class TimerDAO:
         timer_count = await self.engine.make_fetch_rows(request, username, timer_name)
         return bool(timer_count[0][0])
 
-    async def count_timers(self, username: str) -> int:
-        request = """
-            SELECT COUNT(*) FROM timer
-            WHERE username = ($1)
-        """
+    async def count_timers(self, username: Optional[str]) -> int:
+        query = "SELECT COUNT(*) FROM Timer"
+        if username:
+            query += " WHERE username = $1"
+            return await self.engine.make_fetchval(query, username)
 
-        timers_count = await self.engine.make_fetch_rows(request, username)
-        return timers_count[0][0]
+        return await self.engine.make_fetchval(query)
 
     async def remove_timer(self, username: str, timer_name: str) -> None:
         request = "DELETE FROM timer WHERE username = ($1) AND timer_name = ($2)"
