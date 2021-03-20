@@ -126,7 +126,7 @@ async def __process_preset_creation(data: dict, user_id: str):
     answer = answer.unwrap()
 
     user_answer = ""
-    if preset_name in {x.name for x in answer.json()}:
+    if preset_name in {x.get("name", "") for x in answer.json()}:
         user_answer += PRESET_OVERRIDE_WARNING_MESSAGE
         user_answer += "\n"
 
