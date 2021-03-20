@@ -1,3 +1,15 @@
+## @digestbot v3.0.1 - 2021-03-20
+Ignore-list feature added with several bugfixes for the internal code. 
+
+### Changes:
+- Ignore-list: we added possibility to ignore users and do not return to your their messages for top command. 
+([#50](https://github.com/maybe-hello-world/digestbot/issues/50))
+- Added additional checks for @channel, @here, etc. 
+- Made Q&A module optional, so you can deploy this bot in your workspace without this feature
+- Additional statistics added
+- Minor bug fixes and other improvements
+
+
 ## @digestbot v3.0.0 - 2021-03-13
 General release with major changes! New smooth UI, integration with ODS.ai QnA team,
 new features and roadmap - just for you.
