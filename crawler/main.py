@@ -26,7 +26,7 @@ async def crawl_messages_once(slacker: Slacker, logger: Logger) -> None:
             prev_date = datetime.now() - timedelta(days=config.MESSAGE_DELTA_DAYS)
             messages = await slacker.get_channel_messages(ch_id, prev_date)
             if messages:
-                try_request(logger, r.put, base_url + "message",
+                try_request(logger, r.put, base_url + "message/",
                             data=json.dumps([x.dict() for x in messages], cls=TimerEncoder))
 
         logger.info(
