@@ -58,5 +58,22 @@
       }
       {% endif %}
     ]
-  }
+  },
+  {% if qna_presented %}
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Maybe you wanted to use this request as a search string for the Q&A service?"
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Yes!"
+      },
+      "action_id": "qna_fastpath"
+    }
+  },
+  {% endif %}
 ]

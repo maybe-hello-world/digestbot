@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests as r
 from fastapi import Response, BackgroundTasks
 from influxdb_client import Point
+from result import Result
 
 import config
 import container
@@ -26,30 +27,25 @@ async def send_initial_message(user_id: str, channel_id: str, trigger_id: str):
 
 
 async def qna_interaction_eligibility(data: dict):
-    return data.get("type", "") == "view_submission" and \
-           data.get("view", {}).get("callback_id", "") == "qna_submission"
+    return (data.get("type", "") == "view_submission" and
+            data.get("view", {}).get("callback_id", "") == "qna_submission") \
+           or \
+           (data.get("type", "") == "block_actions" and
+            data.get("actions", [{}])[0].get("action_id", "") == "qna_fastpath")
 
 
 async def qna_interaction(data: dict):
     user_id = data.get('user', {}).get('id', '')
-    data = data.get("view", {}).get("state", {}).get("values", {})
 
-    query = data.get('qna_query', {}).get('query', {}).get('value', '')
-    model = data.get('model', {}).get('model_selection', {}).get('selected_option', {}).get('value', '')
-
-    user_id_agreement = (
-        data
-            .get('uid_agreement', {})
-            .get('uid_switch', {})
-            .get('selected_option', {})
-            .get('value', 'user_id_no')
-    )
-
-    params = {'query': query}
-    if model != "default":
-        params['model'] = model
-    if user_id_agreement == "user_id_yes":
-        params['user_id'] = user_id
+    if data.get("type") == "view_submission":
+        params = await qna_interaction_modal(data)
+    else:
+        params = await qna_interaction_fastpath(data)
+        if params.is_err():
+            await container.slacker.post_to_channel(channel_id=user_id, text=params.unwrap_err())
+            return
+        else:
+            params = params.unwrap()
 
     answer = try_request(container.logger, r.get, config.QNA_REQUEST_URL, params=params)
     if answer.is_err():
@@ -72,9 +68,50 @@ async def qna_interaction(data: dict):
     # for each message get either preview or message text and then construct a final message
     blocks = await transform_to_permalinks_or_text(answer)
     template = container.jinja_env.get_template("qna_answer.json")
-    blocks = template.render(query=query, answers=blocks)
+    blocks = template.render(query=params['query'], answers=blocks)
 
     await container.slacker.post_to_channel(channel_id=user_id, blocks=blocks)
+
+
+async def qna_interaction_modal(data: dict) -> dict:
+    user_id = data.get('user', {}).get('id', '')
+    data = data.get("view", {}).get("state", {}).get("values", {})
+
+    query = data.get('qna_query', {}).get('query', {}).get('value', '')
+    model = data.get('model', {}).get('model_selection', {}).get('selected_option', {}).get('value', '')
+
+    user_id_agreement = (
+        data
+            .get('uid_agreement', {})
+            .get('uid_switch', {})
+            .get('selected_option', {})
+            .get('value', 'user_id_no')
+    )
+
+    params = {'query': query}
+    if model != "default":
+        params['model'] = model
+    if user_id_agreement == "user_id_yes":
+        params['user_id'] = user_id
+
+    return params
+
+
+async def qna_interaction_fastpath(data: dict) -> Result[dict, str]:
+    channel_id = data.get("channel", {}).get("id", "")
+    user_id = data.get('user', {}).get('id', '')
+
+    # receive all messages for last 5 minutes and find last from the user
+    messages = await container.slacker.get_channel_messages(
+        channel_id=channel_id, oldest=datetime.now() - timedelta(minutes=5)
+    )
+
+    messages = filter(lambda elem: elem.username == user_id, messages)
+    message = max(messages, key=lambda elem: float(elem.timestamp), default=None)
+
+    if message is None or not message.text:
+        return Result.Err("Didn't find your message. Is it more than 5 minutes old?")
+    return Result.Ok({"query": message.text})
 
 
 async def validate_qna_modal(tasks: BackgroundTasks, body: dict) -> Response:
