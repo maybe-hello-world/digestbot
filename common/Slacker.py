@@ -359,3 +359,30 @@ class Slacker:
         except errors.SlackClientError as e:
             self.logger.exception(e)
             return None
+
+    async def get_im_latest_user_message_text(
+            self, channel_id, user_id: str, oldest: Optional[datetime] = None
+    ) -> Optional[str]:
+
+        oldest = oldest or (datetime.now() - timedelta(minutes=5))
+        oldest = int(time.mktime(oldest.utctimetuple()))
+
+        try:
+            answer = await self.retry_policy.execute(
+                lambda: self.bot_web_client.conversations_history(channel=channel_id, oldest=oldest, limit=5)
+            )
+        except (RetryAfterError, asyncio.TimeoutError):
+            self.logger.warning("Timeout during get_im_latest_user_message request")
+            return None
+        except errors.SlackClientError as e:
+            self.logger.exception(e)
+            return None
+
+        messages = filter(
+            lambda elem: elem.get("user", "") == user_id or elem.get("username", "") == user_id,
+            answer['messages']
+        )
+        message = max(messages, key=lambda elem: float(elem.get("ts", "0")), default=None)
+        if message is not None:
+            message = self.__remove_dangerous_substrings(message.get("text", " "))
+        return message

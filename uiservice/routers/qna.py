@@ -102,16 +102,13 @@ async def qna_interaction_fastpath(data: dict) -> Result[dict, str]:
     user_id = data.get('user', {}).get('id', '')
 
     # receive all messages for last 5 minutes and find last from the user
-    messages = await container.slacker.get_channel_messages(
-        channel_id=channel_id, oldest=datetime.now() - timedelta(minutes=5)
+    message = await container.slacker.get_im_latest_user_message_text(
+        channel_id=channel_id, oldest=datetime.now() - timedelta(minutes=5), user_id=user_id
     )
 
-    messages = filter(lambda elem: elem.username == user_id, messages)
-    message = max(messages, key=lambda elem: float(elem.timestamp), default=None)
-
-    if message is None or not message.text:
+    if not message:
         return Result.Err("Didn't find your message. Is it more than 5 minutes old?")
-    return Result.Ok({"query": message.text})
+    return Result.Ok({"query": message})
 
 
 async def validate_qna_modal(tasks: BackgroundTasks, body: dict) -> Response:
