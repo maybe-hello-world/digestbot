@@ -1,0 +1,46 @@
+{
+  "title": {
+    "type": "plain_text",
+    "text": "Add new preset"
+  },
+  "callback_id": "preset_new_submission",
+  "submit": {
+    "type": "plain_text",
+    "text": "Submit"
+  },
+  "blocks": [
+    {
+      "type": "input",
+      "block_id": "preset_name",
+      "element": {
+        "type": "plain_text_input",
+        "action_id": "title",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "Choose wisely."
+        }
+      },
+      "label": {
+        "type": "plain_text",
+        "text": "Preset name"
+      }
+    },
+    {
+      "type": "input",
+      "block_id": "channels_selector",
+      "element": {
+        "type": "multi_channels_select",
+        "action_id": "channels",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "What channels should be included?"
+        }
+      },
+      "label": {
+        "type": "plain_text",
+        "text": "Channel(s)"
+      }
+    }
+  ],
+  "type": "modal"
+}

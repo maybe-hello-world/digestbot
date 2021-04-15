@@ -1,0 +1,25 @@
+[
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": "Due to Slack security restrictions we should ask you to press this button to open Q&A modal view :(",
+    }
+  },
+  {
+    "type": "actions",
+    "block_id": "command_picker",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Click Me Pls"
+        },
+        "style": "primary",
+        "value": "qna",
+        "action_id": "command_picker"
+      }
+    ]
+  }
+]

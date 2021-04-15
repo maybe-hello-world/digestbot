@@ -1,0 +1,79 @@
+[
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": "Oops! I didn't understood your request, could you check your command? Also you can just choose from the commands below or type `help`."
+    }
+  },
+  {
+    "type": "actions",
+    "block_id": "command_picker",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Top"
+        },
+        "style": "primary",
+        "value": "top"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Timers"
+        },
+        "style": "primary",
+        "value": "timers"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Presets"
+        },
+        "style": "primary",
+        "value": "presets"
+      },
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Ignore lists"
+        },
+        "style": "primary",
+        "value": "ignore"
+      },
+      {% if qna_presented %}
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Q&A"
+        },
+        "style": "primary",
+        "value": "qna"
+      }
+      {% endif %}
+    ]
+  },
+  {% if qna_presented %}
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Maybe you wanted to use this request as a search string for the Q&A service?"
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Yes!"
+      },
+      "action_id": "qna_fastpath"
+    }
+  },
+  {% endif %}
+]

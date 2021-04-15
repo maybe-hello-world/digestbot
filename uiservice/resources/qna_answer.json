@@ -1,0 +1,28 @@
+[
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": "Your query:"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": {{ query | tojson }}
+    }
+  },
+  {% for x in answers %}
+  {
+    "type": "divider"
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": {{ x | tojson }}
+    }
+  },
+  {% endfor %}
+]
