@@ -1,7 +1,43 @@
 version: '3'
 services:
-  bot:
-    build: .
+  uiservice:
+    build:
+      context: .
+      dockerfile: uiservice/Dockerfile
+    restart: always
+    ports:
+      - "80:80"
+      - "443:80"
+    depends_on:
+      - dbservice
+    env_file:
+      - .env
+
+  crawler:
+    build:
+      context: .
+      dockerfile: crawler/Dockerfile
+    restart: always
+    depends_on:
+      - dbservice
+    env_file:
+      - .env
+
+  timers:
+    build:
+      context: .
+      dockerfile: timers/Dockerfile
+    restart: always
+    depends_on:
+      - dbservice
+      - uiservice
+    env_file:
+      - .env
+
+  dbservice:
+    build:
+      context: .
+      dockerfile: dbservice/Dockerfile
     restart: always
     depends_on:
       - postgres

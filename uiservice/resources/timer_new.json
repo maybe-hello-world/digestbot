@@ -1,0 +1,456 @@
+[
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "Define options for the new timer:"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": "How often to trigger the timer:"
+    }
+  },
+  {
+    "type": "actions",
+    "block_id": "timer_period_picker",
+    "elements": [
+      {
+        "type": "static_select",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "amount"
+        },
+        "initial_option": {
+          "text": {
+            "type": "plain_text",
+            "text": "1"
+          },
+          "value": "1"
+        },
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "1"
+            },
+            "value": "1"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "2"
+            },
+            "value": "2"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "3"
+            },
+            "value": "3"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "4"
+            },
+            "value": "4"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "5"
+            },
+            "value": "5"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "6"
+            },
+            "value": "6"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "7"
+            },
+            "value": "7"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "8"
+            },
+            "value": "8"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "10"
+            },
+            "value": "10"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "12"
+            },
+            "value": "12"
+          }
+        ],
+        "action_id": "timer_period_amount"
+      },
+      {
+        "type": "static_select",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "time unit"
+        },
+        "initial_option": {
+          "text": {
+            "type": "plain_text",
+            "text": "day(s)"
+          },
+          "value": "day"
+        },
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "hour(s)"
+            },
+            "value": "hour"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "day(s)"
+            },
+            "value": "day"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "week(s)"
+            },
+            "value": "week"
+          }
+        ],
+        "action_id": "timer_period_unit"
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": "Timer starting since:"
+    }
+  },
+  {
+    "type": "actions",
+    "block_id": "timer_begin_picker",
+    "elements": [
+      {
+        "type": "timepicker",
+        "action_id": "delta_timepicker",
+        "initial_time": "00:00"
+      },
+      {
+        "type": "datepicker",
+        "action_id": "delta_datepicker",
+        "initial_date": "{{ today }}"
+      }
+    ]
+  },
+  {
+    "type": "divider"
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": "Amount of messages to display:"
+    },
+    "block_id": "timer_message_amount",
+    "accessory": {
+      "type": "static_select",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "N"
+      },
+      "initial_option": {
+        "text": {
+          "type": "plain_text",
+          "text": "5"
+        },
+        "value": "5"
+      },
+      "options": [
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "3"
+          },
+          "value": "3"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "5"
+          },
+          "value": "5"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "10"
+          },
+          "value": "10"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "15"
+          },
+          "value": "15"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "20"
+          },
+          "value": "20"
+        }
+      ],
+      "action_id": "timer_message_amount"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "plain_text",
+      "text": "Select messages for last:"
+    }
+  },
+  {
+    "type": "actions",
+    "block_id": "timer_message_period_picker",
+    "elements": [
+      {
+        "type": "static_select",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "amount"
+        },
+        "initial_option": {
+          "text": {
+            "type": "plain_text",
+            "text": "1"
+          },
+          "value": "1"
+        },
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "1"
+            },
+            "value": "1"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "2"
+            },
+            "value": "2"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "3"
+            },
+            "value": "3"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "4"
+            },
+            "value": "4"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "5"
+            },
+            "value": "5"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "6"
+            },
+            "value": "6"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "7"
+            },
+            "value": "7"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "8"
+            },
+            "value": "8"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "10"
+            },
+            "value": "10"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "12"
+            },
+            "value": "12"
+          }
+        ],
+        "action_id": "timer_period_amount"
+      },
+      {
+        "type": "static_select",
+        "placeholder": {
+          "type": "plain_text",
+          "text": "time unit"
+        },
+        "initial_option": {
+          "text": {
+            "type": "plain_text",
+            "text": "day(s)"
+          },
+          "value": "day"
+        },
+        "options": [
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "hour(s)"
+            },
+            "value": "hour"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "day(s)"
+            },
+            "value": "day"
+          },
+          {
+            "text": {
+              "type": "plain_text",
+              "text": "week(s)"
+            },
+            "value": "week"
+          }
+        ],
+        "action_id": "timer_period_unit"
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Sorting methods:"
+    },
+    "block_id": "timer_sorting_selector",
+    "accessory": {
+      "type": "static_select",
+      "action_id": "timer_sorting_selector",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "Select a method"
+      },
+      "initial_option": {
+        "text": {
+          "type": "plain_text",
+          "text": "replies"
+        },
+        "value": "reply_count"
+      },
+      "options": [
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "replies"
+          },
+          "value": "reply_count"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "length"
+          },
+          "value": "thread_length"
+        },
+        {
+          "text": {
+            "type": "plain_text",
+            "text": "reactions"
+          },
+          "value": "reactions_rate"
+        }
+      ]
+    }
+  },
+  {
+    "type": "section",
+    "block_id": "timer_preset_selector",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Pick a channel or preset from the dropdown list"
+    },
+    "accessory": {
+      "action_id": "timer_preset_selector",
+      "type": "external_select",
+      "min_query_length": 0,
+      "placeholder": {
+        "type": "plain_text",
+        "text": "Select an item"
+      },
+      "initial_option": {
+        "text": {
+          "type": "plain_text",
+          "text": "all"
+        },
+        "value": "all"
+      }
+    }
+  },
+  {
+    "type": "actions",
+    "elements": [
+      {
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Submit"
+        },
+        "value": "timer_new_submission",
+        "action_id": "timer_new_submission",
+        "style": "primary"
+      }
+    ]
+  }
+]

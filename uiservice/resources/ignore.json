@@ -1,0 +1,53 @@
+[
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "Add someone to the ignore list:"
+    }
+  },
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "Choose a user to add:"
+    },
+    "accessory": {
+      "type": "users_select",
+      "placeholder": {
+        "type": "plain_text",
+        "text": "Select a user"
+      },
+      "action_id": "ignore_user_add"
+    }
+  },
+  {
+    "type": "divider"
+  },
+  {
+    "type": "header",
+    "text": {
+      "type": "plain_text",
+      "text": "Ignore list:"
+    }
+  },
+  {% for x in ignore_list %}
+  {
+    "type": "section",
+    "text": {
+      "type": "mrkdwn",
+      "text": "<@{{ x }}>"
+    },
+    "accessory": {
+      "type": "button",
+      "text": {
+        "type": "plain_text",
+        "text": "Remove"
+      },
+      "style": "danger",
+      "value": "{{ x }}",
+      "action_id": "ignore_user_remove"
+    }
+  },
+  {% endfor %}
+]
