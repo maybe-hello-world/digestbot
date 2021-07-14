@@ -131,7 +131,7 @@ async def __process_preset_creation(data: dict, user_id: str):
         user_answer += "\n"
 
     answer = try_request(container.logger, r.put, base_url, params={'user_id': user_id, 'name': preset_name},
-                         data=json.dumps(channels))
+                         data=json.dumps(channels), headers={'Content-Type': 'application/json'})
     if answer.is_ok():
         user_answer += PRESET_CREATED.format(preset_name)
         INFLUX_API_WRITE(Point("digestbot").field("preset_created", 1).time(datetime.utcnow()))

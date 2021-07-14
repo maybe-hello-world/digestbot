@@ -50,13 +50,20 @@ async def update_timers_once(
         )
 
         # update timer in DB and notify the user
-        try_request(logger, r.patch, db_base_url + "next_start", data=json.dumps(new_timer.dict(), cls=TimerEncoder))
+        try_request(
+            logger, r.patch, db_base_url + "next_start",
+            data=json.dumps(new_timer.dict(), cls=TimerEncoder),
+            headers={'Content-Type': 'application/json'}
+        )
 
         text = f"""Due to bot being offline or other reasons timer {new_timer.timer_name} 
         of user <@{new_timer.username}> missed it's tick. 
         Timer's new next start is: {new_timer.next_start.strftime('%Y-%m-%d %H:%M:%S')}."""
-        try_request(logger, r.post, ui_base_url + "message",
-                    data=json.dumps({"channel_id": new_timer.channel_id, "text": text}))
+        try_request(
+            logger, r.post, ui_base_url + "message",
+            data=json.dumps({"channel_id": new_timer.channel_id, "text": text}),
+            headers={'Content-Type': 'application/json'}
+        )
 
     logger.debug(f"{len(overdue_timers)} overdue timers updated.")
 
@@ -116,7 +123,8 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
         try_request(
             logger, r.post, ui_base_url + "top",
             data=json.dumps({"channel_id": nearest_timer['channel_id'], "request_parameters": request_parameters},
-                            cls=TimerEncoder)
+                            cls=TimerEncoder),
+            headers={'Content-Type': 'application/json'}
         )
 
         new_timer = Timer(
@@ -128,7 +136,11 @@ async def process_timers(logger: Logger, ui_service: str, db_service: str):
             top_command=nearest_timer['top_command'],
         )
 
-        try_request(logger, r.patch, db_base_url + "next_start", data=json.dumps(new_timer.dict(), cls=TimerEncoder))
+        try_request(
+            logger, r.patch, db_base_url + "next_start",
+            data=json.dumps(new_timer.dict(), cls=TimerEncoder),
+            headers={'Content-Type': 'application/json'}
+        )
         INFLUX_API_WRITE(Point("digestbot").field("timers_processed", 1).time(datetime.utcnow()))
 
 

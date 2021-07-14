@@ -155,7 +155,10 @@ async def __process_timer_creation(data: dict, channel_id: str, user_id: str):
     )
 
     data = json.dumps(new_timer.dict(), cls=TimerEncoder)
-    answer = try_request(container.logger, r.post, f"http://{config.DB_URL}/timer/", data=data)
+    answer = try_request(
+        container.logger, r.post, f"http://{config.DB_URL}/timer/",
+        data=data, headers={'Content-Type': 'application/json'}
+    )
     if answer.is_err():
         await container.slacker.post_to_channel(channel_id=channel_id, text=TIMER_CREATION_FAILED)
         return
