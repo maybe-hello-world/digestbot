@@ -26,7 +26,6 @@ NO_MESSAGES_TO_PRINT = (
 def __pretty_top_format(messages: List[dict]) -> Generator[str, Any, None]:
     template = (
         "{}. <@{}> | <#{}>\n"
-        "{}...\n"
         "Replies: {} from {} users. Reactions rate: {}.\n"
         "Link: {}"
     )
@@ -35,7 +34,6 @@ def __pretty_top_format(messages: List[dict]) -> Generator[str, Any, None]:
             i,
             x['username'],
             x['channel_id'],
-            x['text'][:200],
             x['reply_count'],
             x['reply_users_count'],
             round(x['reactions_rate'], 2),

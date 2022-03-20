@@ -59,7 +59,6 @@ class DBEngine:
             """,
             """CREATE TABLE IF NOT EXISTS Message (
                     username TEXT NOT NULL,
-                    text TEXT NOT NULL,
                     timestamp DECIMAL NOT NULL,
                     reply_count INTEGER NOT NULL,
                     reply_users_count INTEGER NOT NULL,

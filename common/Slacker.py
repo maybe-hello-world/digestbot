@@ -212,7 +212,6 @@ class Slacker:
         messages = [
             Message(
                 username=x.get("user", "") or x.get("username", ""),
-                text=self.__remove_dangerous_substrings(x.get("text", " ")),
                 timestamp=x["ts"],
                 reply_count=x.get("reply_count", 0),
                 reply_users_count=x.get("reply_users_count", 0),
@@ -274,7 +273,6 @@ class Slacker:
         messages = [
             Message(
                 username=mess.username,
-                text=mess.text,
                 timestamp=mess.timestamp,
                 reply_count=mess.reply_count,
                 reply_users_count=mess.reply_users_count,
