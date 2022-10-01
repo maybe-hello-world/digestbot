@@ -86,12 +86,8 @@ async def transform_to_permalinks_or_text(data: List[QnAAnswer]) -> List[str]:
     For each message try to find permalink and return either permalink (ok) or message text (error)
     """
 
-    # to silence errors 'channel_not_found' in test workspace
-    if os.getenv("DEBUG", "False") == "True":
-        return [x.text for x in data]
-
     transformed_data = []
     for answer in data:
         result = await container.slacker.get_permalink(channel_id=answer.channel_id, message_ts=answer.timestamp)
-        transformed_data.append(result.unwrap_or(answer.text))
+        transformed_data.append(result.unwrap_or("<No message available>"))
     return transformed_data

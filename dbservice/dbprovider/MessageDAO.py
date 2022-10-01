@@ -15,7 +15,6 @@ class MessageDAO:
         return [
             (
                 message.username,
-                message.text,
                 Decimal(message.timestamp),
                 message.reply_count,
                 message.reply_users_count,
@@ -36,9 +35,9 @@ class MessageDAO:
 
     async def create_messages(self, messages: List[Message]) -> None:
         request = f"""
-        INSERT INTO message (username, text, timestamp, reply_count, reply_users_count,
+        INSERT INTO message (username, timestamp, reply_count, reply_users_count,
                             reactions_rate, thread_length, channel_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
+        VALUES ($1, $2, $3, $4, $5, $6, $7);
         """
 
         sequence = self.__make_insert_values_from_messages_array(messages)
@@ -46,9 +45,9 @@ class MessageDAO:
 
     async def upsert_messages(self, messages: List[Message]) -> None:
         request = f"""
-        INSERT INTO message (username, text, timestamp, reply_count, reply_users_count,
+        INSERT INTO message (username, timestamp, reply_count, reply_users_count,
                             reactions_rate, thread_length, channel_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         ON CONFLICT (timestamp, channel_id)
         DO UPDATE SET
             reply_count = EXCLUDED.reply_count,

@@ -13,7 +13,6 @@ class Preset(BaseModel):
 
 class Message(BaseModel):
     username: str
-    text: str
     timestamp: str
     channel_id: str
     reply_count: int
