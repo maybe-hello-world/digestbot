@@ -1,5 +1,5 @@
 result==0.5.0
-sentry_sdk==1.0.0
+sentry_sdk==1.14.0
 requests==2.25.1
 pydantic==1.7.4
 influxdb-client==1.15.0
